@@ -107,6 +107,12 @@ ui::ui_commands! {
     /// Regular expression in the find bar.
     FindToggleRegex => "terminal.find-toggle-regex", "Regex",
         "Switches Regex of the find bar on or off.";
+    /// Copy a URL from a terminal link menu.
+    CopyUrl { url: String } => "terminal.copy-url", "Copy URL",
+        "Copies the URL captured when the output context menu opened.";
+    /// Open a URL from a terminal link menu.
+    OpenUrl { url: String } => "terminal.open-url", "Open in Browser",
+        "Opens the URL captured when the output context menu opened in the system browser.";
     /// Open the link at a cell.
     OpenLink { line: usize, column: usize } => "terminal.open-link", "Open Link",
         "Opens the link at a cell of the selected session (a click on it, or Cmd/Ctrl+click for a path in the text): a URL in the browser, a file in the editor at its line and column, a folder of the project in the Project view and another folder in the system's file manager. `line` and `column` count from 0 on the visible screen.",

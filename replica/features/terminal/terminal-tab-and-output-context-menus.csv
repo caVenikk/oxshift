@@ -1,2 +1,2 @@
 feature,area,priority,original,clone,notes
-Terminal tab and output context menus,terminal,should,yes,yes,Community
+Terminal tab and output context menus,terminal,should,yes,yes,"Output scrolling and URL actions, tab navigation and session actions (#459)."

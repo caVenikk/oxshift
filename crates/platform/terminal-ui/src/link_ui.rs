@@ -142,6 +142,32 @@ impl SessionView {
         &self.links.grid
     }
 
+    pub(crate) fn url_at_position(&self, position: GpuiPoint<Pixels>) -> Option<&str> {
+        let geometry = self.geometry.as_ref()?;
+        if !geometry.bounds.contains(&position)
+            || position.x < geometry.origin.x
+            || position.x >= geometry.origin.x + geometry.cell.width * geometry.columns as f32
+            || geometry
+                .scrollbar
+                .is_some_and(|bar| bar.track.contains(&position))
+        {
+            return None;
+        }
+        let (cell, _) = geometry.cell_at(position);
+        let top = geometry.top_of(cell.line);
+        if position.y < top || position.y >= top + geometry.cell.height {
+            return None;
+        }
+        self.links
+            .grid
+            .iter()
+            .find(|l| l.contains(cell))
+            .and_then(|link| match &link.target {
+                LinkTarget::Url(url) => Some(url.as_str()),
+                LinkTarget::File { .. } => None,
+            })
+    }
+
     /// The link under the pointer.
     pub fn hovered_link(&self) -> Option<&GridLink> {
         self.links.hover.as_ref()

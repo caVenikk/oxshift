@@ -926,6 +926,13 @@ impl MenuPopup {
             },
         );
         let (popup, menu) = (popup?, built?);
+        #[cfg(target_os = "macos")]
+        {
+            let menu = menu.downgrade();
+            crate::dialog_window::dismiss_menu_on_hide(popup.into(), cx, move |window, cx| {
+                let _ = menu.update(cx, |menu, cx| menu.dismiss(window, cx));
+            });
+        }
         let subscriptions = vec![
             cx.subscribe_in(&menu, window, |_, _, chosen: &ChosenEvent, window, cx| {
                 window.dispatch_action(chosen.0.boxed_clone(), cx);

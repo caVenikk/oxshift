@@ -277,6 +277,8 @@ pub fn open<V: 'static + Render>(
             open._keep_above = Some((keeper, subscription));
         }
     }
+    #[cfg(target_os = "macos")]
+    native::track(parent, dialog, None, cx);
     let parent_number = native::window_number(parent);
     let _ = dialog.update(cx, |_, window, _| {
         native::order_above(window, parent_number);
@@ -421,13 +423,12 @@ pub fn open_popup(
     cx: &mut App,
     build: impl FnOnce(&mut Window, &mut App) -> AnyView,
 ) -> Option<WindowHandle<PopupHost>> {
-    open_popup_window(parent, at, max, activate, false, cx, build)
+    open_popup_window(parent, at, max, activate, true, cx, build)
 }
 
 /// Opens a message dialog drawn without a title bar (the reference's
-/// alerts) as [`open_popup`] does, but as a window of its own rather than
-/// a child window of `parent`: the system's window capture picks it alone,
-/// like a dialog of [`open`].
+/// alerts). It keeps its contents when its owner minimizes and returns
+/// above the owner on restore, like a dialog of [`open`].
 pub fn open_alert(
     parent: &mut Window,
     at: Point<Pixels>,
@@ -444,7 +445,7 @@ fn open_popup_window(
     at: Point<Pixels>,
     max: Size<Pixels>,
     activate: bool,
-    child: bool,
+    transient: bool,
     cx: &mut App,
     build: impl FnOnce(&mut Window, &mut App) -> AnyView,
 ) -> Option<WindowHandle<PopupHost>> {
@@ -493,6 +494,8 @@ fn open_popup_window(
         })
         .ok()?;
     let popup: AnyWindowHandle = handle.into();
+    #[cfg(target_os = "macos")]
+    native::track(parent, popup, None, cx);
     cx.global_mut::<Modals>().by_parent.insert(
         parent_handle,
         Modal {
@@ -504,17 +507,38 @@ fn open_popup_window(
     );
     let parent_number = native::window_number(parent);
     let _ = popup.update(cx, |_, window, _| {
-        native::popup_behavior(window, activate);
-        if child {
-            native::attach(parent, window);
-        } else {
-            native::order_above(window, parent_number);
-        }
+        native::popup_behavior(window, activate && transient);
+        native::order_above(window, parent_number);
         if activate {
             window.activate_window();
         }
     });
     Some(handle)
+}
+
+/// A dialog combo dismisses through its menu model, clearing the owner's
+/// selection state without activating a hidden or minimized window.
+#[cfg(target_os = "macos")]
+pub(crate) fn dismiss_menu_on_hide(
+    popup: AnyWindowHandle,
+    cx: &mut App,
+    dismiss: impl Fn(&mut Window, &mut App) + 'static,
+) {
+    let Some(parent) = parent_of(popup, cx) else {
+        return;
+    };
+    native::set_dismiss(
+        popup,
+        cx,
+        Rc::new(move |cx| {
+            if let Some(modal) = cx.global_mut::<Modals>().by_parent.get_mut(&parent)
+                && modal.dialog == popup
+            {
+                modal.activate = false;
+                let _ = popup.update(cx, |_, window, cx| dismiss(window, cx));
+            }
+        }),
+    );
 }
 
 /// The window a dialog (modal or not) or popup was opened over.
@@ -589,6 +613,13 @@ fn forget_closed(cx: &mut App) {
         .filter_map(|p| modals.by_parent.remove(&p).map(|m| GiveBack::modal(p, m)))
         .collect();
     let mut orphans = Vec::new();
+    modals.by_parent.retain(|parent, modal| {
+        if open.contains(parent) {
+            return true;
+        }
+        orphans.push(modal.dialog);
+        false
+    });
     let mut kept = Vec::new();
     for d in std::mem::take(&mut modals.non_modal) {
         if !open.contains(&d.dialog) {
@@ -709,6 +740,179 @@ pub(crate) mod native {
         (!window.is_null()).then_some(window)
     }
 
+    type Dismiss = std::rc::Rc<dyn Fn(&mut gpui::App)>;
+
+    struct OwnedWindow {
+        owner: isize,
+        number: isize,
+        window: gpui::AnyWindowHandle,
+        dismiss: Option<Dismiss>,
+    }
+
+    struct OwnedWindows {
+        windows: Vec<OwnedWindow>,
+        _observers: Vec<gpui::Subscription>,
+    }
+
+    impl gpui::Global for OwnedWindows {}
+
+    #[derive(Clone, Copy)]
+    enum OwnerEvent {
+        Minimized,
+        Restored,
+        AppHidden,
+        AppResigned,
+    }
+
+    /// Independent NSWindows do not inherit their owner's miniaturization.
+    /// AppKit posts these notifications even when a different document is key.
+    pub(crate) fn track(
+        owner: &Window,
+        window: gpui::AnyWindowHandle,
+        dismiss: Option<Dismiss>,
+        cx: &mut gpui::App,
+    ) {
+        let Some(owner) = window_number(owner) else {
+            return;
+        };
+        let Ok(Some(number)) = window.update(cx, |_, window, _| window_number(window)) else {
+            return;
+        };
+        if !cx.has_global::<OwnedWindows>() {
+            let observers = observe_owners(cx);
+            cx.set_global(OwnedWindows {
+                windows: Vec::new(),
+                _observers: observers,
+            });
+        }
+        cx.global_mut::<OwnedWindows>().windows.push(OwnedWindow {
+            owner,
+            number,
+            window,
+            dismiss,
+        });
+    }
+
+    pub(super) fn set_dismiss(window: gpui::AnyWindowHandle, cx: &mut gpui::App, dismiss: Dismiss) {
+        if cx.has_global::<OwnedWindows>()
+            && let Some(entry) = cx
+                .global_mut::<OwnedWindows>()
+                .windows
+                .iter_mut()
+                .find(|w| w.window == window)
+        {
+            entry.dismiss = Some(dismiss);
+        }
+    }
+
+    #[allow(unexpected_cfgs)]
+    fn observe_owners(cx: &mut gpui::App) -> Vec<gpui::Subscription> {
+        let mut observers = vec![cx.on_window_closed(|cx| {
+            let open = cx.windows();
+            cx.global_mut::<OwnedWindows>()
+                .windows
+                .retain(|w| open.contains(&w.window));
+        })];
+        // SAFETY: AppKit delivers these window and application notifications on
+        // the main queue. The observer tokens live for this GPUI app's lifetime.
+        unsafe {
+            let center: *mut Object = msg_send![objc::class!(NSNotificationCenter), defaultCenter];
+            let queue: *mut Object = msg_send![objc::class!(NSOperationQueue), mainQueue];
+            for (event, name) in [
+                (OwnerEvent::Minimized, c"NSWindowDidMiniaturizeNotification"),
+                (
+                    OwnerEvent::Restored,
+                    c"NSWindowDidDeminiaturizeNotification",
+                ),
+                (OwnerEvent::AppHidden, c"NSApplicationDidHideNotification"),
+                (
+                    OwnerEvent::AppResigned,
+                    c"NSApplicationDidResignActiveNotification",
+                ),
+            ] {
+                let name: *mut Object =
+                    msg_send![objc::class!(NSString), stringWithUTF8String: name.as_ptr()];
+                let app = cx.to_async();
+                let handler = block::ConcreteBlock::new(move |notification: *mut Object| {
+                    let owner = match event {
+                        OwnerEvent::Minimized | OwnerEvent::Restored => {
+                            let ns: *mut Object = msg_send![notification, object];
+                            Some(msg_send![ns, windowNumber])
+                        }
+                        _ => None,
+                    };
+                    let app = app.clone();
+                    // AppKit may notify synchronously during a GPUI window update.
+                    app.foreground_executor()
+                        .clone()
+                        .spawn(async move {
+                            if matches!(event, OwnerEvent::AppResigned) {
+                                app.background_executor()
+                                    .timer(std::time::Duration::from_millis(30))
+                                    .await;
+                                let ns: *mut Object =
+                                    msg_send![objc::class!(NSApplication), sharedApplication];
+                                let active: bool = msg_send![ns, isActive];
+                                if active || capturing() {
+                                    return;
+                                }
+                            }
+                            let _ = app.update(|cx| owner_event(owner, event, cx));
+                        })
+                        .detach();
+                })
+                .copy();
+                let token: *mut Object = msg_send![center,
+                    addObserverForName: name object: std::ptr::null_mut::<Object>()
+                    queue: queue usingBlock: &*handler];
+                observers.push(gpui::Subscription::new(move || {
+                    let _: () = msg_send![center, removeObserver: token];
+                }));
+            }
+        }
+        observers
+    }
+
+    #[allow(unexpected_cfgs)]
+    fn owner_event(owner: Option<isize>, event: OwnerEvent, cx: &mut gpui::App) {
+        let mut family = owner.into_iter().collect::<std::collections::HashSet<_>>();
+        // Parents are registered before any of their popups. Take a snapshot
+        // because dismissing a menu can synchronously remove its submenu.
+        let mut affected = Vec::new();
+        for child in &cx.global::<OwnedWindows>().windows {
+            if owner.is_some() && !family.contains(&child.owner) {
+                continue;
+            }
+            family.insert(child.number);
+            affected.push((child.owner, child.window, child.dismiss.clone()));
+        }
+        for (parent, handle, dismiss) in affected {
+            if let Some(dismiss) = dismiss {
+                if !matches!(event, OwnerEvent::Restored) {
+                    dismiss(cx);
+                }
+                continue;
+            }
+            match event {
+                OwnerEvent::Minimized => {
+                    let _ = handle.update(cx, |_, window, _| {
+                        if let Some(ns) = ns_window(window) {
+                            // SAFETY: a live NSWindow on its main thread.
+                            unsafe {
+                                let _: () = msg_send![ns, orderOut: std::ptr::null_mut::<Object>()];
+                            }
+                        }
+                    });
+                }
+                OwnerEvent::Restored => {
+                    let _ = handle.update(cx, |_, window, _| order_above(window, Some(parent)));
+                }
+                // AppKit already hides and restores these normal-level windows.
+                OwnerEvent::AppHidden | OwnerEvent::AppResigned => {}
+            }
+        }
+    }
+
     /// AppKit calls back synchronously while resizing. Run outside both the
     /// Window and App borrows so GPUI can update its viewport in that callback.
     #[allow(unexpected_cfgs)]
@@ -783,6 +987,23 @@ pub(crate) mod native {
         }
     }
 
+    /// An owner taken off screen (including a dialog ordered out alongside
+    /// a minimized document) cannot display fresh popup surfaces.
+    #[allow(unexpected_cfgs)]
+    pub(crate) fn owner_visible(window: &Window) -> bool {
+        if !crate::pointer::native() {
+            return true;
+        }
+        ns_window(window).is_some_and(|ns| {
+            // SAFETY: visibility of a live NSWindow on the UI thread.
+            unsafe {
+                let minimized: bool = msg_send![ns, isMiniaturized];
+                let visible: bool = msg_send![ns, isVisible];
+                visible && !minimized
+            }
+        })
+    }
+
     /// AppKit can still own input for this document while GPUI is delivering
     /// the key-window change from a menu that has just closed.
     #[allow(unexpected_cfgs)]
@@ -814,6 +1035,12 @@ pub(crate) mod native {
         };
         // SAFETY: a live NSPanel on the main thread.
         unsafe {
+            // GPUI gives even titlebar-less panels a titled frame. Let AppKit
+            // composite the popup's own outline, including transparent callouts.
+            const NONACTIVATING_PANEL: usize = 1 << 7;
+            let _: () = msg_send![ns, setStyleMask: NONACTIVATING_PANEL];
+            let clear: *mut Object = msg_send![objc::class!(NSColor), clearColor];
+            let _: () = msg_send![ns, setBackgroundColor: clear];
             let _: () = msg_send![ns, setHidesOnDeactivate: false];
             if !foreground {
                 let _: () = msg_send![ns, setLevel: 0isize];
@@ -954,22 +1181,6 @@ pub(crate) mod native {
             let _: () = msg_send![ns, orderWindow: ABOVE relativeTo: above];
         }
     }
-
-    /// Makes `dialog` a child window of `parent`: it stays above it.
-    #[allow(unexpected_cfgs)] // objc's msg_send! checks a cfg of its own
-    pub fn attach(parent: &Window, dialog: &Window) {
-        // The test platform has no native windows.
-        if !crate::pointer::native() {
-            return;
-        }
-        let (Some(parent), Some(dialog)) = (ns_window(parent), ns_window(dialog)) else {
-            return;
-        };
-        // SAFETY: both are live NSWindows, on the main thread.
-        unsafe {
-            let _: () = msg_send![parent, addChildWindow: dialog ordered: ABOVE];
-        }
-    }
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -991,7 +1202,6 @@ pub(crate) mod native {
     ) {
         window.resize(size);
     }
-    pub fn attach(_: &gpui::Window, _: &gpui::Window) {}
 
     pub fn window_number(_: &gpui::Window) -> Option<isize> {
         None
@@ -1259,12 +1469,25 @@ mod tests {
             .unwrap();
         cx.run_until_parked();
         assert!(cx.update(|cx| find("settings", cx)).is_none());
-        let dialog: AnyWindowHandle = open_recorder(parent, options, built.clone(), cx).into();
+        let dialog = open_recorder(parent, options, built.clone(), cx);
         assert_eq!(built.get(), 2, "a new one");
+        let modal = open_recorder(
+            dialog,
+            DialogOptions {
+                size: size(px(200.0), px(120.0)),
+                activate: false,
+                ..DialogOptions::default()
+            },
+            built,
+            cx,
+        );
+        let dialog = AnyWindowHandle::from(dialog);
+        let modal = AnyWindowHandle::from(modal);
         cx.update_window(parent_any, |_, window, _| window.remove_window())
             .unwrap();
         cx.run_until_parked();
         assert!(!cx.update(|cx| cx.windows().contains(&dialog)));
+        assert!(!cx.update(|cx| cx.windows().contains(&modal)));
     }
 
     /// A popup whose row opens the next popup (a menu row that opens a

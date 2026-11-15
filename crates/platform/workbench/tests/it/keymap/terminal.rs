@@ -905,6 +905,30 @@ fn rename_session_from_tab_context_menu(cx: &mut TestAppContext) {
     assert_eq!(state["tabs"][0]["name"], "server");
     assert_eq!(state["tabs"][1]["name"], "second");
     assert!(h.terminal_focused());
+
+    for (button, target) in [(gpui::MouseButton::Left, 1), (gpui::MouseButton::Right, 0)] {
+        h.invoke("terminal.rename-tab", json!(null));
+        h.invoke("editor.type", json!({"text":"discard"}));
+        let mut visual = gpui::VisualTestContext::from_window(h.window.into(), h.cx);
+        let selector = if target == 1 {
+            "terminal-tab-1"
+        } else {
+            "terminal-tab-0"
+        };
+        let tab = visual.debug_bounds(selector).unwrap().center();
+        visual.simulate_mouse_move(tab, None, modifiers);
+        visual.simulate_mouse_down(tab, button, modifiers);
+        visual.simulate_mouse_up(tab, button, modifiers);
+        h.draw();
+        let state = h.terminal();
+        assert!(state["rename"].is_null());
+        assert_eq!(state["selected"], target);
+        assert_eq!(state["tabs"][0]["name"], "server");
+        assert_eq!(state["tabs"][1]["name"], "second");
+        if button == gpui::MouseButton::Right {
+            assert!(state["options_menu"].is_object());
+        }
+    }
 }
 
 /// Preserve the requested shell (before integration), the actual directory and

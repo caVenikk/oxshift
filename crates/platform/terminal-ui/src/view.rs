@@ -32,7 +32,7 @@ use ui::theme::ThemeExt;
 use crate::blocks::{Blocks, RowLayout};
 use crate::colors::{Resolver, TerminalColors};
 use crate::commands::{
-    Clear, Copy, LineDown, LineUp, OpenLink, PageDown, PageUp, Paste, SelectAll,
+    Clear, Copy, CopyUrl, LineDown, LineUp, OpenLink, OpenUrl, PageDown, PageUp, Paste, SelectAll,
 };
 use crate::element::TerminalElement;
 use crate::find::{FindPrefs, FindState};
@@ -1351,6 +1351,14 @@ impl Render for SessionView {
             .on_action(cx.listener(Self::find_case_action))
             .on_action(cx.listener(Self::find_regex_action))
             .on_action(cx.listener(Self::open_link_action))
+            .on_action(cx.listener(|_, action: &CopyUrl, _, cx| {
+                cx.write_to_clipboard(ClipboardItem::new_string(action.url.clone()));
+            }))
+            .on_action(cx.listener(|_, action: &OpenUrl, _, cx| {
+                cx.emit(SessionViewEvent::OpenLink(LinkTarget::Url(
+                    action.url.clone(),
+                )));
+            }))
             .child(grid)
             .children(self.render_find(window, cx))
             .children(self.render_hint(cx))

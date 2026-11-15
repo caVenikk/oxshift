@@ -21,7 +21,9 @@
 - Step 2: the dialog "Create New Branch" with "Branch Name:" and
   "Checkout branch" ticked; afterwards the widget shows `feat/x` and a
   balloon "Checked out new branch feat/x from main"; in the popup
-  `feat/x` sits in a `feat` folder.
+  `feat/x` sits in a `feat` folder. On macOS the name field takes keyboard
+  input immediately. Command-Shift-4 followed by Space highlights the
+  branch dialog separately from the project window.
 - Step 3: the search filters branches and actions; the submenu offers
   Checkout, New Branch from 'main'…, Compare with 'main', Rebase, Merge,
   Update, Push…, Rename…, Delete.

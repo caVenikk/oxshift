@@ -79,6 +79,7 @@ enum Purpose {
 
 struct OpenDialog {
     dialog: Entity<BranchDialog>,
+    window: Option<gpui::AnyWindowHandle>,
     purpose: Purpose,
     return_focus: Option<FocusHandle>,
     _subscription: Subscription,
@@ -435,15 +436,53 @@ impl Workbench {
         cx.spawn_in(window, async move |this, cx| {
             let branches = load.await.map(|d| d.branches).unwrap_or_default();
             let _ = this.update_in(cx, |this, window, cx| {
-                let dialog = cx.new(|cx| BranchDialog::new(kind, &initial, branches, window, cx));
+                if this.branch_ui.dialog.is_some()
+                    || ui::dialog_window::modal_of(window.window_handle(), cx).is_some()
+                {
+                    return;
+                }
                 let return_focus = window.focused(cx);
-                window.focus(&dialog.focus_handle(cx));
+                let build = |window: &mut Window, cx: &mut App| {
+                    let dialog =
+                        cx.new(|cx| BranchDialog::new(kind, &initial, branches, window, cx));
+                    window.focus(&dialog.focus_handle(cx));
+                    dialog
+                };
+                let (dialog, native_window) = if ui::popup_window::enabled() {
+                    let viewport = window.viewport_size();
+                    let width = px(vcs_ui::new_branch::WIDTH);
+                    let at = point(
+                        ((viewport.width - width) / 2.0).max(px(0.0)),
+                        viewport.height * 0.35,
+                    );
+                    let mut content = None;
+                    let handle = ui::dialog_window::open_alert(
+                        window,
+                        at,
+                        gpui::size(width, px(320.0)),
+                        !crate::env::background(),
+                        cx,
+                        |window, cx| {
+                            let dialog = build(window, cx);
+                            content = Some(dialog.clone());
+                            dialog.into()
+                        },
+                    );
+                    let (Some(handle), Some(dialog)) = (handle, content) else {
+                        this.show_notice("Could not open the branch dialog".into(), cx);
+                        return;
+                    };
+                    (dialog, Some(handle.into()))
+                } else {
+                    (build(window, cx), None)
+                };
                 let subscription =
                     cx.subscribe_in(&dialog, window, |this, _, event, window, cx| {
                         this.branch_dialog_closed(event, window, cx)
                     });
                 this.branch_ui.dialog = Some(OpenDialog {
                     dialog,
+                    window: native_window,
                     purpose,
                     return_focus,
                     _subscription: subscription,
@@ -463,7 +502,9 @@ impl Workbench {
         let Some(open) = self.branch_ui.dialog.take() else {
             return;
         };
-        if let Some(focus) = &open.return_focus {
+        if let Some(native) = open.window {
+            ui::dialog_window::close(native, cx);
+        } else if let Some(focus) = &open.return_focus {
             window.focus(focus);
         }
         cx.notify();
@@ -1024,7 +1065,9 @@ impl Workbench {
         if let Some((menu, _)) = &self.branch_ui.menu {
             out.push(ui::menu::overlay_at(menu, below, Corner::TopLeft, window));
         }
-        if let Some(open) = &self.branch_ui.dialog {
+        if let Some(open) = &self.branch_ui.dialog
+            && open.window.is_none()
+        {
             out.push(open.dialog.clone().into_any_element());
         }
         if let Some(open) = &self.branch_ui.problem {

@@ -47,7 +47,7 @@ ui::ui_commands! {
 
 /// Key context of the dialog.
 pub const KEY_CONTEXT: &str = "BranchDialog";
-const WIDTH: f32 = 440.0;
+pub const WIDTH: f32 = 440.0;
 const LABEL_WIDTH: f32 = 96.0;
 const FIELD_HEIGHT: f32 = 30.0;
 
@@ -420,7 +420,7 @@ impl Render for BranchDialog {
             .border_1()
             .border_color(theme.color(UiRole::PopupBorder))
             .bg(theme.color(UiRole::SurfaceRaised))
-            .shadow(popup_shadow())
+            .when(!ui::popup_window::enabled(), |el| el.shadow(popup_shadow()))
             .font_family(theme.ui_family())
             .text_size(theme.ui_size())
             .text_color(theme.color(UiRole::Text))
@@ -433,6 +433,9 @@ impl Render for BranchDialog {
             .children(message)
             .children(options)
             .child(buttons);
+        if ui::popup_window::enabled() {
+            return dialog.into_any_element();
+        }
         div()
             .id("branch-dialog-backdrop")
             .occlude()
@@ -445,5 +448,6 @@ impl Render for BranchDialog {
             .items_center()
             .justify_center()
             .child(dialog)
+            .into_any_element()
     }
 }

@@ -634,8 +634,13 @@ fn forget_closed(cx: &mut App) {
     for back in back {
         back.run(cx);
     }
+    // GPUI takes the window-close observers out of their list while notifying
+    // them. Close after dispatch so descendants and other observers also see
+    // each orphan's window-close event.
     for dialog in orphans {
-        let _ = dialog.update(cx, |_, window, _| window.remove_window());
+        cx.defer(move |cx| {
+            let _ = dialog.update(cx, |_, window, _| window.remove_window());
+        });
     }
 }
 
@@ -727,13 +732,17 @@ pub(crate) mod native {
     /// `NSWindowAbove`.
     const ABOVE: isize = 1;
 
-    #[allow(unexpected_cfgs)] // objc's msg_send! checks a cfg of its own
-    fn ns_window(window: &Window) -> Option<*mut Object> {
+    fn ns_view(window: &Window) -> Option<*mut Object> {
         let handle = HasWindowHandle::window_handle(window).ok()?;
         let RawWindowHandle::AppKit(appkit) = handle.as_raw() else {
             return None;
         };
-        let view = appkit.ns_view.as_ptr() as *mut Object;
+        Some(appkit.ns_view.as_ptr().cast())
+    }
+
+    #[allow(unexpected_cfgs)] // objc's msg_send! checks a cfg of its own
+    fn ns_window(window: &Window) -> Option<*mut Object> {
+        let view = ns_view(window)?;
         // SAFETY: `view` is the live NSView of this window, on the main
         // thread.
         let window: *mut Object = unsafe { msg_send![view, window] };
@@ -1039,6 +1048,12 @@ pub(crate) mod native {
             // composite the popup's own outline, including transparent callouts.
             const NONACTIVATING_PANEL: usize = 1 << 7;
             let _: () = msg_send![ns, setStyleMask: NONACTIVATING_PANEL];
+            // Changing the frame can reset AppKit's first responder after
+            // GPUI installed its text-input view. Keep that view on the key path.
+            if let Some(view) = ns_view(window) {
+                let _: () = msg_send![ns, setInitialFirstResponder: view];
+                let _: bool = msg_send![ns, makeFirstResponder: view];
+            }
             let clear: *mut Object = msg_send![objc::class!(NSColor), clearColor];
             let _: () = msg_send![ns, setBackgroundColor: clear];
             let _: () = msg_send![ns, setHidesOnDeactivate: false];
@@ -1488,6 +1503,11 @@ mod tests {
         cx.run_until_parked();
         assert!(!cx.update(|cx| cx.windows().contains(&dialog)));
         assert!(!cx.update(|cx| cx.windows().contains(&modal)));
+        cx.update(|cx| {
+            let modals = cx.global::<Modals>();
+            assert!(modals.non_modal.is_empty());
+            assert!(modals.by_parent.is_empty());
+        });
     }
 
     /// A popup whose row opens the next popup (a menu row that opens a

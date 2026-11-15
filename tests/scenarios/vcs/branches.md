@@ -11,6 +11,9 @@
 5. Check out a tag through Checkout Tag or Revision….
 6. Check out `main`; rename `feat/x` (F2) to `feat/y`; delete it.
 7. Try New Branch… with an empty name, an existing name and `HEAD`.
+8. Open New Branch… in a narrow project window. Enter an existing local
+   branch name and toggle Overwrite existing branch. Repeat from that
+   branch's New Branch from… action.
 
 ## Expected
 - Step 1: the widget shows the branch icon and `main`; the tooltip "Git
@@ -35,6 +38,10 @@
 - Step 6: the widget follows; "**Deleted Branch:** feat/y" (bold title with the colon) with Restore.
 - Step 7: "Specify name for the new branch", "Branch name … already
   exists", "HEAD is a reserved keyword".
+- Step 8: both checkbox labels are readable with a right margin in their
+  disabled and enabled states. The options stay on one row when they fit
+  and flow onto separate rows in a narrow window. The validation message
+  and both buttons stay visible.
 
 ## Commands
 `vcs.branches-popup`, `branches-popup.search {"text": ...}`,

@@ -442,6 +442,7 @@ impl Workbench {
                     return;
                 }
                 let return_focus = window.focused(cx);
+                let width = kind.width(window, cx);
                 let build = |window: &mut Window, cx: &mut App| {
                     let dialog =
                         cx.new(|cx| BranchDialog::new(kind, &initial, branches, window, cx));
@@ -450,7 +451,6 @@ impl Workbench {
                 };
                 let (dialog, native_window) = if ui::popup_window::enabled() {
                     let viewport = window.viewport_size();
-                    let width = px(vcs_ui::new_branch::WIDTH);
                     let at = point(
                         ((viewport.width - width) / 2.0).max(px(0.0)),
                         viewport.height * 0.35,

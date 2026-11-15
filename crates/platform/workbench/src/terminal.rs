@@ -76,7 +76,14 @@ pub(crate) fn init(cx: &mut App, hook: Option<TerminalHook>) {
         let settings: TerminalSettings = settings_ui::store::get(cx);
         cx.set_global(terminal_ui::Behavior {
             close_on_exit: settings.close_session_on_exit,
-            option_as_meta: settings.option_as_meta,
+            session: terminal_ui::TerminalOptions {
+                option_as_meta: settings.option_as_meta,
+                show_separators: settings.show_separators,
+                mouse_reporting: settings.mouse_reporting,
+                copy_on_selection: settings.copy_on_selection,
+                paste_on_middle_click: settings.paste_on_middle_click,
+                ..Default::default()
+            },
         });
     }
     follow_behavior(cx);

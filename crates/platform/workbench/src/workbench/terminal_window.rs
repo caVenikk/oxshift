@@ -294,13 +294,6 @@ impl Workbench {
         let session = cx.new(|cx| {
             let mut session = SessionView::new(plan.options, window, cx);
             session.set_link_filters(filters, cx);
-            session.set_options(
-                terminal_ui::TerminalOptions {
-                    option_as_meta: settings.option_as_meta,
-                    ..session.options().clone()
-                },
-                cx,
-            );
             session
         });
         if let Some(input) = input {

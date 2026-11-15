@@ -37,6 +37,7 @@ use vcs_ui::update::{UpdateDialog, UpdateDialogEvent};
 use vcs_ui::{Fetch, Pull, ShowOperations, UpdateBranch, UpdateProject, VcsPush};
 
 use super::Workbench;
+use super::git_dialog::GitDialog;
 use crate::dialog::{Dialog, DialogButton, DialogEvent};
 
 /// The open dialogs and popup of the remote commands and what they
@@ -60,13 +61,13 @@ pub(super) struct RemoteUi {
 
 struct OpenPush {
     dialog: Entity<PushDialog>,
-    return_focus: Option<FocusHandle>,
+    host: GitDialog,
     _subscription: Subscription,
 }
 
 struct OpenUpdate {
     dialog: Entity<UpdateDialog>,
-    return_focus: Option<FocusHandle>,
+    host: GitDialog,
     _subscription: Subscription,
 }
 
@@ -80,6 +81,7 @@ enum Asking {
 
 struct OpenMessage {
     dialog: Entity<Dialog>,
+    in_push_window: bool,
     return_focus: Option<FocusHandle>,
     _subscription: Subscription,
 }
@@ -403,30 +405,35 @@ impl Workbench {
     }
 
     fn open_push_dialog(&mut self, setup: PushSetup, window: &mut Window, cx: &mut Context<Self>) {
+        if self.remote_ui.push.is_some() {
+            return;
+        }
         let dialog = cx.new(|cx| PushDialog::new(setup, cx));
-        let return_focus = self
-            .remote_ui
-            .push
-            .take()
-            .and_then(|o| o.return_focus)
-            .or_else(|| window.focused(cx));
-        window.focus(&dialog.focus_handle(cx));
+        let title = dialog.read(cx).title();
+        let Some(host) = GitDialog::open(
+            &dialog,
+            title,
+            (800.0, 528.0),
+            PushDialogEvent::Cancelled,
+            window,
+            cx,
+        ) else {
+            return;
+        };
         let subscription = cx.subscribe_in(&dialog, window, |this, _, event, window, cx| {
             this.push_dialog_event(event, window, cx)
         });
         self.remote_ui.push = Some(OpenPush {
             dialog,
-            return_focus,
+            host,
             _subscription: subscription,
         });
         cx.notify();
     }
 
     fn close_push_dialog(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if let Some(open) = self.remote_ui.push.take()
-            && let Some(focus) = open.return_focus
-        {
-            window.focus(&focus);
+        if let Some(open) = self.remote_ui.push.take() {
+            open.host.close(window, cx);
         }
         cx.notify();
     }
@@ -620,8 +627,30 @@ impl Workbench {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let return_focus = window.focused(cx);
-        window.focus(&dialog.focus_handle(cx));
+        let push_window = self
+            .remote_ui
+            .push
+            .as_ref()
+            .and_then(|open| match open.host {
+                GitDialog::Owned(handle) if matches!(asking, Asking::ForcePush(_)) => Some(handle),
+                _ => None,
+            });
+        let return_focus = if let Some(handle) = push_window {
+            if !handle
+                .update(cx, |_, owner, cx| {
+                    Dialog::open_owned(dialog.clone(), owner, cx)
+                })
+                .unwrap_or(false)
+            {
+                self.show_notice("Could not open the Force Push confirmation".into(), cx);
+                return;
+            }
+            None
+        } else {
+            let previous = window.focused(cx);
+            window.focus(&dialog.focus_handle(cx));
+            previous
+        };
         let mut asking = Some(asking);
         let subscription = cx.subscribe_in(&dialog, window, move |this, _, event, window, cx| {
             let DialogEvent::Closed { button, checked } = event;
@@ -639,6 +668,7 @@ impl Workbench {
         });
         self.remote_ui.message = Some(OpenMessage {
             dialog,
+            in_push_window: push_window.is_some(),
             return_focus,
             _subscription: subscription,
         });
@@ -679,7 +709,9 @@ impl Workbench {
             Asking::ForcePush(spec) => {
                 if button != Some("force") {
                     // Back to the Push dialog.
-                    if let Some(open) = &self.remote_ui.push {
+                    if let Some(open) = &self.remote_ui.push
+                        && matches!(open.host, GitDialog::Overlay(_))
+                    {
                         window.focus(&open.dialog.focus_handle(cx));
                     }
                     return;
@@ -722,13 +754,22 @@ impl Workbench {
         }
         let method = self.remote_ui.method;
         let dialog = cx.new(|cx| UpdateDialog::new(method, cx));
-        let return_focus = window.focused(cx);
-        window.focus(&dialog.focus_handle(cx));
+        if self.remote_ui.update.is_some() {
+            return;
+        }
+        let Some(host) = GitDialog::open(
+            &dialog,
+            dialog.read(cx).title(),
+            (592.0, 166.0),
+            UpdateDialogEvent::Cancelled,
+            window,
+            cx,
+        ) else {
+            return;
+        };
         let subscription = cx.subscribe_in(&dialog, window, |this, _, event, window, cx| {
-            if let Some(open) = this.remote_ui.update.take()
-                && let Some(focus) = open.return_focus
-            {
-                window.focus(&focus);
+            if let Some(open) = this.remote_ui.update.take() {
+                open.host.close(window, cx);
             }
             cx.notify();
             if let UpdateDialogEvent::Confirmed { method, dont_show } = event {
@@ -739,7 +780,7 @@ impl Workbench {
         });
         self.remote_ui.update = Some(OpenUpdate {
             dialog,
-            return_focus,
+            host,
             _subscription: subscription,
         });
         cx.notify();
@@ -894,13 +935,19 @@ impl Workbench {
     pub(super) fn render_remote_overlays(&self, window: &Window) -> Vec<AnyElement> {
         let ui = &self.remote_ui;
         let mut out = Vec::new();
-        if let Some(open) = &ui.push {
+        if let Some(open) = &ui.push
+            && matches!(open.host, GitDialog::Overlay(_))
+        {
             out.push(open.dialog.clone().into_any_element());
         }
-        if let Some(open) = &ui.update {
+        if let Some(open) = &ui.update
+            && matches!(open.host, GitDialog::Overlay(_))
+        {
             out.push(open.dialog.clone().into_any_element());
         }
-        if let Some(open) = &ui.message {
+        if let Some(open) = &ui.message
+            && !open.in_push_window
+        {
             out.push(open.dialog.clone().into_any_element());
         }
         if let Some((menu, _)) = &ui.operations {

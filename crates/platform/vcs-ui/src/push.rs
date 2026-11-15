@@ -988,6 +988,7 @@ impl PushDialog {
 
 impl Render for PushDialog {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let owned = cfg!(target_os = "macos");
         let size = window.viewport_size();
         let theme = cx.theme();
         let border = theme.color(UiRole::Border);
@@ -1008,7 +1009,8 @@ impl Render for PushDialog {
             .flex()
             .flex_row()
             .flex_none()
-            .h(px(LOG_HEIGHT))
+            .when(owned, |d| d.flex_1().min_h(px(0.0)))
+            .when(!owned, |d| d.h(px(LOG_HEIGHT)))
             .border_t_1()
             .border_b_1()
             .border_color(border)
@@ -1051,19 +1053,25 @@ impl Render for PushDialog {
             .occlude()
             .flex()
             .flex_col()
-            .w(px(WIDTH))
-            .rounded(px(10.0))
-            .border_1()
-            .border_color(popup_border)
-            .bg(surface)
-            .shadow(popup_shadow())
+            .when(owned, |d| d.size_full())
+            .when(!owned, |d| {
+                d.w(px(WIDTH))
+                    .rounded(px(10.0))
+                    .border_1()
+                    .border_color(popup_border)
+                    .bg(surface)
+                    .shadow(popup_shadow())
+            })
             .font_family(family)
             .text_size(text_size)
             .text_color(text_color)
             .overflow_hidden()
-            .child(title)
+            .when(!owned, |d| d.child(title))
             .child(log)
             .child(bar);
+        if owned {
+            return dialog.children(menu).into_any_element();
+        }
         div()
             .id("push-dialog-backdrop")
             .occlude()
@@ -1077,6 +1085,7 @@ impl Render for PushDialog {
             .justify_center()
             .child(dialog)
             .children(menu)
+            .into_any_element()
     }
 }
 

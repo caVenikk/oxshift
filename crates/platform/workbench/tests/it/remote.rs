@@ -216,6 +216,58 @@ fn open<'a>(cx: &'a mut TestAppContext, root: &Path) -> H<'a> {
     h
 }
 
+#[cfg(target_os = "macos")]
+#[gpui::test]
+fn owned_git_dialogs_cancel_and_restore_project_focus(cx: &mut TestAppContext) {
+    let repos = repos();
+    let path = repos.root.join("a.py");
+    std::fs::write(&path, "local edit").unwrap();
+    let local = git(&repos.root, &["rev-parse", "HEAD"]);
+    let remote = git(&repos.remote, &["rev-parse", "main"]);
+    let mut h = open(cx, &repos.root);
+    let parent = h.window.into();
+    let focus =
+        h.cx.update_window(parent, |_, window, cx| window.focused(cx))
+            .unwrap();
+    for command in ["vcs.push", "vcs.update-project", "vcs.rollback"] {
+        if command == "vcs.push" {
+            h.open_push();
+        } else {
+            h.invoke(command, Value::Null);
+        }
+        let dialog =
+            h.cx.update(|cx| ui::dialog_window::modal_of(parent, cx))
+                .expect(command);
+        assert!(dialog != parent);
+        h.cx.update_window(dialog, |_, window, cx| window.draw(cx).clear())
+            .unwrap();
+        let start =
+            h.cx.update_window(dialog, |_, window, cx| window.focused(cx))
+                .unwrap()
+                .unwrap();
+        h.cx.simulate_keystrokes(dialog, "tab");
+        assert_ne!(
+            h.cx.update_window(dialog, |_, window, cx| window.focused(cx))
+                .unwrap(),
+            Some(start)
+        );
+        h.cx.simulate_keystrokes(dialog, "escape");
+        h.draw();
+        assert!(
+            h.cx.update(|cx| ui::dialog_window::modal_of(parent, cx))
+                .is_none()
+        );
+        assert_eq!(
+            h.cx.update_window(parent, |_, window, cx| window.focused(cx))
+                .unwrap(),
+            focus
+        );
+    }
+    assert_eq!(std::fs::read_to_string(path).unwrap(), "local edit");
+    assert_eq!(git(&repos.root, &["rev-parse", "HEAD"]), local);
+    assert_eq!(git(&repos.remote, &["rev-parse", "main"]), remote);
+}
+
 fn texts(rows: &Value) -> Vec<String> {
     rows.as_array()
         .unwrap()
@@ -358,7 +410,22 @@ fn a_new_branch_and_a_force_push(cx: &mut TestAppContext) {
     );
     assert_eq!(d["option"]["label"], "Don't warn about this target");
     // Cancel goes back to the Push dialog.
-    h.invoke("dialog.choose", json!({ "button": "Cancel" }));
+    if cfg!(target_os = "macos") {
+        let owner =
+            h.cx.update(|cx| ui::dialog_window::modal_of(h.window.into(), cx))
+                .unwrap();
+        let confirmation =
+            h.cx.update(|cx| ui::dialog_window::modal_of(owner, cx))
+                .unwrap();
+        h.cx.simulate_keystrokes(confirmation, "escape");
+        h.draw();
+        assert!(
+            h.cx.update(|cx| ui::dialog_window::modal_of(owner, cx))
+                .is_none()
+        );
+    } else {
+        h.invoke("dialog.choose", json!({ "button": "Cancel" }));
+    }
     assert!(
         !h.remote()["push_dialog"].is_null(),
         "the Push dialog stays"
@@ -404,6 +471,33 @@ fn a_new_branch_and_a_force_push(cx: &mut TestAppContext) {
     h.invoke("push-dialog.force-push", Value::Null);
     assert!(h.remote()["remote_dialog"].is_null(), "nothing to confirm");
     assert!(!h.remote()["push_dialog"].is_null(), "the dialog stays");
+
+    // Closing the project discards both the dialog and its unanswered prompt.
+    #[cfg(target_os = "macos")]
+    {
+        h.invoke(
+            "push-dialog.set-target",
+            json!({"branch": "unpublished", "remote": "origin"}),
+        );
+        h.wait("the new target", |v| {
+            let dialog = &v["remote"]["push_dialog"];
+            dialog["target"]["branch"] == "unpublished" && dialog["can_push"] == true
+        });
+        h.invoke("push-dialog.force-push", Value::Null);
+        let parent = h.window.into();
+        let push =
+            h.cx.update(|cx| ui::dialog_window::modal_of(parent, cx))
+                .unwrap();
+        let prompt =
+            h.cx.update(|cx| ui::dialog_window::modal_of(push, cx))
+                .unwrap();
+        h.cx.update_window(parent, |_, window, _| window.remove_window())
+            .unwrap();
+        h.cx.run_until_parked();
+        assert!(!h.cx.windows().contains(&push));
+        assert!(!h.cx.windows().contains(&prompt));
+        assert!(git(&repos.remote, &["branch", "--list", "unpublished"]).is_empty());
+    }
 }
 
 #[gpui::test]

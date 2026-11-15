@@ -918,35 +918,17 @@ fn output_context_menu_uses_the_url_at_the_click(cx: &mut TestAppContext) {
         let rows = state["options_menu"]["levels"][0]["items"]
             .as_array()
             .unwrap();
-        let labels: Vec<_> = rows.iter().filter_map(|r| r["label"].as_str()).collect();
-        assert_eq!(
-            &labels[..11],
-            [
-                "Find",
-                "New Tab",
-                "Close Tab",
-                "Copy",
-                "Paste",
-                "Select All",
-                "Clear Terminal",
-                "Page Up",
-                "Page Down",
-                "Line Up",
-                "Line Down"
-            ]
-        );
         assert_eq!(
             rows.iter().find(|r| r["label"] == "Copy").unwrap()["enabled"],
             false
         );
         if let Some(action) = action {
-            assert_eq!(&labels[11..], ["Open in Browser", "Copy URL"]);
             let mut visual = gpui::VisualTestContext::from_window(h.window.into(), h.cx);
             let at = visual.debug_bounds(action).unwrap().center();
             visual.simulate_click(at, modifiers);
             h.draw();
         } else {
-            assert_eq!(labels.len(), 11);
+            assert!(rows.iter().all(|r| r["label"] != "Copy URL" && r["label"] != "Open in Browser"));
             h.press("escape");
         }
     }
@@ -974,19 +956,6 @@ fn rename_session_from_tab_context_menu(cx: &mut TestAppContext) {
     h.draw();
 
     let mut visual = gpui::VisualTestContext::from_window(h.window.into(), h.cx);
-    for label in [
-        "menu-item:Close All Tabs",
-        "menu-item:Select Next Tab",
-        "menu-item:Select Previous Tab",
-        "menu-item:Show List of Tabs",
-        "menu-item:Group Tabs",
-        "menu-item:Settings",
-    ] {
-        assert!(
-            visual.debug_bounds(label).is_some(),
-            "{label}"
-        );
-    }
     let row = visual.debug_bounds("menu-item:Rename Session").unwrap().center();
     visual.simulate_click(row, modifiers);
     h.draw();
@@ -1077,11 +1046,18 @@ fn project_sessions_restore_unfocused(cx: &mut TestAppContext) {
     for (element, labels) in [
         (
             "terminal-tab-1",
-            vec!["Rename Session", "Close Tab", "Close Other Tabs"],
+            vec![
+                "Rename Session", "Close Tab", "Close All Tabs", "Close Other Tabs",
+                "Select Next Tab", "Select Previous Tab", "Show List of Tabs",
+                "Settings", "Group Tabs",
+            ],
         ),
         (
             "terminal-session",
-            vec!["Copy", "Paste", "Select All", "Clear", "Find", "New Tab"],
+            vec![
+                "Find", "New Tab", "Close Tab", "Copy", "Paste", "Select All",
+                "Clear Terminal", "Page Up", "Page Down", "Line Up", "Line Down",
+            ],
         ),
     ] {
         let mut visual = gpui::VisualTestContext::from_window(h.window.into(), h.cx);

@@ -102,7 +102,13 @@ fn frame(id: &'static str, dialog: impl IntoElement, window: &Window) -> AnyElem
 }
 
 /// The box of a dialog with its title.
-fn panel(id: &'static str, title: &str, width: f32, cx: &App) -> gpui::Stateful<gpui::Div> {
+fn panel(
+    id: &'static str,
+    title: &str,
+    width: f32,
+    owned: bool,
+    cx: &App,
+) -> gpui::Stateful<gpui::Div> {
     let theme = cx.theme();
     div()
         .id(id)
@@ -111,22 +117,27 @@ fn panel(id: &'static str, title: &str, width: f32, cx: &App) -> gpui::Stateful<
         .flex()
         .flex_col()
         .gap(px(12.0))
-        .w(px(width))
-        .pt(px(16.0))
-        .rounded(px(10.0))
-        .border_1()
-        .border_color(theme.color(UiRole::PopupBorder))
+        .when(owned, |d| d.size_full())
+        .when(!owned, |d| {
+            d.w(px(width))
+                .pt(px(16.0))
+                .rounded(px(10.0))
+                .border_1()
+                .border_color(theme.color(UiRole::PopupBorder))
+                .shadow(popup_shadow())
+        })
         .bg(theme.color(UiRole::SurfaceRaised))
-        .shadow(popup_shadow())
         .font_family(theme.ui_family())
         .text_size(theme.ui_size())
         .text_color(theme.color(UiRole::Text))
-        .child(
-            div()
-                .px(px(20.0))
-                .font_weight(FontWeight::SEMIBOLD)
-                .child(SharedString::from(title.to_owned())),
-        )
+        .when(!owned, |d| {
+            d.child(
+                div()
+                    .px(px(20.0))
+                    .font_weight(FontWeight::SEMIBOLD)
+                    .child(SharedString::from(title.to_owned())),
+            )
+        })
 }
 
 // ---- Rollback Changes ----------------------------------------------------------
@@ -357,7 +368,8 @@ impl Render for RollbackDialog {
                 Box::new(CancelRollback),
             ))
             .render(cx);
-        let dialog = panel("rollback-dialog", ROLLBACK_TITLE, ROLLBACK_WIDTH, cx)
+        let owned = cfg!(target_os = "macos");
+        let dialog = panel("rollback-dialog", ROLLBACK_TITLE, ROLLBACK_WIDTH, owned, cx)
             .key_context(ROLLBACK_KEY_CONTEXT)
             .track_focus(&self.focus)
             .on_action(cx.listener(Self::confirm))
@@ -368,7 +380,8 @@ impl Render for RollbackDialog {
                 div()
                     .id("rollback-files")
                     .mx(px(20.0))
-                    .h(px(LIST_HEIGHT))
+                    .when(owned, |d| d.flex_1().min_h(px(0.0)))
+                    .when(!owned, |d| d.h(px(LIST_HEIGHT)))
                     .overflow_y_scroll()
                     .rounded(px(4.0))
                     .border_1()
@@ -379,7 +392,11 @@ impl Render for RollbackDialog {
             .child(div().px(px(20.0)).child(legend_el))
             .child(div().px(px(20.0)).child(delete))
             .child(buttons);
-        frame("rollback-dialog-backdrop", dialog, window)
+        if owned {
+            dialog.into_any_element()
+        } else {
+            frame("rollback-dialog-backdrop", dialog, window)
+        }
     }
 }
 
@@ -545,17 +562,23 @@ impl Render for UserNameDialog {
                 Box::new(CancelUserName),
             ))
             .render(cx);
-        let dialog = panel("user-name-dialog", USER_NAME_TITLE, USER_NAME_WIDTH, cx)
-            .key_context(USER_NAME_KEY_CONTEXT)
-            .on_action(cx.listener(Self::confirm))
-            .on_action(cx.listener(Self::cancel))
-            .on_action(cx.listener(Self::next_field))
-            .on_action(cx.listener(Self::set))
-            .child(field("Name:", &self.name, window, cx))
-            .child(field("E-mail:", &self.email, window, cx))
-            .child(div().px(px(20.0 + LABEL_WIDTH + 8.0)).child(global))
-            .children(error)
-            .child(buttons);
+        let dialog = panel(
+            "user-name-dialog",
+            USER_NAME_TITLE,
+            USER_NAME_WIDTH,
+            false,
+            cx,
+        )
+        .key_context(USER_NAME_KEY_CONTEXT)
+        .on_action(cx.listener(Self::confirm))
+        .on_action(cx.listener(Self::cancel))
+        .on_action(cx.listener(Self::next_field))
+        .on_action(cx.listener(Self::set))
+        .child(field("Name:", &self.name, window, cx))
+        .child(field("E-mail:", &self.email, window, cx))
+        .child(div().px(px(20.0 + LABEL_WIDTH + 8.0)).child(global))
+        .children(error)
+        .child(buttons);
         frame("user-name-dialog-backdrop", dialog, window)
     }
 }

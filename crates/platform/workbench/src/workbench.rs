@@ -49,6 +49,7 @@ mod documentation_window;
 mod editor_menu;
 mod file_events;
 mod file_sync;
+mod git_dialog;
 mod history;
 pub(crate) mod project_widget;
 mod remote;

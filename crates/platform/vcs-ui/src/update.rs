@@ -114,8 +114,10 @@ impl UpdateDialog {
 
 impl Render for UpdateDialog {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let owned = cfg!(target_os = "macos");
         let size = window.viewport_size();
         let theme = cx.theme();
+        let focus_bg = theme.color(UiRole::Hover);
         let methods = [UpdateMethod::Merge, UpdateMethod::Rebase]
             .into_iter()
             .map(|m| {
@@ -127,6 +129,11 @@ impl Render for UpdateDialog {
                     m.description(),
                     cx,
                 )
+                .when(owned, |row| {
+                    row.focusable()
+                        .tab_stop(true)
+                        .focus(move |style| style.bg(focus_bg))
+                })
                 .debug_selector(move || format!("update-method-{id}"))
                 .on_click(cx.listener(move |this, _: &ClickEvent, window, cx| {
                     this.set_method(
@@ -141,6 +148,11 @@ impl Render for UpdateDialog {
             .collect::<Vec<_>>();
         let dont_show = div()
             .id("update-dont-show")
+            .when(owned, |row| {
+                row.focusable()
+                    .tab_stop(true)
+                    .focus(move |style| style.bg(focus_bg))
+            })
             .debug_selector(|| "update-dont-show".into())
             .flex()
             .flex_row()
@@ -179,29 +191,35 @@ impl Render for UpdateDialog {
             .occlude()
             .flex()
             .flex_col()
-            .w(px(WIDTH))
-            .rounded(px(10.0))
-            .border_1()
-            .border_color(theme.color(UiRole::PopupBorder))
+            .when(owned, |d| d.size_full())
+            .when(!owned, |d| {
+                d.w(px(WIDTH))
+                    .rounded(px(10.0))
+                    .border_1()
+                    .border_color(theme.color(UiRole::PopupBorder))
+                    .shadow(popup_shadow())
+            })
             .bg(theme.color(UiRole::SurfaceRaised))
-            .shadow(popup_shadow())
             .font_family(theme.ui_family())
             .text_size(theme.ui_size())
             .text_color(theme.color(UiRole::Text))
             .overflow_hidden()
-            .child(
-                div()
-                    .flex()
-                    .items_center()
-                    .justify_center()
-                    .h(px(40.0))
-                    .font_weight(FontWeight::SEMIBOLD)
-                    .child(self.title()),
-            )
+            .when(!owned, |d| {
+                d.child(
+                    div()
+                        .flex()
+                        .items_center()
+                        .justify_center()
+                        .h(px(40.0))
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .child(self.title()),
+                )
+            })
             .child(
                 div()
                     .flex()
                     .flex_col()
+                    .when(owned, |d| d.flex_1())
                     .gap(px(10.0))
                     .px(px(20.0))
                     .pt(px(8.0))
@@ -209,6 +227,9 @@ impl Render for UpdateDialog {
                     .children(methods),
             )
             .child(bar);
+        if owned {
+            return dialog.into_any_element();
+        }
         div()
             .id("update-dialog-backdrop")
             .occlude()
@@ -221,5 +242,6 @@ impl Render for UpdateDialog {
             .items_center()
             .justify_center()
             .child(dialog)
+            .into_any_element()
     }
 }

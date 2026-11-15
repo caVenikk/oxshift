@@ -420,6 +420,57 @@ fn programs_get_the_mouse_unless_shift_is_held(cx: &mut TestAppContext) {
 }
 
 #[gpui::test]
+fn pointer_preferences_apply_to_an_open_session(cx: &mut TestAppContext) {
+    let (view, cx) = open(
+        cx,
+        "/bin/sh",
+        &["-c", r"printf 'hello\r\n\033[?1000h'; exec cat"],
+    );
+    wait(cx, &view, "the mouse-aware program", |s| {
+        s["mouse_reporting"] == true
+    });
+    cx.update(|_, cx| {
+        cx.set_global(terminal_ui::Behavior {
+            close_on_exit: true,
+            session: terminal_ui::TerminalOptions {
+                mouse_reporting: false,
+                copy_on_selection: true,
+                paste_on_middle_click: false,
+                ..Default::default()
+            },
+        });
+    });
+    let (from, to) = (cell(cx, &view, 0, 0), cell_end(cx, &view, 0, 4));
+    cx.simulate_mouse_down(from, MouseButton::Left, Modifiers::none());
+    cx.simulate_mouse_move(to, MouseButton::Left, Modifiers::none());
+    cx.simulate_mouse_up(to, MouseButton::Left, Modifiers::none());
+    wait(cx, &view, "selected output", |s| s["selection"] == "hello");
+    assert_eq!(
+        cx.update(|_, cx| cx.read_from_clipboard().and_then(|c| c.text())),
+        Some("hello".into())
+    );
+    cx.simulate_mouse_down(from, MouseButton::Middle, Modifiers::none());
+    cx.simulate_mouse_up(from, MouseButton::Middle, Modifiers::none());
+    cx.simulate_input("first");
+    wait(cx, &view, "typing without a paste", |s| {
+        s["lines"][1] == "first"
+    });
+    cx.update(|_, cx| {
+        let mut session = cx.global::<terminal_ui::Behavior>().session.clone();
+        session.paste_on_middle_click = true;
+        cx.set_global(terminal_ui::Behavior {
+            close_on_exit: true,
+            session,
+        });
+    });
+    cx.simulate_mouse_down(from, MouseButton::Middle, Modifiers::none());
+    cx.simulate_mouse_up(from, MouseButton::Middle, Modifiers::none());
+    wait(cx, &view, "middle click pasted the selection", |s| {
+        s["lines"][1] == "firsthello"
+    });
+}
+
+#[gpui::test]
 fn the_wheel_scrolls_the_history_or_sends_arrows(cx: &mut TestAppContext) {
     let (view, cx) = open(
         cx,

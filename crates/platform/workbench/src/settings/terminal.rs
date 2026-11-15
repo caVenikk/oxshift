@@ -23,7 +23,11 @@ pub const SEARCH_TERMS: &[&str] = &[
     ENVIRONMENT,
     APPLICATION_SETTINGS,
     SHELL_PATH,
+    SEPARATORS,
     CLOSE,
+    MOUSE,
+    COPY,
+    PASTE,
     OVERRIDE,
     INTEGRATION,
     META,
@@ -42,6 +46,10 @@ const APPLICATION_SETTINGS: &str = "Application Settings";
 const START_DIRECTORY: &str = "Start directory:";
 const ENVIRONMENT: &str = "Environment variables:";
 const SHELL_PATH: &str = "Shell path:";
+const SEPARATORS: &str = "Show separators between executed commands";
+const MOUSE: &str = "Mouse reporting";
+const COPY: &str = "Copy to clipboard on selection";
+const PASTE: &str = "Paste on middle mouse button click";
 const CLOSE: &str = "Close session when it ends";
 const OVERRIDE: &str = "Override IDE shortcuts";
 const INTEGRATION: &str = "Shell integration";
@@ -392,6 +400,10 @@ impl TerminalPage {
     fn option(&mut self, key: &str) -> Option<&mut bool> {
         match key {
             "shell-integration" => Some(&mut self.app.shell_integration),
+            "show-separators" => Some(&mut self.app.show_separators),
+            "mouse-reporting" => Some(&mut self.app.mouse_reporting),
+            "copy-on-selection" => Some(&mut self.app.copy_on_selection),
+            "paste-on-middle-click" => Some(&mut self.app.paste_on_middle_click),
             "close-session-on-exit" => Some(&mut self.app.close_session_on_exit),
             "override-ide-shortcuts" => Some(&mut self.app.override_ide_shortcuts),
             "option-as-meta" if cfg!(target_os = "macos") => Some(&mut self.app.option_as_meta),
@@ -547,6 +559,10 @@ impl SettingsPage for TerminalPage {
         let mut state = json!({
             "shell-path": self.shell.read(cx).text(),
             "shell-integration": self.app.shell_integration,
+            "show-separators": self.app.show_separators,
+            "mouse-reporting": self.app.mouse_reporting,
+            "copy-on-selection": self.app.copy_on_selection,
+            "paste-on-middle-click": self.app.paste_on_middle_click,
             "close-session-on-exit": self.app.close_session_on_exit,
             "override-ide-shortcuts": self.app.override_ide_shortcuts,
             "option-as-meta": self.app.option_as_meta,
@@ -701,9 +717,6 @@ impl Render for TerminalPage {
                             .child(Self::input(START_DIRECTORY, &self.directory, window, cx))
                             .child(Self::input(ENVIRONMENT, &self.environment, window, cx))
                     })
-                    .when_some(self.product_toggle.zip(self.toggle), |group, (t, value)| {
-                        group.child(self.check(t.key, t.label, value, cx))
-                    })
                     .when(self.root.is_none(), |group| {
                         group.child("Open a project to configure its terminal.")
                     })
@@ -739,10 +752,19 @@ impl Render for TerminalPage {
                     .flex_col()
                     .gap(px(ROW_GAP))
                     .child(Self::input(SHELL_PATH, &self.shell, window, cx))
+                    .child(self.check("show-separators", SEPARATORS, self.app.show_separators, cx))
                     .child(self.check(
                         "close-session-on-exit",
                         CLOSE,
                         self.app.close_session_on_exit,
+                        cx,
+                    ))
+                    .child(self.check("mouse-reporting", MOUSE, self.app.mouse_reporting, cx))
+                    .child(self.check("copy-on-selection", COPY, self.app.copy_on_selection, cx))
+                    .child(self.check(
+                        "paste-on-middle-click",
+                        PASTE,
+                        self.app.paste_on_middle_click,
                         cx,
                     ))
                     .child(self.check(
@@ -759,6 +781,9 @@ impl Render for TerminalPage {
                     ))
                     .when(cfg!(target_os = "macos"), |group| {
                         group.child(self.check("option-as-meta", META, self.app.option_as_meta, cx))
+                    })
+                    .when_some(self.product_toggle.zip(self.toggle), |group, (t, value)| {
+                        group.child(self.check(t.key, t.label, value, cx))
                     }),
             )
     }

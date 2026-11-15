@@ -47,10 +47,10 @@ pub use view::{
     ScrollbarGeometry, SessionView, SessionViewEvent, TerminalOptions,
 };
 
-/// The application preferences read when the session handles a key or exits.
+/// Application preferences shared by open and newly created sessions.
 pub struct Behavior {
     pub close_on_exit: bool,
-    pub option_as_meta: bool,
+    pub session: TerminalOptions,
 }
 
 impl gpui::Global for Behavior {}

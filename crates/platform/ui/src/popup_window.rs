@@ -189,6 +189,11 @@ pub(crate) fn show<T: 'static>(
         persistent,
         keyboard,
     } = options;
+    // A frame queued before its owner was hidden can still request a popup.
+    #[cfg(target_os = "macos")]
+    if !crate::dialog_window::native::owner_visible(parent) {
+        return;
+    }
     if !cx.has_global::<Surfaces>() {
         cx.set_global(Surfaces::default());
         cx.on_window_closed(|cx| {
@@ -221,8 +226,18 @@ pub(crate) fn show<T: 'static>(
         return;
     }
     let above = crate::dialog_window::native::window_number(parent);
-    let activate = keyboard && parent.is_window_active();
+    let activate = keyboard && crate::dialog_window::native::active_owner(parent);
     cx.global_mut::<Surfaces>().1.insert(key.0);
+    #[cfg(target_os = "macos")]
+    let on_hide = (!persistent).then(|| {
+        let dismiss = dismiss.clone();
+        Rc::new(move |cx: &mut App| {
+            if contains(key.0, cx) {
+                dismiss(cx);
+                close_from(key.0, key.1, cx);
+            }
+        }) as Dismiss
+    });
     let handle = cx.open_window(
         WindowOptions {
             window_bounds: Some(WindowBounds::Windowed(Bounds::new(origin, size))),
@@ -250,16 +265,22 @@ pub(crate) fn show<T: 'static>(
                             return;
                         }
                         let dismiss = dismiss.clone();
+                        let surface_window = window.window_handle();
                         cx.spawn(async move |_, cx| {
                             cx.background_executor()
                                 .timer(std::time::Duration::from_millis(30))
                                 .await;
                             let _ = cx.update(|cx| {
-                                if !family_active(key.0, cx)
+                                if cx
+                                    .global::<Surfaces>()
+                                    .0
+                                    .get(&key)
+                                    .is_some_and(|surface| surface.window == surface_window)
+                                    && !family_active(key.0, cx)
                                     && !crate::dialog_window::native::capturing()
                                 {
                                     dismiss(cx);
-                                    close_from(key.0, 0, cx);
+                                    close_from(key.0, key.1, cx);
                                 }
                             });
                         })
@@ -290,6 +311,8 @@ pub(crate) fn show<T: 'static>(
             focus,
         },
     );
+    #[cfg(target_os = "macos")]
+    crate::dialog_window::native::track(parent, handle.into(), on_hide, cx);
     let _ = handle.update(cx, |_, window, _| {
         crate::dialog_window::native::popup_behavior(window, activate && !persistent);
         crate::dialog_window::native::order_above(window, above);
@@ -872,7 +895,7 @@ mod tests {
                             at: point(px(20.0), px(30.0)),
                             size: size(px(120.0), px(60.0)),
                             focus: model.read(cx).focus_handle(cx),
-                            persistent: true,
+                            persistent: level == 0,
                             keyboard,
                         },
                         Rc::new(|_, _| div().w(px(120.0)).h(px(60.0)).into_any_element()),
@@ -895,14 +918,24 @@ mod tests {
         // Re-presenting a level reuses its identity rather than leaking windows.
         open(1, true, cx);
         assert!(cx.update(|cx| innermost(parent.into(), cx)) == child);
-        cx.update(|cx| close_level(id, 1, cx));
+        // A transient dropdown loses activation while its persistent form stays open.
+        child
+            .update(cx, |_, window, _| window.activate_window())
+            .unwrap();
+        let sibling = cx.add_window(|_, cx| Model(cx.focus_handle()));
+        sibling
+            .update(cx, |_, window, _| window.activate_window())
+            .unwrap();
+        cx.run_until_parked();
+        cx.executor()
+            .advance_clock(std::time::Duration::from_millis(40));
         cx.run_until_parked();
         assert_eq!(cx.update(|cx| windows_of(parent.into(), cx).len()), 1);
         assert!(cx.update(|cx| innermost(parent.into(), cx)) == parent.into());
         cx.update(|cx| close(id, cx));
         cx.run_until_parked();
         assert!(cx.update(|cx| windows_of(parent.into(), cx).is_empty()));
-        assert_eq!(cx.update(|cx| cx.windows().len()), 1);
+        assert_eq!(cx.update(|cx| cx.windows().len()), 2);
     }
     #[gpui::test]
     fn unhandled_popup_commands_and_shortcuts_reach_owner(cx: &mut TestAppContext) {

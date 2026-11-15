@@ -981,7 +981,7 @@ impl ContextMenu {
         self.dismissed = true;
         let owner = crate::popup_window::owner(cx.entity_id(), cx);
         let origin = self.origin.clone();
-        let activate = window.is_window_active();
+        let activate = crate::dialog_window::native::active_owner(window);
         crate::popup_window::close_from(cx.entity_id(), 0, cx);
         if let Some(owner) = owner {
             cx.defer(move |cx| {
@@ -1497,15 +1497,28 @@ impl ContextMenu {
         }
         let owner = crate::popup_window::owner(cx.entity_id(), cx);
         let focus = self.origin.clone();
+        let returning_from_foreground_menu = owner.is_some()
+            && crate::popup_window::enabled()
+            && crate::dialog_window::native::active_owner(window);
         self.dismiss(window, cx);
         if let Some(owner) = owner {
             cx.defer(move |cx| {
-                let _ = owner.update(cx, |_, window, cx| {
-                    if let Some(focus) = focus {
-                        window.focus(&focus);
-                    }
-                    window.dispatch_action(action, cx);
-                });
+                let dispatch = move |cx: &mut App| {
+                    let _ = owner.update(cx, |_, window, cx| {
+                        if let Some(focus) = focus {
+                            window.focus(&focus);
+                        }
+                        window.dispatch_action(action, cx);
+                    });
+                };
+                if returning_from_foreground_menu {
+                    // Dismissal has queued AppKit's makeKeyAndOrderFront on the
+                    // foreground executor. Run the choice behind it on the same
+                    // queue so a new keyboard popup sees the restored owner.
+                    cx.spawn(async move |cx| cx.update(dispatch)).detach();
+                } else {
+                    dispatch(cx);
+                }
             });
         } else {
             window.dispatch_action(action, cx);

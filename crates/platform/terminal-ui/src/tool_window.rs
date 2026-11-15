@@ -1272,7 +1272,16 @@ impl TerminalToolWindow {
                     .position(point(tip.x - px(BALLOON_WIDTH / 2.0), tip.y))
                     .anchor(Corner::BottomLeft)
                     .snap_to_window_with_margin(px(4.0))
-                    .child(content),
+                    // Listen in the owner even when the field lives in a native panel.
+                    // An outside press still reaches the control underneath it.
+                    .child(
+                        div()
+                            .occlude()
+                            .on_mouse_down_out(
+                                cx.listener(|this, _, window, cx| this.close_rename(window, cx)),
+                            )
+                            .child(content),
+                    ),
             )
             .with_priority(2)
             .into_any_element(),
@@ -1299,7 +1308,6 @@ impl TerminalToolWindow {
             .key_context(RENAME_CONTEXT)
             .on_action(cx.listener(Self::rename_confirm))
             .on_action(cx.listener(Self::rename_cancel))
-            .on_mouse_down_out(cx.listener(|this, _, window, cx| this.close_rename(window, cx)))
             .w(px(BALLOON_WIDTH))
             .p(px(BALLOON_PADDING))
             .pb(px(BALLOON_PADDING + 1.0))

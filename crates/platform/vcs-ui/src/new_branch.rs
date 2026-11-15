@@ -12,12 +12,13 @@
 
 use gpui::{
     App, ClickEvent, Context, Entity, EventEmitter, FocusHandle, Focusable, FontWeight,
-    IntoElement, Render, SharedString, Subscription, Window, div, prelude::*, px,
+    IntoElement, Pixels, Render, SharedString, Subscription, Window, div, prelude::*, px,
 };
 use serde_json::{Value as Json, json};
 use text::{Buffer, Selection, SelectionSet};
 use themes::UiRole;
-use ui::components::{checkbox, input_frame, popup_shadow};
+use ui::components::{checkbox, checkbox_size, input_frame, popup_shadow};
+use ui::expandable::text_width;
 use ui::form::{BarButton, BottomBar, ButtonRole};
 use ui::theme::ThemeExt;
 use vcs::Branch;
@@ -47,9 +48,19 @@ ui::ui_commands! {
 
 /// Key context of the dialog.
 pub const KEY_CONTEXT: &str = "BranchDialog";
-const WIDTH: f32 = 440.0;
-const LABEL_WIDTH: f32 = 96.0;
+const BASE_WIDTH: f32 = 440.0;
+const PADDING: f32 = 20.0;
+const FIELD_GAP: f32 = 8.0;
+const CHECK_GAP: f32 = 6.0;
+const OPTIONS_GAP: f32 = 16.0;
+const CHECKOUT_LABEL: &str = "Checkout branch";
+const OVERWRITE_LABEL: &str = "Overwrite existing branch";
 const FIELD_HEIGHT: f32 = 30.0;
+
+fn option_width(label: &str, window: &Window, cx: &App) -> Pixels {
+    px(checkbox_size(cx) + CHECK_GAP)
+        + text_width(label, cx.theme().ui_size(), FontWeight::NORMAL, window, cx).ceil()
+}
 
 /// What the dialog is for.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -70,6 +81,31 @@ impl DialogKind {
             Self::Rename { from } => format!("Rename Branch {from}"),
             Self::Checkout => "Checkout".to_owned(),
         }
+    }
+
+    fn label_width(&self, window: &Window, cx: &App) -> Pixels {
+        text_width(
+            self.label(),
+            cx.theme().ui_size(),
+            FontWeight::NORMAL,
+            window,
+            cx,
+        )
+        .ceil()
+    }
+
+    /// Pack the name field and its aligned controls in the current UI font.
+    pub fn width(&self, window: &Window, cx: &App) -> Pixels {
+        let mut preferred = px(BASE_WIDTH);
+        if let Self::Create { .. } = self {
+            preferred = preferred.max(
+                px(2.0 * (PADDING + 1.0) + FIELD_GAP + OPTIONS_GAP)
+                    + self.label_width(window, cx)
+                    + option_width(CHECKOUT_LABEL, window, cx)
+                    + option_width(OVERWRITE_LABEL, window, cx),
+            );
+        }
+        preferred.min(window.viewport_size().width)
     }
 
     fn label(&self) -> &'static str {
@@ -302,8 +338,10 @@ impl Render for BranchDialog {
         let error = self.error.is_some();
         let label = self.kind.label();
         let wide_label = !self.kind.is_name();
+        let width = self.kind.width(window, cx);
+        let label_width = self.kind.label_width(window, cx);
         let field = input_frame(focused, error, cx)
-            .flex_1()
+            .min_w_0()
             .h(px(FIELD_HEIGHT))
             .px(px(8.0))
             .child(
@@ -320,15 +358,15 @@ impl Render for BranchDialog {
                 .flex_col()
                 .gap(px(6.0))
                 .child(label)
-                .child(field)
+                .child(field.w_full().flex_none())
         } else {
             div()
                 .flex()
                 .flex_row()
                 .items_center()
-                .gap(px(8.0))
-                .child(div().w(px(LABEL_WIDTH)).flex_none().child(label))
-                .child(field)
+                .gap(px(FIELD_GAP))
+                .child(div().w(label_width).flex_none().child(label))
+                .child(field.flex_1())
         };
         let exists = self.offers_overwrite() && self.name_exists(cx);
         let option = |id: &'static str, label: &'static str, on: bool, enabled: bool| {
@@ -338,21 +376,28 @@ impl Render for BranchDialog {
                 .flex()
                 .flex_row()
                 .items_center()
-                .gap(px(6.0))
+                .flex_none()
+                .max_w_full()
+                .gap(px(CHECK_GAP))
                 .when(!enabled, |d| d.opacity(0.5))
                 .child(checkbox((id, 0usize), on, cx))
                 .child(label)
         };
         let options = self.offers_overwrite().then(|| {
+            let indent = label_width + px(FIELD_GAP);
+            let inner_width = width - px(2.0 * (PADDING + 1.0));
+            let indent_fits = indent + option_width(OVERWRITE_LABEL, window, cx) <= inner_width;
             div()
                 .flex()
                 .flex_row()
-                .gap(px(16.0))
-                .pl(px(LABEL_WIDTH + 8.0))
+                .flex_wrap()
+                .gap_x(px(OPTIONS_GAP))
+                .gap_y(px(CHECK_GAP))
+                .when(indent_fits, |row| row.pl(indent))
                 .child(
                     option(
                         "branch-dialog-checkout",
-                        "Checkout branch",
+                        CHECKOUT_LABEL,
                         self.checkout,
                         true,
                     )
@@ -365,7 +410,7 @@ impl Render for BranchDialog {
                 .child(
                     option(
                         "branch-dialog-overwrite",
-                        "Overwrite existing branch",
+                        OVERWRITE_LABEL,
                         self.overwrite,
                         exists,
                     )
@@ -379,7 +424,7 @@ impl Render for BranchDialog {
         let message = self.error.clone().map(|m| {
             div()
                 .debug_selector(|| "branch-dialog-error".into())
-                .pl(px(if wide_label { 0.0 } else { LABEL_WIDTH + 8.0 }))
+                .when(!wide_label, |row| row.pl(label_width + px(FIELD_GAP)))
                 .text_color(danger)
                 .children(
                     m.lines()
@@ -414,13 +459,13 @@ impl Render for BranchDialog {
             .flex()
             .flex_col()
             .gap(px(12.0))
-            .w(px(WIDTH))
-            .p(px(20.0))
+            .w(width)
+            .p(px(PADDING))
             .rounded(px(10.0))
             .border_1()
             .border_color(theme.color(UiRole::PopupBorder))
             .bg(theme.color(UiRole::SurfaceRaised))
-            .shadow(popup_shadow())
+            .when(!ui::popup_window::enabled(), |el| el.shadow(popup_shadow()))
             .font_family(theme.ui_family())
             .text_size(theme.ui_size())
             .text_color(theme.color(UiRole::Text))
@@ -433,6 +478,9 @@ impl Render for BranchDialog {
             .children(message)
             .children(options)
             .child(buttons);
+        if ui::popup_window::enabled() {
+            return dialog.into_any_element();
+        }
         div()
             .id("branch-dialog-backdrop")
             .occlude()
@@ -445,5 +493,6 @@ impl Render for BranchDialog {
             .items_center()
             .justify_center()
             .child(dialog)
+            .into_any_element()
     }
 }

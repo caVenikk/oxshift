@@ -22,6 +22,7 @@ themes.workspace = true
 # Pointer shapes are set natively on macOS (see src/pointer.rs); these
 # crates are already in GPUI's dependency tree.
 [target.'cfg(target_os = "macos")'.dependencies]
+block = "0.1"
 objc = "0.2"
 raw-window-handle = "0.6"
 

@@ -13,8 +13,12 @@ use std::process::Command;
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
-use gpui::{AppContext as _, TestAppContext, WindowHandle};
+use gpui::{
+    AppContext as _, FontWeight, TestAppContext, VisualTestContext, WindowHandle, px, size,
+};
 use serde_json::{Value, json};
+use ui::ThemeExt as _;
+use vcs_ui::new_branch::{BranchDialog, DialogKind};
 use workbench::{Product, SyncSettings, Workbench};
 
 fn git(dir: &Path, args: &[&str]) -> String {
@@ -309,6 +313,46 @@ fn the_widget_follows_branch_commands(cx: &mut TestAppContext) {
     h.invoke("git.checkout", json!({ "ref": other }));
     let widget = h.wait_widget(&other[..8]);
     assert_eq!(widget["icon"], "warning");
+}
+
+#[gpui::test]
+fn create_branch_controls_fit_inside_the_dialog(cx: &mut TestAppContext) {
+    cx.update(|cx| workbench::init(cx, &Product::default()));
+    let window = cx.add_window(|window, cx| {
+        BranchDialog::new(DialogKind::Create { from: None }, "", vec![], window, cx)
+    });
+    let mut view = VisualTestContext::from_window(window.into(), cx);
+    for width in [900.0, 360.0] {
+        view.simulate_resize(size(px(width), px(600.0)));
+        view.run_until_parked();
+        view.update(|window, cx| window.draw(cx).clear());
+        let dialog = view.debug_bounds("branch-dialog").unwrap();
+        assert!(dialog.left() >= px(0.0) && dialog.right() <= px(width));
+        let right = dialog.right() - px(20.0);
+        for (id, label) in [
+            ("branch-dialog-checkout", "Checkout branch"),
+            ("branch-dialog-overwrite", "Overwrite existing branch"),
+        ] {
+            let option = view.debug_bounds(id).unwrap();
+            let required = view.update(|window, cx| {
+                px(ui::components::checkbox_size(cx) + 6.0)
+                    + ui::expandable::text_width(
+                        label,
+                        cx.theme().ui_size(),
+                        FontWeight::NORMAL,
+                        window,
+                        cx,
+                    )
+            });
+            assert!(
+                option.size.width + px(1.0) >= required && option.right() <= right,
+                "{label} at {width}px: {option:?}, needs {required:?}, right inset starts at {right:?}"
+            );
+        }
+        let create = view.debug_bounds("branch-dialog-ok").unwrap();
+        assert!(create.left() >= dialog.left() + px(20.0) && create.right() <= right);
+        assert!(create.bottom() <= dialog.bottom() - px(20.0));
+    }
 }
 
 #[gpui::test]

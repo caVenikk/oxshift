@@ -2,8 +2,11 @@
 
 ## Steps
 1. Open the terminal; press Cmd+T (macOS) or Ctrl+Shift+T twice.
-2. Double-click the second tab, type `server`, press Enter. Double-click
-   it again, clear the field, press Enter.
+2. Right-click the second tab, click **Rename Session**, type `server`
+   without clicking again, and press Enter. Double-click
+   it again, clear the field, press Enter. Type a draft and press Escape.
+   Reopen the balloon, type a draft, then click another tab. Repeat using
+   a right-click on the editor in the same IDE window.
 3. In "server" run `sleep 100`; press Cmd+W / Ctrl+F4 and choose Cancel;
    press it again and choose Terminate.
 4. In the third tab type `exit`.
@@ -16,7 +19,12 @@
   and has the focus.
 - Step 2: a balloon pointing at the tab shows a bold "Session name:" and
   a field with the name selected; Enter renames the tab to "server"; an
-  empty name gets a red outline and is not applied.
+  empty name gets a red outline and is not applied. On macOS the balloon
+  stays visibly above the IDE when the context menu closes. With
+  Command-Shift-4 followed by Space, pointing at it highlights the balloon
+  alone. Press Escape to leave the screenshot picker. Escape in the field
+  discards the draft. Either outside click also discards it and reaches
+  its target: the tab becomes selected or the editor context menu opens.
 - Step 3: the dialog "Process 'Terminal server' Is Running" with "Do you
   want to terminate the process 'Terminal server'?", Terminate, Cancel and
   "Don't ask again"; Cancel keeps the tab and the process, Terminate

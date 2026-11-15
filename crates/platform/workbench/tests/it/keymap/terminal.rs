@@ -874,6 +874,39 @@ fn paths_in_the_output_open_in_the_editor_and_the_project_view(cx: &mut TestAppC
     assert_eq!(state["tool_windows"]["project"]["visible"], json!(true));
 }
 
+#[gpui::test]
+fn rename_session_from_tab_context_menu(cx: &mut TestAppContext) {
+    let (mut h, _dir) = setup(cx, keymap::MACOS);
+    h.open_terminal(None);
+    h.invoke("terminal.rename-tab", json!({"name":"first"}));
+    h.invoke("terminal.new-tab", json!({"shell":TEST_SHELL, "name":"second"}));
+    h.wait_terminal("second tab selected", |s| s["selected"] == json!(1));
+
+    let mut visual = gpui::VisualTestContext::from_window(h.window.into(), h.cx);
+    let at = visual.debug_bounds("terminal-tab-0").unwrap().center();
+    let modifiers = gpui::Modifiers::none();
+    visual.simulate_mouse_move(at, None, modifiers);
+    visual.simulate_mouse_down(at, gpui::MouseButton::Right, modifiers);
+    visual.simulate_mouse_up(at, gpui::MouseButton::Right, modifiers);
+    h.draw();
+
+    let mut visual = gpui::VisualTestContext::from_window(h.window.into(), h.cx);
+    let row = visual.debug_bounds("menu-item:Rename Session").unwrap().center();
+    visual.simulate_click(row, modifiers);
+    h.draw();
+    let mut visual = gpui::VisualTestContext::from_window(h.window.into(), h.cx);
+    assert!(visual.debug_bounds("terminal-rename").is_some());
+    assert_eq!(h.terminal()["rename"]["text"], "first");
+    h.invoke("editor.type", json!({"text":"server"}));
+    h.press("enter");
+
+    let state = h.terminal();
+    assert!(state["rename"].is_null());
+    assert_eq!(state["tabs"][0]["name"], "server");
+    assert_eq!(state["tabs"][1]["name"], "second");
+    assert!(h.terminal_focused());
+}
+
 /// Preserve the requested shell (before integration), the actual directory and
 /// a user name across a project switch, without moving focus to the terminal.
 #[gpui::test]

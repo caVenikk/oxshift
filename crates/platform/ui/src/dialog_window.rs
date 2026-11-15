@@ -783,6 +783,26 @@ pub(crate) mod native {
         }
     }
 
+    /// AppKit can still own input for this document while GPUI is delivering
+    /// the key-window change from a menu that has just closed.
+    #[allow(unexpected_cfgs)]
+    pub fn active_owner(window: &Window) -> bool {
+        if !crate::pointer::native() {
+            return window.is_window_active();
+        }
+        let Some(ns) = ns_window(window) else {
+            return false;
+        };
+        // SAFETY: these are AppKit queries on the UI thread.
+        unsafe {
+            let app: *mut Object = msg_send![objc::class!(NSApplication), sharedApplication];
+            let active: bool = msg_send![app, isActive];
+            let main: *mut Object = msg_send![app, mainWindow];
+            let key: *mut Object = msg_send![app, keyWindow];
+            active && (ns == main || ns == key)
+        }
+    }
+
     /// Keep capture mode from hiding panels; background runs stay below unrelated apps.
     #[allow(unexpected_cfgs)]
     pub fn popup_behavior(window: &Window, foreground: bool) {
@@ -955,6 +975,9 @@ pub(crate) mod native {
 #[cfg(not(target_os = "macos"))]
 pub(crate) mod native {
     pub fn keep_owner_focus(_: &gpui::Window) {}
+    pub fn active_owner(window: &gpui::Window) -> bool {
+        window.is_window_active()
+    }
     pub fn popup_behavior(_: &gpui::Window, _: bool) {}
     pub fn capturing() -> bool {
         false

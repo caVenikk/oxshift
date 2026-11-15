@@ -221,7 +221,7 @@ pub(crate) fn show<T: 'static>(
         return;
     }
     let above = crate::dialog_window::native::window_number(parent);
-    let activate = keyboard && parent.is_window_active();
+    let activate = keyboard && crate::dialog_window::native::active_owner(parent);
     cx.global_mut::<Surfaces>().1.insert(key.0);
     let handle = cx.open_window(
         WindowOptions {

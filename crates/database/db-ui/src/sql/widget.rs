@@ -516,17 +516,42 @@ impl SqlWidget {
         let Some(console) = self.console(cx) else {
             return;
         };
-        let (items, anchor) = {
-            let console = console.read(cx);
-            (console.choice_items(), console.choice_anchor())
+        if self.menu.is_some() {
+            return;
+        }
+        let Some(question) = console.read(cx).choice_menu() else {
+            return;
         };
-        let anchor = anchor.unwrap_or_else(|| self.source_bounds.get());
+        let anchor = question.anchor.unwrap_or_else(|| self.source_bounds.get());
+        let selected = question.selected;
         let options = PopupOptions {
-            title: Some("Execute".into()),
-            selected: Some(0),
+            title: Some("Statements".into()),
+            selected: Some(selected),
             ..PopupOptions::default()
         };
-        self.show_items(items, anchor, options, window, cx);
+        self.show_items(question.items, anchor, options, window, cx);
+        if let Some((menu, _)) = &self.menu {
+            console.update(cx, |c, cx| c.preview_choice(Some(selected), cx));
+            let target = console.clone();
+            cx.subscribe(menu, move |_, _, event: &ui::menu::HighlightEvent, cx| {
+                let index = event
+                    .0
+                    .as_ref()
+                    .and_then(|a| a.as_any().downcast_ref::<crate::console::ExecuteChoice>())
+                    .map(|a| a.index);
+                target.update(cx, |c, cx| c.preview_choice(index, cx));
+            })
+            .detach();
+            let released = console.clone();
+            cx.observe_release(menu, move |_, _, cx| {
+                released.update(cx, |c, cx| c.preview_choice(None, cx));
+            })
+            .detach();
+            cx.subscribe(menu, move |_, _, _: &DismissEvent, cx| {
+                console.update(cx, |c, cx| c.preview_choice(None, cx));
+            })
+            .detach();
+        }
     }
 
     /// The console's transaction mode and isolation popup.

@@ -8,7 +8,7 @@
 5. Execute a script whose second statement fails.
 
 ## Expected
-- With the caret in a statement only that statement runs. Where the caret is in nested statements (a subquery) a small picker offers the choices; with the caret outside any statement nothing runs.
+- With the default Ask mode, Execute offers the current statement, nested queries around the caret and the whole script when distinct. The current statement is preselected. Arrow keys preview the scope in the editor, Enter runs it and Escape restores the caret without execution. Customize opens Query Execution settings. A single unique statement runs directly; with the caret outside any statement nothing runs by default.
 - A selection runs as separate statements, one after another.
 - Statements are separated by a lexer: semicolons inside strings, comments, dollar-quoted bodies and PL/SQL blocks do not split.
 - When one statement of a script fails the error shows the position in the editor and the user chooses to continue, skip or stop.

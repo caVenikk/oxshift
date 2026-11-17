@@ -122,6 +122,10 @@ fn a_console_runs_the_statement_at_the_caret_and_logs_it(cx: &mut TestAppContext
     let server = server();
     let (mut h, _cache, consoles) = harness(cx, &root, &server);
     let s = open_console(&mut h);
+    h.invoke(
+        "settings.set",
+        json!({"key": "database.query-execution.execute.caret-inside", "value": "largest"}),
+    );
     assert_eq!(s["source"], NAME);
     assert!(
         consoles.path().join(NAME).join("console.sql").exists(),
@@ -215,6 +219,7 @@ fn an_executed_statement_gets_a_check_a_time_and_a_box_until_it_is_edited(cx: &m
         json!({ "text": "select 1;\nselect * from demo.customers;" }),
     );
     h.invoke("db.console.execute", Value::Null);
+    h.press("enter");
     wait_console(&mut h, "the statement", idle);
     let marks_now = marks(&mut h);
     assert_eq!(marks_now.len(), 1, "{marks_now:?}");

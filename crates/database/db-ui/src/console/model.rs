@@ -88,8 +88,15 @@ pub(crate) struct ResultTab {
 /// What the options of Execute ask about: the ways to run, and where the
 /// popup goes.
 struct Asked {
+    selected: usize,
     choices: Vec<Choice>,
     anchor: Option<Bounds<Pixels>>,
+}
+
+pub(crate) struct ExecutionMenu {
+    pub items: Vec<MenuItem>,
+    pub selected: usize,
+    pub anchor: Option<Bounds<Pixels>>,
 }
 
 /// The statement being run, for the lines it leaves in the output.
@@ -347,30 +354,65 @@ impl Console {
         match execution::plan(&text, caret, selection, self.dialect(), &options) {
             Plan::Nothing => {}
             Plan::Run(statements) => self.submit(statements, window, cx),
-            Plan::Ask(choices) => {
-                self.asked = Some(Asked { choices, anchor });
+            Plan::Ask { choices, selected } => {
+                self.asked = Some(Asked {
+                    choices,
+                    selected,
+                    anchor,
+                });
                 window.dispatch_action(Box::new(super::ChooseExecution), cx);
                 cx.notify();
             }
         }
     }
 
-    /// The popup's rows of the open "what to execute" question.
-    pub fn choice_items(&self) -> Vec<MenuItem> {
-        self.asked
+    /// The statement picker and the current statement's row.
+    pub fn choice_menu(&self) -> Option<ExecutionMenu> {
+        let asked = self.asked.as_ref()?;
+        let mut items: Vec<_> = asked
+            .choices
             .iter()
-            .flat_map(|a| a.choices.iter().enumerate())
-            .map(|(index, c)| MenuItem::action(c.label.clone(), super::ExecuteChoice { index }))
-            .collect()
+            .enumerate()
+            .map(|(index, choice)| {
+                MenuItem::action(choice.label.clone(), super::ExecuteChoice { index })
+            })
+            .collect();
+        items.push(MenuItem::separator());
+        items.push(MenuItem::action(
+            "Customize",
+            settings_ui::commands::OpenSettings {
+                page: Some(crate::settings_page::QUERY_EXECUTION.to_owned()),
+                filter: None,
+            },
+        ));
+        Some(ExecutionMenu {
+            items,
+            selected: asked.selected,
+            anchor: asked.anchor,
+        })
     }
 
-    /// Where the question was asked: the caret's character in the window.
-    pub fn choice_anchor(&self) -> Option<Bounds<Pixels>> {
-        self.asked.as_ref().and_then(|a| a.anchor)
+    /// Preview a scope without changing the selection that Execute reads.
+    pub fn preview_choice(&self, index: Option<usize>, cx: &mut App) {
+        let Some(editor) = self.editor(cx) else {
+            return;
+        };
+        let range = index.and_then(|i| {
+            let choice = self.asked.as_ref()?.choices.get(i)?;
+            let buffer = editor.read(cx).buffer();
+            if choice.statements.len() > 1 {
+                return Some(0..buffer.len_chars());
+            }
+            let range = &choice.statements.first()?.range;
+            (range.end <= buffer.len_bytes())
+                .then(|| buffer.byte_to_char(range.start)..buffer.byte_to_char(range.end))
+        });
+        editor.update(cx, |e, cx| e.set_selection_preview(range, cx));
     }
 
     /// The answer to the question: runs the choice `index`.
     pub fn run_choice(&mut self, index: usize, window: &mut Window, cx: &mut Context<Self>) {
+        self.preview_choice(None, cx);
         let Some(asked) = self.asked.take() else {
             return;
         };

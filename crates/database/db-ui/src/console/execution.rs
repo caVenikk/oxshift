@@ -22,7 +22,10 @@ pub(crate) enum Plan {
     Nothing,
     Run(Vec<Statement>),
     /// More than one thing could run and the options ask: the person picks.
-    Ask(Vec<Choice>),
+    Ask {
+        choices: Vec<Choice>,
+        selected: usize,
+    },
 }
 
 /// The longest label of a choice, in characters.
@@ -97,7 +100,15 @@ pub(crate) fn plan(
                 if options.caret_inside == CaretInside::Smallest {
                     run(scoped.next())
                 } else {
-                    ask_or_run(scoped.map(choice).collect())
+                    let mut choices: Vec<_> = scoped.map(choice).collect();
+                    let selected = choices.len().saturating_sub(1);
+                    if statements.len() > 1 {
+                        choices.push(Choice {
+                            label: preview(text),
+                            statements,
+                        });
+                    }
+                    ask_or_run(choices, selected)
                 }
             }
         };
@@ -118,7 +129,7 @@ pub(crate) fn plan(
                     statements,
                 });
             }
-            ask_or_run(choices)
+            ask_or_run(choices, 0)
         }
     }
 }
@@ -163,30 +174,32 @@ fn run(statements: impl IntoIterator<Item = Statement>) -> Plan {
     }
 }
 
-fn ask_or_run(mut choices: Vec<Choice>) -> Plan {
+fn ask_or_run(mut choices: Vec<Choice>, selected: usize) -> Plan {
     match choices.len() {
         0 => Plan::Nothing,
         1 => run(choices.remove(0).statements),
-        _ => Plan::Ask(choices),
+        _ => Plan::Ask { choices, selected },
     }
 }
 
 fn choice(statement: Statement) -> Choice {
-    let one_line = statement
-        .text
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ");
-    let label = if one_line.chars().count() > LABEL_CHARS {
-        let cut: String = one_line.chars().take(LABEL_CHARS - 1).collect();
-        format!("{cut}\u{2026}")
-    } else {
-        one_line
-    };
     Choice {
-        label,
+        label: preview(&statement.text),
         statements: vec![statement],
     }
+}
+
+fn preview(text: &str) -> String {
+    let mut chars = text
+        .split_whitespace()
+        .enumerate()
+        .flat_map(|(i, word)| (i > 0).then_some(' ').into_iter().chain(word.chars()));
+    let mut label: String = chars.by_ref().take(LABEL_CHARS).collect();
+    if chars.next().is_some() {
+        label.pop();
+        label.push('…');
+    }
+    label
 }
 
 #[cfg(test)]
@@ -212,7 +225,7 @@ mod tests {
     fn texts(plan: &Plan) -> Vec<String> {
         match plan {
             Plan::Run(s) => s.iter().map(|s| s.text.clone()).collect(),
-            Plan::Ask(c) => c.iter().map(|c| c.label.clone()).collect(),
+            Plan::Ask { choices, .. } => choices.iter().map(|c| c.label.clone()).collect(),
             Plan::Nothing => Vec::new(),
         }
     }
@@ -222,7 +235,7 @@ mod tests {
     #[test]
     fn ask_runs_a_plain_statement_at_once() {
         let o = ExecuteOptions::default();
-        let p = at(SCRIPT, "select 1", 3, &o);
+        let p = at("select 1;", "select 1", 3, &o);
         assert_eq!(texts(&p), ["select 1"]);
         assert!(matches!(p, Plan::Run(_)));
     }
@@ -231,11 +244,40 @@ mod tests {
     fn ask_asks_inside_a_subquery() {
         let o = ExecuteOptions::default();
         let p = at(SCRIPT, "select a", 3, &o);
-        assert!(matches!(p, Plan::Ask(_)));
+        assert!(matches!(p, Plan::Ask { selected: 1, .. }));
         assert_eq!(
             texts(&p),
-            ["select a from t", "select * from (select a from t) x"]
+            [
+                "select a from t",
+                "select * from (select a from t) x",
+                "select 1; select * from (select a from t) x; select 3;"
+            ]
         );
+    }
+
+    #[test]
+    fn ask_deduplicates_a_single_script_and_preserves_statement_boundaries() {
+        let o = ExecuteOptions::default();
+        let Plan::Ask { choices, selected } = at("select (select 1);", "select 1", 3, &o) else {
+            panic!("a subquery and its surrounding statement");
+        };
+        assert_eq!(choices.len(), 2);
+        assert_eq!(selected, 1);
+        let Plan::Ask { choices, selected } = at("select 'a;b';select 2;", "select 2", 3, &o)
+        else {
+            panic!("a statement and the script");
+        };
+        assert_eq!(selected, 0);
+        assert_eq!(choices.len(), 2);
+        assert_eq!(
+            choices[1]
+                .statements
+                .iter()
+                .map(|s| s.text.as_str())
+                .collect::<Vec<_>>(),
+            ["select 'a;b'", "select 2"]
+        );
+        assert!(matches!(at("select 1;", "select 1", 3, &o), Plan::Run(_)));
     }
 
     #[test]

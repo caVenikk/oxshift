@@ -154,6 +154,15 @@ impl Workbench {
                 };
                 self.open_file_at(path.clone(), point, None, window, cx);
             }
+            DebuggerViewEvent::CompareWithClipboard(comparison) => {
+                let diff = comparison.view(window, cx);
+                // Closing a tab selects its preceding neighbour.
+                let index = self.active.map_or(self.tabs.len(), |i| i + 1);
+                self.insert_tab_view(index, diff, window, cx);
+                if !crate::env::background() {
+                    window.activate_window();
+                }
+            }
             DebuggerViewEvent::Navigate { path, line } => {
                 let point = text::Point {
                     line: line.saturating_sub(1) as usize,

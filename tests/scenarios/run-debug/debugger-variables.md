@@ -29,8 +29,10 @@
 - Step 7: functions, classes and modules appear among the variables.
 - Step 8: a window titled "Inspect 'name'" with a toolbar (Set As Root, Back,
   Forward) and the value's tree; the history keeps 11 steps.
-- Step 9: a window titled "Clipboard vs Selected Value" with the clipboard
-  text ("From clipboard") against the value ("Selected Value").
+- Step 9: an editor tab titled "Clipboard vs Selected Value" shows the clipboard
+  text ("From clipboard") on the left and the value ("Selected Value") on the
+  right. Both sides are read-only. Closing it focuses the preceding editor
+  and the debug session stays suspended.
 - Step 10: a window titled "Referring Objects For name" whose children are
   the objects that refer to the value.
 

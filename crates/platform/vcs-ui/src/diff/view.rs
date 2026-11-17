@@ -296,7 +296,7 @@ impl DiffView {
             let mut buffer = Buffer::new(base.as_deref().unwrap_or(""));
             buffer.set_read_only(true);
             *e.buffer_mut() = buffer;
-            e.set_path(Some(request.path.clone()));
+            e.set_path((!request.path.as_os_str().is_empty()).then(|| request.path.clone()));
             e.set_config(config);
             e.buffer_reloaded(cx);
             e.set_highlighter(highlighter, cx);
@@ -1136,7 +1136,9 @@ impl DiffView {
             .child(button(
                 "jump-to-source",
                 IconName::EDIT,
-                true,
+                self.request
+                    .as_ref()
+                    .is_some_and(|r| !r.path.as_os_str().is_empty()),
                 "Jump to Source",
                 shortcut(&JumpToSource),
                 cx,

@@ -58,7 +58,9 @@ impl TabView for DiffView {
     }
 
     fn tab_tooltip(&self, _: &App) -> Option<SharedString> {
-        self.request().map(|r| r.path.display().to_string().into())
+        self.request()
+            .filter(|r| !r.path.as_os_str().is_empty())
+            .map(|r| r.path.display().to_string().into())
     }
 
     fn is_preview(&self, _: &App) -> bool {

@@ -64,6 +64,18 @@ fn blocks_have_room_above_them_and_failed_ones_are_marked(cx: &mut TestAppContex
     let in_room = g.top_of(2) - px(3.0);
     let (found, _) = g.cell_at(point(g.origin.x + px(1.0), in_room));
     assert!(found.line == 1 || found.line == 2, "{}", found.line);
+    cx.update(|_, cx| {
+        cx.set_global(terminal_ui::Behavior {
+            close_on_exit: true,
+            session: terminal_ui::TerminalOptions {
+                show_separators: false,
+                ..Default::default()
+            },
+        });
+    });
+    crate::view::frame(cx);
+    let g = view.read_with(cx, |v, _| v.geometry()).expect("laid out");
+    assert_eq!(g.top_of(4) - g.origin.y, g.cell.height * 4.);
 }
 
 #[gpui::test]

@@ -670,6 +670,112 @@ impl TerminalToolWindow {
         cx.notify();
     }
 
+    fn group_item(&self) -> MenuItem {
+        let item = MenuItem::action("Group Tabs", GroupTabs).hidden(!self.had_several);
+        if self.grouped {
+            item.icon(IconName::CHECKED)
+        } else {
+            item
+        }
+    }
+
+    fn open_tab_context(
+        &mut self,
+        e: &MouseDownEvent,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        cx.stop_propagation();
+        window.prevent_default();
+        let several = self.tabs.len() > 1;
+        self.open_actions(
+            vec![
+                MenuItem::action("Rename Session", RenameTab { name: None }),
+                MenuItem::separator(),
+                MenuItem::action("Close Tab", CloseTab),
+                MenuItem::action("Close All Tabs", CloseAllTabs),
+                MenuItem::action("Close Other Tabs", crate::commands::CloseOtherTabs)
+                    .enabled(several),
+                MenuItem::separator(),
+                MenuItem::action("Select Next Tab", NextTab).enabled(several),
+                MenuItem::action("Select Previous Tab", PreviousTab).enabled(several),
+                MenuItem::action("Show List of Tabs", ShowTabList).enabled(several),
+                MenuItem::separator(),
+                MenuItem::action("Settings", ShowSettings).icon(IconName::SETTINGS_SMALL),
+                self.group_item(),
+            ],
+            e.position,
+            window,
+            cx,
+        );
+        self.context_target = self.selected.map(|i| self.tabs[i].id);
+    }
+
+    fn open_output_context(
+        &mut self,
+        e: &MouseDownEvent,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        use crate::commands::{
+            Clear, Copy, CopyUrl, Find, LineDown, LineUp, OpenUrl, PageDown, PageUp, Paste,
+            SelectAll,
+        };
+
+        let Some(session) = self.selected_session() else {
+            return;
+        };
+        cx.stop_propagation();
+        window.prevent_default();
+        let session = session.read(cx);
+        let mut items = vec![
+            MenuItem::action("Find", Find { text: None }),
+            MenuItem::action(
+                "New Tab",
+                NewTab {
+                    shell: None,
+                    args: None,
+                    name: None,
+                },
+            )
+            .icon(IconName::ADD),
+            MenuItem::action("Close Tab", CloseTab),
+            MenuItem::separator(),
+            MenuItem::action("Copy", Copy)
+                .icon(IconName::COPY)
+                .enabled(session.has_selected_text()),
+            MenuItem::action("Paste", Paste).icon(IconName::PASTE),
+            MenuItem::action("Select All", SelectAll),
+            MenuItem::separator(),
+            MenuItem::action("Clear Terminal", Clear),
+            MenuItem::action("Page Up", PageUp),
+            MenuItem::action("Page Down", PageDown),
+            MenuItem::separator(),
+            MenuItem::action("Line Up", LineUp),
+            MenuItem::action("Line Down", LineDown),
+        ];
+        if let Some(url) = session.url_at_position(e.position) {
+            items.extend([
+                MenuItem::separator(),
+                MenuItem::action(
+                    "Open in Browser",
+                    OpenUrl {
+                        url: url.to_owned(),
+                    },
+                ),
+                MenuItem::action(
+                    "Copy URL",
+                    CopyUrl {
+                        url: url.to_owned(),
+                    },
+                )
+                .icon(IconName::COPY),
+            ]);
+        }
+        self.open_actions(items, e.position, window, cx);
+        self.context_target = self.selected.map(|i| self.tabs[i].id);
+    }
+
     fn close_others(
         &mut self,
         _: &crate::commands::CloseOtherTabs,
@@ -804,14 +910,7 @@ impl TerminalToolWindow {
             MenuItem::action("Settings", ShowSettings).icon(IconName::SETTINGS_SMALL),
             MenuItem::separator(),
             MenuItem::action("Close All", CloseAllTabs),
-            {
-                let item = MenuItem::action("Group Tabs", GroupTabs).hidden(!self.had_several);
-                if self.grouped {
-                    item.icon(IconName::CHECKED)
-                } else {
-                    item
-                }
-            },
+            self.group_item(),
             // The view modes, moving and resizing of tool windows are not
             // there yet; the tool window is docked and pinned.
             MenuItem::submenu(
@@ -1033,21 +1132,8 @@ impl TerminalToolWindow {
             .on_mouse_down(
                 MouseButton::Right,
                 cx.listener(move |this, e: &MouseDownEvent, window, cx| {
-                    cx.stop_propagation();
-                    window.prevent_default();
                     this.select(index, window, cx);
-                    this.open_actions(
-                        vec![
-                            MenuItem::action("Rename Session", RenameTab { name: None }),
-                            MenuItem::action("Close Tab", CloseTab),
-                            MenuItem::action("Close Other Tabs", crate::commands::CloseOtherTabs)
-                                .enabled(this.tabs.len() > 1),
-                        ],
-                        e.position,
-                        window,
-                        cx,
-                    );
-                    this.context_target = this.tabs.get(index).map(|tab| tab.id);
+                    this.open_tab_context(e, window, cx);
                 }),
             )
             .on_click(cx.listener(move |this, e: &ClickEvent, window, cx| {
@@ -1082,6 +1168,7 @@ impl TerminalToolWindow {
             .child(div().whitespace_nowrap().child(title))
             .child(Icon::new(IconName::CHEVRON_DOWN))
             .child(Self::bounds_probe(&self.selected_bounds))
+            .on_mouse_down(MouseButton::Right, cx.listener(Self::open_tab_context))
             .on_click(cx.listener(|this, _: &ClickEvent, window, cx| {
                 if this.tab_list.is_none() {
                     this.show_tab_list(&ShowTabList, window, cx);
@@ -1407,40 +1494,7 @@ impl Render for TerminalToolWindow {
                     .debug_selector(|| "terminal-session".into())
                     .flex_1()
                     .min_h(px(0.0))
-                    .on_mouse_down(
-                        MouseButton::Right,
-                        cx.listener(|this, e: &MouseDownEvent, window, cx| {
-                            cx.stop_propagation();
-                            window.prevent_default();
-                            use crate::commands::{Clear, Copy, Find, Paste, SelectAll};
-                            let has_selection = this
-                                .selected_session()
-                                .is_some_and(|s| s.read(cx).has_selected_text());
-                            this.open_actions(
-                                vec![
-                                    MenuItem::action("Copy", Copy).enabled(has_selection),
-                                    MenuItem::action("Paste", Paste),
-                                    MenuItem::action("Select All", SelectAll),
-                                    MenuItem::separator(),
-                                    MenuItem::action("Clear", Clear),
-                                    MenuItem::action("Find", Find { text: None }),
-                                    MenuItem::separator(),
-                                    MenuItem::action(
-                                        "New Tab",
-                                        NewTab {
-                                            shell: None,
-                                            args: None,
-                                            name: None,
-                                        },
-                                    ),
-                                ],
-                                e.position,
-                                window,
-                                cx,
-                            );
-                            this.context_target = this.selected.map(|i| this.tabs[i].id);
-                        }),
-                    )
+                    .on_mouse_down(MouseButton::Right, cx.listener(Self::open_output_context))
                     .on_drop(cx.listener(|this, dragged: &ui::DraggedFiles, _, cx| {
                         if let Some(tab) = this.selected.and_then(|i| this.tabs.get(i)) {
                             cx.stop_propagation();

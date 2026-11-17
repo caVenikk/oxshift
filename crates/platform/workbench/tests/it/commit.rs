@@ -519,6 +519,35 @@ fn amend_takes_the_last_message_and_gives_the_draft_back(cx: &mut TestAppContext
 }
 
 #[gpui::test]
+fn rollback_without_changed_context_starts_unchecked(cx: &mut TestAppContext) {
+    let (mut h, _dir) = open(cx, |root| {
+        repository(root, true);
+        write(root, "a.py", "keep this edit\n");
+        write(root, "untracked.py", "keep this file\n");
+    });
+    h.wait("the change", |c| {
+        c["rows"]
+            .as_array()
+            .is_some_and(|rows| rows.iter().any(|row| row["path"] == "a.py"))
+    });
+    h.invoke("vcs.rollback", Value::Null);
+    let commit = h.wait("the rollback dialog", |c| c["dialog"]["kind"] == "rollback");
+    assert_eq!(
+        commit["dialog"]["files"],
+        json!([{ "path": "a.py", "status": "modified", "included": false }])
+    );
+    assert_eq!(commit["dialog"]["ok_enabled"], false);
+    h.invoke("rollback-dialog.confirm", Value::Null);
+    assert_eq!(h.commit()["dialog"]["kind"], "rollback");
+    h.invoke("rollback-dialog.cancel", Value::Null);
+    assert_eq!(
+        std::fs::read_to_string(h.root.join("a.py")).unwrap(),
+        "keep this edit\n"
+    );
+    assert!(h.root.join("untracked.py").exists());
+}
+
+#[gpui::test]
 fn rollback_reverts_unindexes_and_deletes(cx: &mut TestAppContext) {
     let (mut h, _dir) = open(cx, |root| {
         repository(root, true);

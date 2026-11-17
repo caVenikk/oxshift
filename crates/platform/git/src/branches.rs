@@ -100,7 +100,7 @@ fn listed_files(text: &str, header: &str) -> Option<Vec<String>> {
 }
 
 /// The failure of a checkout from git's message.
-fn checkout_error(out: &Output) -> CheckoutError {
+pub(crate) fn checkout_error(out: &Output) -> CheckoutError {
     let text = error_text(out);
     if let Some(files) = listed_files(
         &text,

@@ -189,6 +189,19 @@ pub fn open<V: 'static + Render>(
     cx: &mut App,
     build: impl FnOnce(&mut Window, &mut App) -> Entity<V>,
 ) -> Option<WindowHandle<V>> {
+    let center = parent.bounds().center();
+    let origin = center - point(options.size.width / 2.0, options.size.height / 2.0);
+    open_at(parent, options, origin, cx, build)
+}
+
+/// Opens an owned dialog at a screen position chosen by its caller.
+pub fn open_at<V: 'static + Render>(
+    parent: &mut Window,
+    options: DialogOptions,
+    origin: Point<Pixels>,
+    cx: &mut App,
+    build: impl FnOnce(&mut Window, &mut App) -> Entity<V>,
+) -> Option<WindowHandle<V>> {
     ensure_init(cx);
     if !options.modal
         && let Some(open) = options.key.as_ref().and_then(|key| find(key.as_ref(), cx))
@@ -200,9 +213,6 @@ pub fn open<V: 'static + Render>(
     }
     let parent_handle = parent.window_handle();
     let return_focus = parent.focused(cx);
-    let parent_bounds = parent.bounds();
-    let origin =
-        parent_bounds.center() - point(options.size.width / 2.0, options.size.height / 2.0);
     let bounds = Bounds::new(point(origin.x.floor(), origin.y.floor()), options.size);
     let window_options = WindowOptions {
         window_bounds: Some(WindowBounds::Windowed(bounds)),
@@ -340,6 +350,30 @@ pub fn innermost(window: AnyWindowHandle, cx: &App) -> AnyWindowHandle {
 /// buttons; it moves the window like the system's (macOS drags it) and
 /// zooms it on a double click. `None` where the system draws it.
 pub fn title_bar(title: impl Into<SharedString>, themed: bool, cx: &App) -> Option<AnyElement> {
+    title_bar_with_label(title.into(), TITLE_BAR, themed, cx)
+}
+
+/// Compact macOS caption above Git dialogs and their comparison windows.
+pub fn compact_title_bar(title: SharedString, cx: &App) -> Option<AnyElement> {
+    let theme = cx.theme();
+    let label = div()
+        .pt(px(3.0))
+        .font_family(theme.ui_family())
+        .text_size(theme.ui_size() + px(0.35))
+        .line_height(px(18.0))
+        .font_weight(FontWeight::BOLD)
+        .text_color(theme.color(UiRole::Text).opacity(0.69))
+        .child(title);
+    title_bar_with_label(label, 29.0, true, cx)
+}
+
+/// A themed title bar with the dialog's own title label and height.
+fn title_bar_with_label(
+    label: impl IntoElement,
+    height: f32,
+    themed: bool,
+    cx: &App,
+) -> Option<AnyElement> {
     if !own_title(themed) {
         return None;
     }
@@ -352,7 +386,7 @@ pub fn title_bar(title: impl Into<SharedString>, themed: bool, cx: &App) -> Opti
             .flex_none()
             .flex_row()
             .items_center()
-            .h(px(TITLE_BAR))
+            .h(px(height))
             .pl(px(TITLE_LEFT))
             .pr(px(12.0))
             .bg(theme.color(UiRole::Surface))
@@ -360,7 +394,7 @@ pub fn title_bar(title: impl Into<SharedString>, themed: bool, cx: &App) -> Opti
             .font_weight(FontWeight::SEMIBOLD)
             .whitespace_nowrap()
             .overflow_hidden()
-            .child(title.into())
+            .child(label)
             .on_click(|event, window, _| {
                 if event.click_count() == 2 {
                     window.titlebar_double_click();

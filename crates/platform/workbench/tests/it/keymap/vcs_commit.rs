@@ -255,6 +255,44 @@ fn check_commit(h: &mut H, command: &str, keys: &str, what: &str) {
             }
             assert!(opened, "{what}: a.py opens");
         }
+        c if c.starts_with("dialog-changes.") => {
+            change_a(h, "a = 'tree'\n");
+            open_rollback(h);
+            let dialog = |h: &mut H| commit_state(h)["dialog"].clone();
+            let selected = |h: &mut H| dialog(h)["browser"]["selected"].as_u64().unwrap();
+            match c {
+                "dialog-changes.up" | "dialog-changes.left" => {
+                    let previous = selected(h);
+                    h.press(keys);
+                    assert!(selected(h) < previous, "{what}");
+                }
+                "dialog-changes.down" | "dialog-changes.right" => {
+                    h.invoke("dialog-changes.left", json!(null));
+                    let previous = selected(h);
+                    h.press(keys);
+                    assert!(selected(h) > previous, "{what}");
+                }
+                "dialog-changes.toggle" => {
+                    assert_eq!(dialog(h)["ok_enabled"], true);
+                    h.press(keys);
+                    assert_eq!(dialog(h)["ok_enabled"], false, "{what}");
+                }
+                "dialog-changes.diff" => {
+                    h.press(keys);
+                    assert_eq!(dialog(h)["preview"], true, "{what}");
+                    wait_vcs(h, "snapshot ready", |v| {
+                        v["commit"]["dialog"]["preview_ready"] == true
+                    });
+                    h.invoke("diff.toggle-rollback-inclusion", json!(null));
+                    assert_eq!(dialog(h)["ok_enabled"], false);
+                    h.invoke("diff.close-window", json!(null));
+                    assert_eq!(dialog(h)["preview"], false);
+                    assert_eq!(dialog(h)["kind"], "rollback");
+                }
+                _ => unreachable!(),
+            }
+            h.invoke("rollback-dialog.cancel", json!(null));
+        }
         "rollback-dialog.confirm" | "rollback-dialog.cancel" => {
             change_a(h, "a = 'dialog'\n");
             let committed = git_in(h, &["show", "HEAD:a.py"]);
@@ -322,7 +360,8 @@ fn check(h: &mut H, b: &Binding) -> bool {
         | "vcs.commit.run"
         | "vcs.commit.toggle-amend"
         | "vcs.commit.options" => check_commit(h, &b.command, keys, &what),
-        c if c.starts_with("commit-tree.")
+        c if c.starts_with("dialog-changes.")
+            || c.starts_with("commit-tree.")
             || c.starts_with("commit-options.")
             || c.starts_with("rollback-dialog.")
             || c.starts_with("user-name-dialog.") =>

@@ -16,3 +16,9 @@ name = "Diff"
 "ctrl-shift-tab" = "diff.focus-opposite"
 "f4" = "diff.jump-to-source"
 "ctrl-alt-r" = "diff.apply-left-side"
+
+[[context]]
+name = "SnapshotDiffWindow"
+[context.bindings]
+"escape" = "diff.close-window"
+"ctrl-w" = "diff.close-window"

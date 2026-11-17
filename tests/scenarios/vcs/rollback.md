@@ -23,5 +23,5 @@
 ## Source
 https://www.jetbrains.com/help/pycharm/undo-changes.html; IntelliJ
 Community (Apache-2.0) at `pycharm/2026.2.3`: `ChangesView.Revert`,
-`VcsBundle` (`changes.checkbox.delete.locally.added.files`). The dialog is
-to verify against a reference screenshot.
+`VcsBundle` (`changes.checkbox.delete.locally.added.files`). `RollbackChangesDialog` and
+`LocalChangesBrowser`.

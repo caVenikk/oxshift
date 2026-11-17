@@ -1,2 +1,2 @@
 feature,area,priority,original,clone,notes
-Rollback of files (Rollback Changes dialog),vcs,must,yes,yes,Community (#170)
+Rollback of files (Rollback Changes dialog),vcs,must,yes,yes,Community (#170) Owned Rollback window with grouped selection and a separate resizable comparison window (#458).

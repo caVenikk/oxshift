@@ -130,6 +130,29 @@ fn spec(source: &str, target: PushTarget) -> PushSpec {
 }
 
 #[test]
+fn push_file_comparison_uses_the_selected_revisions_through_a_rename() {
+    let r = Remotes::new();
+    let repo = r.repo();
+    let cancel = Cancel::new();
+    git(&r.ours, &["mv", "a.py", "renamed.py"]);
+    git(&r.ours, &["commit", "-qm", "rename"]);
+    let rename = git(&r.ours, &["rev-parse", "HEAD"]);
+    r.our_commit("renamed.py", "committed\n", "edit");
+    let edit = git(&r.ours, &["rev-parse", "HEAD"]);
+    write(&r.ours, "renamed.py", "local edit\n");
+    let versions = repo
+        .commit_file_versions(&[edit, rename], "renamed.py", &cancel)
+        .unwrap();
+    assert_eq!(
+        versions,
+        (Some("1\n2\n3\n".into()), Some("committed\n".into()))
+    );
+    let root = git(&r.ours, &["rev-list", "--max-parents=0", "HEAD"]);
+    let added = repo.commit_file_versions(&[root], "a.py", &cancel).unwrap();
+    assert_eq!(added, (None, Some("1\n2\n3\n".into())));
+}
+
+#[test]
 fn a_push_sends_the_outgoing_commits() {
     let r = Remotes::new();
     let repo = r.repo();
@@ -320,6 +343,57 @@ fn conflicts_leave_the_repository_as_they_are() {
         !git(&r.ours, &["stash", "list"]).is_empty(),
         "kept in the stash"
     );
+}
+
+#[test]
+fn reset_to_remote_requires_incoming_commits_and_preserves_local_edits() {
+    let r = Remotes::new();
+    let repo = r.repo();
+    let c = Cancel::new();
+    r.our_commit("local.py", "local commit", "local");
+    let target = repo.reset_target().unwrap();
+    assert_eq!(
+        repo.reset_to_remote(&target, &c).unwrap(),
+        UpdateResult::UpToDate
+    );
+    r.their_commit("incoming.py", "remote contents", "incoming");
+    write(&r.ours, "incoming.py", "untracked collision");
+    assert!(repo.reset_to_remote(&target, &c).is_err());
+    assert_eq!(read(&r.ours, "incoming.py"), "untracked collision");
+    assert_eq!(read(&r.ours, "local.py"), "local commit");
+
+    write(&r.ours, ".git/info/exclude", "incoming.py\n");
+    assert!(repo.reset_to_remote(&target, &c).is_err());
+    assert_eq!(read(&r.ours, "incoming.py"), "untracked collision");
+    std::fs::remove_file(r.ours.join("incoming.py")).unwrap();
+    write(&r.ours, "a.py", "staged local edit");
+    git(&r.ours, &["add", "a.py"]);
+    write(&r.ours, "a.py", "unstaged local edit");
+    write(&r.ours, "scratch.py", "untracked");
+    assert!(matches!(
+        repo.reset_to_remote(&target, &c).unwrap(),
+        UpdateResult::Updated { .. }
+    ));
+    assert_eq!(git(&r.ours, &["rev-parse", "HEAD"]), r.remote_head("main"));
+    assert_eq!(git(&r.ours, &["show", ":a.py"]), "staged local edit");
+    assert_eq!(read(&r.ours, "a.py"), "unstaged local edit");
+    assert_eq!(read(&r.ours, "scratch.py"), "untracked");
+}
+
+#[test]
+fn reset_to_remote_rejects_a_changed_branch_after_confirmation() {
+    let r = Remotes::new();
+    let repo = r.repo();
+    let target = repo.reset_target().unwrap();
+    r.their_commit("b.py", "incoming", "incoming");
+    git(&r.ours, &["checkout", "-b", "other", "origin/main"]);
+    let head = git(&r.ours, &["rev-parse", "HEAD"]);
+    assert!(matches!(
+        repo.reset_to_remote(&target, &Cancel::new()).unwrap(),
+        UpdateResult::NotReady { .. }
+    ));
+    assert_eq!(git(&r.ours, &["branch", "--show-current"]), "other");
+    assert_eq!(git(&r.ours, &["rev-parse", "HEAD"]), head);
 }
 
 #[test]

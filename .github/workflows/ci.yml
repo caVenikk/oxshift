@@ -98,7 +98,21 @@ jobs:
               sha256sum "$source" >> "$apt_sources_stamp"
             fi
           done
-          sudo apt-get -o APT::Update::Error-Mode=any update
+          # The runner can have no IPv6 route. Bound the first attempt so a
+          # mirror outage leaves time to fetch the same signed suites elsewhere.
+          apt_update=(-o Acquire::ForceIPv4=true -o APT::Update::Error-Mode=any update)
+          if ! sudo timeout --kill-after=10s 120s apt-get "${apt_update[@]}"; then
+            sha256sum --check "$apt_sources_stamp"
+            echo '::warning::APT index update failed; retrying via the Ubuntu archive'
+            : > "$apt_sources_stamp"
+            for source in /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources; do
+              if [ -f "$source" ]; then
+                sudo sed -i -E 's#(^|[[:space:]])https://mirrors\.kernel\.org/ubuntu/([[:space:]]|$)#\1https://archive.ubuntu.com/ubuntu/\2#g' "$source"
+                sha256sum "$source" >> "$apt_sources_stamp"
+              fi
+            done
+            sudo timeout --kill-after=10s 120s apt-get "${apt_update[@]}"
+          fi
           sha256sum --check "$apt_sources_stamp"
           echo "::group::APT index diagnostics"
           dpkg-query -W apt
@@ -126,7 +140,7 @@ jobs:
           apt-cache policy libxkbcommon-dev libwayland-dev libfontconfig-dev
           apt-cache stats
           echo "::endgroup::"
-          sudo apt-get install -y --no-install-recommends \
+          sudo apt-get -o Acquire::ForceIPv4=true install -y --no-install-recommends \
             pkg-config libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev \
             libx11-xcb-dev libxcb1-dev libfontconfig-dev libfreetype-dev libvulkan1
       - uses: dtolnay/rust-toolchain@stable

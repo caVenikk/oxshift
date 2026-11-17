@@ -32,7 +32,7 @@ use ui::theme::ThemeExt;
 use crate::blocks::{Blocks, RowLayout};
 use crate::colors::{Resolver, TerminalColors};
 use crate::commands::{
-    Clear, Copy, LineDown, LineUp, OpenLink, PageDown, PageUp, Paste, SelectAll,
+    Clear, Copy, CopyUrl, LineDown, LineUp, OpenLink, OpenUrl, PageDown, PageUp, Paste, SelectAll,
 };
 use crate::element::TerminalElement;
 use crate::find::{FindPrefs, FindState};
@@ -337,6 +337,9 @@ impl SessionView {
     fn empty(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let focus = cx.focus_handle();
         let subscriptions = vec![
+            cx.observe_global::<crate::Behavior>(|this, cx| {
+                this.set_options(cx.global::<crate::Behavior>().session.clone(), cx);
+            }),
             cx.on_focus(&focus, window, |this, window, cx| {
                 if let Some(s) = &this.session {
                     s.set_focused(true);
@@ -363,7 +366,10 @@ impl SessionView {
             working_directory: None,
             command_running: false,
             focus,
-            options: TerminalOptions::default(),
+            options: cx
+                .try_global::<crate::Behavior>()
+                .map(|s| s.session.clone())
+                .unwrap_or_default(),
             snapshot: Snapshot::default(),
             spare: Snapshot::default(),
             copy_in_frame: false,
@@ -851,9 +857,7 @@ impl SessionView {
         let Some(session) = &self.session else {
             return false;
         };
-        let meta = cx
-            .try_global::<crate::Behavior>()
-            .map_or(self.options.option_as_meta, |s| s.option_as_meta);
+        let meta = self.options.option_as_meta;
         let Some((key, mods)) = keys::session_key(keystroke, meta) else {
             return false;
         };
@@ -1351,6 +1355,14 @@ impl Render for SessionView {
             .on_action(cx.listener(Self::find_case_action))
             .on_action(cx.listener(Self::find_regex_action))
             .on_action(cx.listener(Self::open_link_action))
+            .on_action(cx.listener(|_, action: &CopyUrl, _, cx| {
+                cx.write_to_clipboard(ClipboardItem::new_string(action.url.clone()));
+            }))
+            .on_action(cx.listener(|_, action: &OpenUrl, _, cx| {
+                cx.emit(SessionViewEvent::OpenLink(LinkTarget::Url(
+                    action.url.clone(),
+                )));
+            }))
             .child(grid)
             .children(self.render_find(window, cx))
             .children(self.render_hint(cx))

@@ -232,6 +232,17 @@ fn project_and_application_options_apply_together_and_cancel_discards_edits(
     h.invoke("settings.open", json!({"page": "terminal"}));
     assert_eq!(h.page()["start-directory"], "$PROJECT_DIR$/src");
     assert_eq!(h.page()["environment"], r"ONE=a\;b");
+    let pointer_options = [
+        ("show-separators", true),
+        ("mouse-reporting", true),
+        ("copy-on-selection", false),
+        ("paste-on-middle-click", true),
+    ];
+    let initial = h.page();
+    for (key, default) in pointer_options {
+        assert_eq!(initial[key], default);
+        h.edit(key, json!(!default));
+    }
     h.edit("shell-path", json!("sh"));
     h.edit("shell-integration", json!(false));
     h.edit("close-session-on-exit", json!(false));
@@ -243,6 +254,10 @@ fn project_and_application_options_apply_together_and_cancel_discards_edits(
     assert_eq!(h.get("terminal.shell-integration"), false);
     assert_eq!(h.get("terminal.close-session-on-exit"), false);
     assert_eq!(h.get("terminal.override-ide-shortcuts"), false);
+    for (key, default) in pointer_options {
+        assert_eq!(h.get(&format!("terminal.{key}")), !default);
+        assert!(h.file_text().contains(&format!("{key} = {}", !default)));
+    }
     assert_eq!(h.get("terminal.font.size"), 15.0);
     assert_eq!(h.modified(), json!([]));
     assert_eq!(std::fs::read_to_string(&reference).unwrap(), xml);

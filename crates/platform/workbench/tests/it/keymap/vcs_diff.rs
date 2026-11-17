@@ -133,6 +133,18 @@ fn check(h: &mut H, b: &Binding) -> bool {
     h.reset();
     match b.command.as_str() {
         // The diff viewer (#171).
+        "diff.close-window" => {
+            let owner = h.target();
+            let snapshot = h.cx.update_window(owner, |_, window, cx| {
+                vcs_ui::diff::SnapshotWindow::open("Compare Changes".into(), window, cx)
+                    .expect("the comparison opens")
+            }).unwrap();
+            h.draw();
+            assert!(h.target() == snapshot.handle(), "{what}");
+            h.press(keys);
+            assert!(h.target() == owner, "{what}: focus returns to the owner");
+            assert!(!h.cx.update(|cx| snapshot.is_open(cx)), "{what}");
+        }
         c if c.starts_with("diff.") => check_diff(h, c, keys, &what),
         _ => return false,
     }

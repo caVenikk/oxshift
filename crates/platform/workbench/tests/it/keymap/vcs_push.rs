@@ -33,7 +33,12 @@ fn with_remote(h: &mut H) {
         git(h, &["init", "-q", "--bare", &path]);
         git(h, &["remote", "add", "origin", &path]);
     }
-    git(h, &["commit", "-q", "--allow-empty", "-m", "outgoing"]);
+    let file = h.root.join("outgoing.txt");
+    let mut contents = std::fs::read_to_string(&file).unwrap_or_default();
+    contents.push_str("outgoing change\n");
+    std::fs::write(file, contents).unwrap();
+    git(h, &["add", "outgoing.txt"]);
+    git(h, &["commit", "-q", "-m", "outgoing"]);
 }
 
 /// Opens the Push dialog of `main` and waits for its commits.
@@ -83,6 +88,46 @@ fn check_remote(h: &mut H, command: &str, keys: &str, what: &str) {
                 // `main` tracks nothing: the update cannot start.
                 wait_vcs(h, "the update's balloon", |_| true);
             }
+        }
+        "push-dialog.edit-target" => {
+            open_push(h);
+            h.press(keys);
+            assert_eq!(remote_ui(h)["push_dialog"]["editing"], "main", "{what}");
+        }
+        "push-dialog.compare" => {
+            open_push(h);
+            h.invoke("push-dialog.select", json!({ "row": 1 }));
+            let before = wait_vcs(h, "the selected commit's files", |v| {
+                v["remote"]["push_dialog"]["files"]
+                    .as_array()
+                    .is_some_and(|f| !f.is_empty())
+            })["remote"]["push_dialog"]
+                .clone();
+            let owner = h.target();
+            h.press(keys);
+            let child =
+                h.cx.update(|cx| ui::dialog_window::modal_of(owner, cx))
+                    .expect("the file comparison owns a window over Push");
+            wait_vcs(h, "committed file comparison", |v| {
+                v["remote"]["push_dialog"]["comparison"]["computed"] == true
+            });
+            h.cx.simulate_keystrokes(child, "escape");
+            h.draw();
+            assert!(
+                h.cx.update(|cx| ui::dialog_window::modal_of(owner, cx))
+                    .is_none()
+            );
+            let after = remote_ui(h)["push_dialog"].clone();
+            assert!(after["comparison"].is_null(), "{what}: {after}");
+            assert_eq!(after["selected_rows"], before["selected_rows"], "{what}");
+            assert_eq!(after["files"], before["files"], "{what}");
+            h.cx.simulate_keystrokes(owner, "up");
+            h.draw();
+            assert_eq!(
+                remote_ui(h)["push_dialog"]["selected"],
+                0,
+                "focus returned to the log"
+            );
         }
         "push-dialog.cancel" => {
             open_push(h);

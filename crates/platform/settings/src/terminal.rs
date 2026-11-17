@@ -21,6 +21,10 @@ pub struct TerminalSettings {
     /// scripts (a virtual environment's `activate`) are sourced before the
     /// first prompt. The reference activates no environment without it.
     pub shell_integration: bool,
+    pub show_separators: bool,
+    pub mouse_reporting: bool,
+    pub copy_on_selection: bool,
+    pub paste_on_middle_click: bool,
     /// "Close session when it ends": the tab of a session whose shell
     /// exited closes.
     pub close_session_on_exit: bool,
@@ -38,6 +42,10 @@ impl Default for TerminalSettings {
         Self {
             shell_path: String::new(),
             shell_integration: true,
+            show_separators: true,
+            mouse_reporting: true,
+            copy_on_selection: false,
+            paste_on_middle_click: true,
             close_session_on_exit: true,
             override_ide_shortcuts: true,
             option_as_meta: false,

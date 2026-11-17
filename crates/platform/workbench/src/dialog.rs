@@ -273,6 +273,13 @@ impl Dialog {
         }
     }
 
+    /// Opens a message directly over its owning dialog window.
+    pub(crate) fn open_owned(this: Entity<Self>, parent: &mut Window, cx: &mut App) -> bool {
+        this.update(cx, |dialog, _| dialog.shown = Shown::Opening);
+        Self::open_window(this.clone(), parent, cx);
+        matches!(this.read(cx).shown, Shown::Open(_))
+    }
+
     /// Opens the dialog's window over `parent`: centred, a quarter of the
     /// window's height from its top (`AlertDialog.initialLocation`).
     fn open_window(this: Entity<Self>, parent: &mut Window, cx: &mut App) {

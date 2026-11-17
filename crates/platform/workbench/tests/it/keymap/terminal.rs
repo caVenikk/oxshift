@@ -875,6 +875,71 @@ fn paths_in_the_output_open_in_the_editor_and_the_project_view(cx: &mut TestAppC
 }
 
 #[gpui::test]
+fn output_context_menu_uses_the_url_at_the_click(cx: &mut TestAppContext) {
+    let (mut h, _dir) = setup(cx, keymap::MACOS);
+    h.open_terminal(None);
+    let url = "https://example.org";
+    h.invoke(
+        "terminal.type",
+        json!({"text": format!("echo link {url}\r")}),
+    );
+    let line = format!("link {url}");
+    let state = h.wait_terminal("URL in shell output", |s| {
+        s["lines"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|l| l.as_str().unwrap().trim_end() == line)
+    });
+    let row = state["lines"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .position(|l| l.as_str().unwrap().trim_end() == line)
+        .unwrap();
+    let session = h.workbench(|w, cx| w.terminal_session(cx)).unwrap();
+    let geometry = h.cx.update(|cx| session.read(cx).geometry().unwrap());
+    let modifiers = gpui::Modifiers::none();
+
+    for (col, action) in [
+        (0, None),
+        (7, Some("menu-item:Copy URL")),
+        (7, Some("menu-item:Open in Browser")),
+    ] {
+        let at = gpui::point(
+            geometry.origin.x + geometry.cell.width * (col as f32 + 0.5),
+            geometry.top_of(row) + geometry.cell.height * 0.5,
+        );
+        let mut visual = gpui::VisualTestContext::from_window(h.window.into(), h.cx);
+        visual.simulate_mouse_down(at, gpui::MouseButton::Right, modifiers);
+        visual.simulate_mouse_up(at, gpui::MouseButton::Right, modifiers);
+        h.draw();
+        let state = h.terminal();
+        let rows = state["options_menu"]["levels"][0]["items"]
+            .as_array()
+            .unwrap();
+        assert_eq!(
+            rows.iter().find(|r| r["label"] == "Copy").unwrap()["enabled"],
+            false
+        );
+        if let Some(action) = action {
+            let mut visual = gpui::VisualTestContext::from_window(h.window.into(), h.cx);
+            let at = visual.debug_bounds(action).unwrap().center();
+            visual.simulate_click(at, modifiers);
+            h.draw();
+        } else {
+            assert!(rows.iter().all(|r| r["label"] != "Copy URL" && r["label"] != "Open in Browser"));
+            h.press("escape");
+        }
+    }
+    assert_eq!(
+        h.cx.read_from_clipboard().and_then(|c| c.text()).as_deref(),
+        Some(url)
+    );
+    assert_eq!(h.cx.opened_url().as_deref(), Some(url));
+}
+
+#[gpui::test]
 fn rename_session_from_tab_context_menu(cx: &mut TestAppContext) {
     let (mut h, _dir) = setup(cx, keymap::MACOS);
     h.open_terminal(None);
@@ -981,11 +1046,18 @@ fn project_sessions_restore_unfocused(cx: &mut TestAppContext) {
     for (element, labels) in [
         (
             "terminal-tab-1",
-            vec!["Rename Session", "Close Tab", "Close Other Tabs"],
+            vec![
+                "Rename Session", "Close Tab", "Close All Tabs", "Close Other Tabs",
+                "Select Next Tab", "Select Previous Tab", "Show List of Tabs",
+                "Settings", "Group Tabs",
+            ],
         ),
         (
             "terminal-session",
-            vec!["Copy", "Paste", "Select All", "Clear", "Find", "New Tab"],
+            vec![
+                "Find", "New Tab", "Close Tab", "Copy", "Paste", "Select All",
+                "Clear Terminal", "Page Up", "Page Down", "Line Up", "Line Down",
+            ],
         ),
     ] {
         let mut visual = gpui::VisualTestContext::from_window(h.window.into(), h.cx);

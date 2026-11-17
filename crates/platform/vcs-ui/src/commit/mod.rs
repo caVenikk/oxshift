@@ -23,6 +23,7 @@
 pub mod dialogs;
 pub mod legend;
 mod render;
+pub(crate) use render::tri_checkbox;
 pub mod tree;
 
 use std::cell::Cell;

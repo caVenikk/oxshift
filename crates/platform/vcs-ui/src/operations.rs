@@ -2,8 +2,8 @@
 //! Alt+` elsewhere): "VCS Operations" in the middle of the window with
 //! speed search. Under Git it lists the `Vcs.Operations.Popup` group as
 //! the Git quick list provider rearranges it: the "Git" separator,
-//! Commit…, Rollback…, then Show History, Annotate with Git Blame and
-//! Compare with the Same Repository Version, then Branches…, Push…, Stash
+//! Commit…, Rollback…, then Show History, Annotate and
+//! Show Diff, then Branches…, Push…, Stash
 //! Changes… and Unstash Changes…, then Add to VCS, Copy Branch Name and
 //! Resolve Conflicts…. Without a repository it offers Create Git
 //! Repository…. Commands that are not there yet are shown disabled.
@@ -39,18 +39,22 @@ fn item(label: &'static str, id: &str, cx: &App) -> MenuItem {
 
 /// The rows of the popup: for a project under Git (`git`), else the
 /// actions that put it under version control.
-pub fn items(git: bool, cx: &App) -> Vec<MenuItem> {
+pub fn items(git: bool, diff_path: Option<String>, cx: &App) -> Vec<MenuItem> {
     if !git {
         return vec![item("Create Git Repository\u{2026}", "git.init", cx)];
     }
+    let can_diff = diff_path.is_some();
     vec![
         MenuItem::header("Git"),
         item("Commit\u{2026}", "vcs.commit", cx),
+        // The stage-specific Commit action is disabled without staging support.
+        MenuItem::unavailable("Commit\u{2026}"),
         item("Rollback\u{2026}", "vcs.rollback", cx),
-        MenuItem::separator(),
         MenuItem::unavailable("Show History"),
-        MenuItem::unavailable("Annotate with Git Blame"),
-        MenuItem::unavailable("Compare with the Same Repository Version"),
+        MenuItem::unavailable("Annotate"),
+        MenuItem::action("Show Diff", crate::diff::ShowDiff { path: diff_path })
+            .icon(ui::icons::IconName::DIFF)
+            .enabled(can_diff),
         MenuItem::separator(),
         item("Branches\u{2026}", "vcs.branches-popup", cx),
         item("Push\u{2026}", "vcs.push", cx),

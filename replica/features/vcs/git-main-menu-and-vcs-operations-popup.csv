@@ -1,2 +1,2 @@
 feature,area,priority,original,clone,notes
-Git main menu and VCS Operations popup,vcs,must,yes,partial,"Community (#91); Git main menu with Commit, Push, Update Project, Fetch, Branches, New Branch, Rollback, Add and VCS Operations; no Pull, Stash, Annotate or Log yet"
+Git main menu and VCS Operations popup,vcs,must,yes,partial,"Community (#91); Git main menu with Commit, Push, Update Project, Fetch, Branches, New Branch, Rollback, Add and VCS Operations; VCS Operations opens Show Diff for the focused changed file; no top-level Pull dialog, Stash, Annotate or Log yet"

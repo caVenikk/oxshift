@@ -402,16 +402,15 @@ pub fn candidates_at(script: &str, caret: usize, dialect: Dialect) -> Vec<Candid
 
 /// The text in `range` of `script` as one statement, whatever it holds:
 /// trimmed, a closing `;` dropped (a PL/SQL block keeps its own), the range
-/// narrowed to match. `None` when nothing but blanks and `;` is left.
+/// narrowed to match. `None` when the selection contains only trivia and terminators.
 pub fn statement_of(script: &str, range: Range<usize>, dialect: Dialect) -> Option<Statement> {
     let start = floor_boundary(script, range.start);
     let end = floor_boundary(script, range.end).max(start);
     let piece = &script[start..end];
     let lead = piece.len() - piece.trim_start().len();
     let mut text = piece.trim();
-    let block = split(text, dialect)
-        .last()
-        .is_some_and(|s| s.text.trim_end().ends_with(';'));
+    let statements = split(text, dialect);
+    let block = statements.last()?.text.trim_end().ends_with(';');
     if !block {
         text = text.trim_end_matches(|c: char| c == ';' || c.is_whitespace());
     }

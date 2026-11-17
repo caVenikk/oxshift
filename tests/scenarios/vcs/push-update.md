@@ -60,10 +60,11 @@
   offers Pull into 'main' Using Rebase and Using Merge; Update of another
   branch fast-forwards it: "Fetched 1 targets".
 - Step 11: the popup "VCS Operations" in the middle of the window: Git,
-  Commit…, Rollback…, Show History, Annotate with Git Blame, Compare with
-  the Same Repository Version, Branches…, Push…, Stash Changes…, Unstash
-  Changes…, Add to VCS, Copy Branch Name, Resolve Conflicts…; those not
-  there yet are disabled.
+  Commit…, the disabled staging Commit…, Rollback…, Show History, Annotate,
+  Show Diff, Branches…, Push…, Stash Changes…, Unstash Changes…, Add to VCS, Copy Branch Name, Resolve Conflicts…; those not
+  there yet are disabled. From the editor or Project tree, Show Diff opens
+  the changed tracked file. With a clean file, untracked file or directory
+  selected, the row is disabled.
 
 ## Limitations
 - git never asks for credentials: remotes need a credential helper or an

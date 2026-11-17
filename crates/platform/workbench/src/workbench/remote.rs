@@ -980,10 +980,15 @@ impl Workbench {
             return;
         }
         let git = self.version_control.service.is_some();
-        let items = vcs_ui::operations::items(git, cx);
+        let diff_path = self
+            .diff_context_file(window, cx)
+            .filter(|path| self.vcs_file_status(path, cx).is_change())
+            .map(|path| path.display().to_string());
+        let items = vcs_ui::operations::items(git, diff_path, cx);
         let options = PopupOptions {
             title: Some(vcs_ui::operations::TITLE.into()),
             speed_search: true,
+            numbered: true,
             ..PopupOptions::default()
         };
         let menu = ContextMenu::popup(items, options, window, cx);
@@ -1042,7 +1047,7 @@ impl Workbench {
                             .on_mouse_down(MouseButton::Left, move |_, window, cx| {
                                 backdrop.update(cx, |m, cx| m.dismiss(window, cx))
                             })
-                            .child(menu.clone()),
+                            .child(ui::menu::surface(menu)),
                     ),
                 )
                 .with_priority(1)

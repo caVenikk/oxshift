@@ -165,16 +165,16 @@ impl Workbench {
         }
     }
 
-    fn diff_context_file(&self, window: &Window, cx: &App) -> Option<PathBuf> {
+    pub(super) fn diff_context_file(&self, window: &Window, cx: &App) -> Option<PathBuf> {
         let commit = self.commit_ui.view.read(cx);
         if commit.contains_focus(window, cx) {
             return commit.selected_files().into_iter().next();
         }
         let panel = self.panel.read(cx);
-        if panel.focus_handle(cx).contains_focused(window, cx)
-            && let Some((path, false)) = panel.selected_path()
-        {
-            return Some(path.to_owned());
+        if panel.focus_handle(cx).contains_focused(window, cx) {
+            return panel
+                .selected_path()
+                .and_then(|(path, dir)| (!dir).then(|| path.to_owned()));
         }
         self.active_file(cx)
     }

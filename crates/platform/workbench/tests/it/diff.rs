@@ -629,6 +629,75 @@ fn the_marker_popup_and_the_project_tree_open_the_diff(cx: &mut TestAppContext) 
 }
 
 #[gpui::test]
+fn operations_show_diff_uses_the_file_focused_before_the_popup(cx: &mut TestAppContext) {
+    let (mut h, _dir) = open(cx, |root| {
+        repository(root);
+        write(root, "clean.py", "# clean\n");
+        git(root, &["add", "clean.py"]);
+        git(root, &["commit", "-q", "-m", "clean file"]);
+        change(root);
+        write(root, "sub/new.py", "# untracked\n");
+    });
+    let keys = if cfg!(target_os = "macos") {
+        "ctrl-v"
+    } else {
+        "alt-`"
+    };
+    let open_popup = |h: &mut H| {
+        h.cx.simulate_keystrokes(h.window.into(), keys);
+        h.draw();
+        let popup = &h.invoke("vcs.state", Value::Null)["remote"]["operations_popup"];
+        let items = popup["levels"][0]["items"]
+            .as_array()
+            .expect("open VCS Operations");
+        let row = items
+            .iter()
+            .position(|i| i["label"] == "Show Diff")
+            .expect("Show Diff row");
+        assert_eq!(items[row]["number"], "6");
+        assert_eq!(items[row - 1]["label"], "Annotate");
+        assert_eq!(items[row + 1]["separator"], true);
+        assert_eq!(items[row + 2]["label"], "Branches…");
+        items[row]["enabled"] == true
+    };
+    h.invoke("project.open-file", json!({ "path": "main.py" }));
+    h.wait("the editor", |h| {
+        h.window
+            .read_with(h.cx, |w, _| w.active_editor().map(|_| ()))
+            .unwrap()
+    });
+    h.focus(|w, cx| w.active_editor().unwrap().focus_handle(cx));
+    assert!(open_popup(&mut h));
+    h.cx.simulate_keystrokes(h.window.into(), "6");
+    h.wait_diff("main.py");
+    h.invoke("project.open-file", json!({ "path": "main.py" }));
+    for path in ["clean.py", "sub", "sub/new.py", "b.py"] {
+        h.invoke("project.tree.reveal", json!({ "path": path }));
+        let selected = h.root.join(path);
+        h.wait("the project tree selection", |h| {
+            h.window
+                .read_with(h.cx, |w, cx| {
+                    w.panel()
+                        .read(cx)
+                        .selected_path()
+                        .filter(|(p, _)| *p == selected)
+                        .map(|_| ())
+                })
+                .unwrap()
+        });
+        h.focus(|w, cx| w.panel().focus_handle(cx));
+        assert_eq!(open_popup(&mut h), path == "b.py", "{path}");
+        if path == "b.py" {
+            h.cx.simulate_keystrokes(h.window.into(), "d i f f enter");
+            h.wait_diff("b.py");
+        } else {
+            h.cx.simulate_keystrokes(h.window.into(), "escape");
+            h.draw();
+        }
+    }
+}
+
+#[gpui::test]
 fn whitespace_is_ignored_on_request(cx: &mut TestAppContext) {
     let (mut h, _dir) = open(cx, |root| {
         repository(root);

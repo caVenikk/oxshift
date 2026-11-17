@@ -2643,16 +2643,21 @@ pub fn overlay_at(
                         .when(!crate::popup_window::enabled(), |a| {
                             a.snap_to_window_with_margin(px(4.0))
                         })
-                        .child(if crate::popup_window::enabled() {
-                            NativeMenu { menu: menu.clone() }.into_any_element()
-                        } else {
-                            menu.clone().into_any_element()
-                        }),
+                        .child(surface(menu)),
                 ),
         ),
     )
     .with_priority(1)
     .into_any_element()
+}
+
+/// Places the menu in the owner layout, using its own window on native macOS.
+pub fn surface(menu: &Entity<ContextMenu>) -> AnyElement {
+    if crate::popup_window::enabled() {
+        NativeMenu { menu: menu.clone() }.into_any_element()
+    } else {
+        menu.clone().into_any_element()
+    }
 }
 
 struct NativeMenu {

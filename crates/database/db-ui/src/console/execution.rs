@@ -377,7 +377,12 @@ mod tests {
                 for_selection: mode,
                 ..o
             };
-            assert_eq!(plan("-- x", 4, 0..4, PG, &options), Plan::Nothing);
+            for empty in ["-- x", "; ;", " /* ; */ ; \n; -- x"] {
+                assert_eq!(
+                    plan(empty, empty.len(), 0..empty.len(), PG, &options),
+                    Plan::Nothing
+                );
+            }
         }
     }
 }

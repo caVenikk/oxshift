@@ -39,6 +39,7 @@ pub(crate) fn plan(
     if !selection.is_empty() {
         let statements = match options.for_selection {
             ForSelection::Separate => sql_syntax::statements_in(text, selection, dialect),
+            ForSelection::SmartExpand => smart_expand(text, selection, dialect),
             ForSelection::One => sql_syntax::statement_of(text, selection, dialect)
                 .into_iter()
                 .collect(),
@@ -47,53 +48,109 @@ pub(crate) fn plan(
     }
     let statements = sql_syntax::split(text, dialect);
     // The statement's own `;` is part of it for the caret.
-    let inside = statements.iter().any(|s| {
-        s.range.start <= caret
-            && text
-                .get(s.range.end..caret.max(s.range.end))
-                .is_some_and(|tail| tail.bytes().all(|b| b == b';'))
-    });
-    let candidates = sql_syntax::candidates_at(text, caret, dialect);
-    if candidates.is_empty() {
-        return Plan::Nothing;
-    }
-    let statement_candidate = || {
-        candidates
-            .iter()
-            .find(|c| c.kind == CandidateKind::Statement)
-    };
-    let one = |range: &Range<usize>| sql_syntax::statement_of(text, range.clone(), dialect);
-    if inside {
-        match options.caret_inside {
-            CaretInside::Smallest => run(candidates.first().and_then(|c| one(&c.range))),
-            CaretInside::Largest => run(statement_candidate().and_then(|c| one(&c.range))),
-            CaretInside::Ask => {
-                let choices: Vec<Choice> = candidates
+    let index = statements
+        .iter()
+        .rposition(|s| s.range.start <= caret)
+        .filter(|&i| {
+            let statement = &statements[i];
+            let end = statement.range.end;
+            if caret > end {
+                return caret == end + 1 && text.as_bytes().get(end) == Some(&b';');
+            }
+            // Comments within a statement use the same outside policy as a standalone comment.
+            let local = caret - statement.range.start;
+            !((statement.text.contains("--") || statement.text.contains("/*"))
+                && sql_syntax::lex(&statement.text, dialect)
                     .iter()
-                    .filter(|c| c.kind != CandidateKind::Script)
-                    .filter_map(|c| choice(text, &c.range, one(&c.range)))
-                    .collect();
-                ask_or_run(choices)
+                    .any(|token| {
+                        matches!(
+                            token.kind,
+                            sql_syntax::TokenKind::LineComment
+                                | sql_syntax::TokenKind::BlockComment
+                        ) && token.range().contains(&local)
+                    }))
+        });
+    if let Some(index) = index {
+        let statement = &statements[index];
+        return match options.caret_inside {
+            CaretInside::WholeScript => run(statements),
+            CaretInside::FromCaret => run(statements.into_iter().skip(index)),
+            // The supported dialects have no Transact-SQL batch separator.
+            CaretInside::Largest | CaretInside::LargestOrBatch => run([statement.clone()]),
+            CaretInside::SmallestStatement => {
+                let nested = nested_statement(statement, caret, dialect)
+                    .and_then(|r| sql_syntax::statement_of(text, r, dialect));
+                run([nested.unwrap_or_else(|| statement.clone())])
             }
-        }
-    } else {
-        match options.caret_outside {
-            CaretOutside::Nothing => Plan::Nothing,
-            CaretOutside::Closest => run(statement_candidate().and_then(|c| one(&c.range))),
-            CaretOutside::Ask => {
-                let mut choices: Vec<Choice> = statement_candidate()
-                    .and_then(|c| choice(text, &c.range, one(&c.range)))
+            CaretInside::Ask | CaretInside::Smallest => {
+                let mut ranges: Vec<_> = sql_syntax::candidates_at(text, caret, dialect)
                     .into_iter()
+                    .filter(|c| c.kind != CandidateKind::Script)
+                    .map(|c| c.range)
+                    .chain(nested_statement(statement, caret, dialect))
                     .collect();
-                if let Some(script) = candidates.iter().find(|c| c.kind == CandidateKind::Script) {
-                    choices.push(Choice {
-                        label: "All statements".to_owned(),
-                        statements: sql_syntax::statements_in(text, script.range.clone(), dialect),
-                    });
+                ranges.sort_by_key(Range::len);
+                ranges.dedup();
+                let mut scoped = ranges
+                    .into_iter()
+                    .filter_map(|range| sql_syntax::statement_of(text, range, dialect));
+                if options.caret_inside == CaretInside::Smallest {
+                    run(scoped.next())
+                } else {
+                    ask_or_run(scoped.map(choice).collect())
                 }
-                ask_or_run(choices)
             }
+        };
+    }
+    match options.caret_outside {
+        CaretOutside::Nothing => Plan::Nothing,
+        CaretOutside::WholeScript => run(statements),
+        CaretOutside::BelowCaret => run(statements.into_iter().filter(|s| s.range.start >= caret)),
+        CaretOutside::Closest => run(sql_syntax::statement_at(text, caret, dialect)),
+        CaretOutside::Ask => {
+            let mut choices: Vec<_> = sql_syntax::statement_at(text, caret, dialect)
+                .map(choice)
+                .into_iter()
+                .collect();
+            if statements.len() > 1 {
+                choices.push(Choice {
+                    label: "All statements".to_owned(),
+                    statements,
+                });
+            }
+            ask_or_run(choices)
         }
+    }
+}
+
+/// Procedural bodies can contain complete statements of their own.
+fn nested_statement(statement: &Statement, caret: usize, dialect: Dialect) -> Option<Range<usize>> {
+    if !statement.text.contains(';') {
+        return None;
+    }
+    let start = statement.range.start;
+    let parsed = sql_syntax::parse(&statement.text, dialect);
+    let leaf = parsed.node_at(caret - start)?;
+    let node = std::iter::once(leaf).chain(leaf.ancestors()).find(|n| {
+        n.parent()
+            .is_some_and(|p| p.kind() == sql_syntax::SyntaxKind::StatementList)
+    })?;
+    let range = node.range();
+    Some(start + range.start..start + range.end)
+}
+
+fn smart_expand(text: &str, selection: Range<usize>, dialect: Dialect) -> Vec<Statement> {
+    let touched: Vec<_> = sql_syntax::split(text, dialect)
+        .into_iter()
+        .filter(|s| s.range.start < selection.end && selection.start < s.range.end)
+        .collect();
+    if touched
+        .iter()
+        .any(|s| selection.start < s.range.start || s.range.end < selection.end)
+    {
+        touched
+    } else {
+        sql_syntax::statements_in(text, selection, dialect)
     }
 }
 
@@ -114,9 +171,9 @@ fn ask_or_run(mut choices: Vec<Choice>) -> Plan {
     }
 }
 
-fn choice(text: &str, range: &Range<usize>, statement: Option<Statement>) -> Option<Choice> {
-    let statement = statement?;
-    let one_line = text[range.clone()]
+fn choice(statement: Statement) -> Choice {
+    let one_line = statement
+        .text
         .split_whitespace()
         .collect::<Vec<_>>()
         .join(" ");
@@ -126,10 +183,10 @@ fn choice(text: &str, range: &Range<usize>, statement: Option<Statement>) -> Opt
     } else {
         one_line
     };
-    Some(Choice {
+    Choice {
         label,
         statements: vec![statement],
-    })
+    }
 }
 
 #[cfg(test)]
@@ -246,9 +303,81 @@ mod tests {
     }
 
     #[test]
+    fn script_and_tail_keep_complete_statements_in_source_order() {
+        let input = "select 1;select (select 2);\n\nselect 3;";
+        let mut o = ExecuteOptions::default();
+        let all = ["select 1", "select (select 2)", "select 3"];
+        o.caret_inside = CaretInside::WholeScript;
+        assert_eq!(texts(&at(input, "select 2", 4, &o)), all);
+        o.caret_inside = CaretInside::FromCaret;
+        for (marker, offset) in [("select (", 0), ("select 2", 4)] {
+            assert_eq!(texts(&at(input, marker, offset, &o)), all[1..]);
+        }
+        o.caret_outside = CaretOutside::WholeScript;
+        assert_eq!(texts(&at(input, "\n\n", 1, &o)), all);
+        o.caret_outside = CaretOutside::BelowCaret;
+        assert_eq!(texts(&at(input, "\n\n", 1, &o)), ["select 3"]);
+        assert_eq!(at("select 1;\n", "\n", 1, &o), Plan::Nothing);
+        assert_eq!(
+            texts(&at("select 1; -- here\n select 2;", "here", 1, &o)),
+            ["select 2"]
+        );
+        assert_eq!(
+            texts(&at("select /* here */ 1; select 2;", "here", 1, &o)),
+            ["select 2"]
+        );
+    }
+
+    #[test]
+    fn smallest_statement_excludes_subqueries_and_can_run_a_trigger_statement() {
+        let mut o = ExecuteOptions {
+            caret_inside: CaretInside::SmallestStatement,
+            ..Default::default()
+        };
+        let input = "select 1; select (select 2);";
+        assert_eq!(texts(&at(input, "select 2", 4, &o)), ["select (select 2)"]);
+        let trigger = "create trigger log after insert on t begin select 41; select 42; end;";
+        let caret = trigger.find("42").unwrap();
+        assert_eq!(
+            texts(&plan(trigger, caret, caret..caret, Dialect::Sqlite, &o)),
+            ["select 42"]
+        );
+        o.caret_inside = CaretInside::LargestOrBatch;
+        assert_eq!(
+            texts(&plan(trigger, caret, caret..caret, Dialect::Sqlite, &o)),
+            [trigger.trim_end_matches(';')]
+        );
+    }
+
+    #[test]
+    fn smart_selection_expands_only_when_crossing_a_statement_boundary() {
+        let input = "select 'a;b'; select (select 22); select 33;";
+        let o = ExecuteOptions {
+            for_selection: ForSelection::SmartExpand,
+            ..Default::default()
+        };
+        let nested = input.find("select 22").unwrap();
+        let run = |range: Range<usize>| texts(&plan(input, range.end, range, PG, &o));
+        assert_eq!(run(nested..nested + 9), ["select 22"]);
+        assert_eq!(run(8..nested + 1), ["select 'a;b'", "select (select 22)"]);
+        assert!(run(12..14).is_empty());
+    }
+
+    #[test]
     fn an_empty_script_runs_nothing() {
         let o = ExecuteOptions::default();
         assert_eq!(plan("", 0, 0..0, PG, &o), Plan::Nothing);
         assert_eq!(plan("-- x", 2, 2..2, PG, &o), Plan::Nothing);
+        for mode in [
+            ForSelection::One,
+            ForSelection::Separate,
+            ForSelection::SmartExpand,
+        ] {
+            let options = ExecuteOptions {
+                for_selection: mode,
+                ..o
+            };
+            assert_eq!(plan("-- x", 4, 0..4, PG, &options), Plan::Nothing);
+        }
     }
 }

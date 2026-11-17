@@ -47,8 +47,12 @@ choices! {
     /// What Execute runs when the caret is inside a statement.
     CaretInside {
         Ask => "ask", "Ask what to execute";
-        Smallest => "smallest", "Smallest statement";
+        Smallest => "smallest", "Smallest subquery or statement";
+        SmallestStatement => "smallest-statement", "Smallest statement";
         Largest => "largest", "Largest statement";
+        LargestOrBatch => "largest-or-batch", "Largest statement or batch";
+        WholeScript => "whole-script", "Whole script";
+        FromCaret => "from-caret", "Everything from caret";
     }
 }
 
@@ -56,6 +60,8 @@ choices! {
     /// What Execute runs when the caret is between statements.
     CaretOutside {
         Nothing => "nothing", "Nothing";
+        WholeScript => "whole-script", "Whole script";
+        BelowCaret => "below-caret", "Everything below caret";
         Closest => "closest", "Closest statement";
         Ask => "ask", "Ask what to execute";
     }
@@ -64,8 +70,9 @@ choices! {
 choices! {
     /// How Execute runs a selection.
     ForSelection {
+        One => "one", "Exactly as a single statement";
         Separate => "separate", "Exactly as separate statements";
-        One => "one", "Exactly as one statement";
+        SmartExpand => "smart-expand", "Smart expand to script";
     }
 }
 

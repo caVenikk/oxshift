@@ -215,18 +215,29 @@ impl QueryExecutionPage {
 
     /// The list of a combo box: its options and the index of the current one.
     fn options_of(&self, combo: Combo) -> (Vec<(&'static str, &'static str)>, Option<usize>) {
-        fn rows<C: Choice>(current: C) -> (Vec<(&'static str, &'static str)>, Option<usize>) {
+        fn rows<C: Choice>(
+            choices: &[C],
+            current: C,
+        ) -> (Vec<(&'static str, &'static str)>, Option<usize>) {
             (
-                C::ALL.iter().map(|c| (c.id(), c.label())).collect(),
-                C::ALL.iter().position(|c| *c == current),
+                choices.iter().map(|c| (c.id(), c.label())).collect(),
+                choices.iter().position(|c| *c == current),
             )
         }
         let options = self.draft.options(self.variant);
         match combo {
-            Combo::CaretInside => rows(options.caret_inside),
-            Combo::CaretOutside => rows(options.caret_outside),
-            Combo::ForSelection => rows(options.for_selection),
-            Combo::SplitScript => rows(self.draft.split_script),
+            Combo::CaretInside => rows(CaretInside::ALL, options.caret_inside),
+            // Older configurations with Closest or Ask stay active until changed.
+            Combo::CaretOutside => rows(
+                &[
+                    CaretOutside::Nothing,
+                    CaretOutside::WholeScript,
+                    CaretOutside::BelowCaret,
+                ],
+                options.caret_outside,
+            ),
+            Combo::ForSelection => rows(ForSelection::ALL, options.for_selection),
+            Combo::SplitScript => rows(SplitScript::ALL, self.draft.split_script),
         }
     }
 
@@ -307,10 +318,13 @@ impl QueryExecutionPage {
 
     fn combo(&self, combo: Combo, width: f32, cx: &mut Context<Self>) -> AnyElement {
         let theme = cx.theme();
-        let (rows, selected) = self.options_of(combo);
-        let text = selected
-            .and_then(|i| rows.get(i))
-            .map_or("", |(_, label)| *label);
+        let options = self.draft.options(self.variant);
+        let text = match combo {
+            Combo::CaretInside => options.caret_inside.label(),
+            Combo::CaretOutside => options.caret_outside.label(),
+            Combo::ForSelection => options.for_selection.label(),
+            Combo::SplitScript => self.draft.split_script.label(),
+        };
         let open = self.list.as_ref().is_some_and(|(c, ..)| *c == combo);
         let anchors = self.anchors.clone();
         let name = combo.name();

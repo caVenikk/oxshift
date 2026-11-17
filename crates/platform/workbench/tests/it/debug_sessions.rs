@@ -658,7 +658,7 @@ impl H<'_> {
 /// A debugger comparison belongs beside the source tab even when the
 /// source is not the last file. Both snapshots survive later clipboard edits.
 #[gpui::test]
-fn compare_with_clipboard_opens_a_read_only_tab(cx: &mut TestAppContext) {
+fn compare_with_clipboard_edits_only_the_temporary_left_side(cx: &mut TestAppContext) {
     use vcs_ui::diff::Side;
 
     let (mut h, _dir) = setup(cx);
@@ -683,6 +683,8 @@ fn compare_with_clipboard_opens_a_read_only_tab(cx: &mut TestAppContext) {
     assert_eq!(diff["title"], "Clipboard vs Selected Value", "{state:#}");
     assert_eq!(diff["left_title"]["label"], "From clipboard");
     assert_eq!(diff["right_title"]["label"], "Selected Value");
+    assert_eq!(diff["left_title"]["read_only"], false);
+    assert_eq!(diff["right_title"]["read_only"], true);
     assert_eq!(diff["one_side"], Value::Null);
     assert_eq!(h.cx.update(|cx| cx.windows().len()), windows);
     h.window
@@ -692,10 +694,63 @@ fn compare_with_clipboard_opens_a_read_only_tab(cx: &mut TestAppContext) {
             for (side, expected) in [(Side::Left, "first\nsecond"), (Side::Right, "2")] {
                 let editor = diff.read(cx).editor(side).read(cx);
                 assert_eq!(editor.buffer().text(), expected);
-                assert!(editor.buffer().is_read_only());
+                assert_eq!(editor.buffer().is_read_only(), side == Side::Right);
             }
         })
         .unwrap();
+    let view = h
+        .window
+        .read_with(h.cx, |w, _| w.active_diff().unwrap())
+        .unwrap();
+    let texts = |h: &mut H<'_>| {
+        h.cx.update(|cx| {
+            let view = view.read(cx);
+            (
+                view.editor(Side::Left).read(cx).text(),
+                view.editor(Side::Right).read(cx).text(),
+            )
+        })
+    };
+    let wait_computed = |h: &mut H<'_>| {
+        for _ in 0..300 {
+            tick(h.cx);
+            if h.cx.update(|cx| view.read(cx).is_computed(cx)) {
+                h.draw();
+                return;
+            }
+        }
+        panic!("clipboard comparison did not finish");
+    };
+    wait_computed(&mut h);
+    h.press("x"); // Focus starts in the read-only selected value.
+    assert_eq!(texts(&mut h), ("first\nsecond".into(), "2".into()));
+    h.invoke("diff.focus-opposite", json!(null));
+    h.invoke("editor.select-all", json!(null));
+    h.press("x");
+    assert_eq!(texts(&mut h), ("x".into(), "2".into()));
+    // A hunk from the old two-line clipboard cannot be used on the new text.
+    h.invoke("diff.apply-right-side", json!({"index": 0}));
+    assert_eq!(texts(&mut h), ("x".into(), "2".into()));
+    wait_computed(&mut h);
+    assert_eq!(h.state()["diff"]["changes"][0]["left"], json!([0, 1]));
+    let at = h.cx.update(|cx| {
+        view.read(cx)
+            .action_bounds(Side::Right, 0, cx)
+            .expect("right-to-left gutter arrow")
+            .center()
+    });
+    let mut visual = gpui::VisualTestContext::from_window(h.window.into(), h.cx);
+    visual.simulate_mouse_move(at, None, gpui::Modifiers::none());
+    visual.simulate_click(at, gpui::Modifiers::none());
+    h.draw();
+    wait_computed(&mut h);
+    assert_eq!(texts(&mut h), ("2".into(), "2".into()));
+    assert_eq!(h.state()["diff"]["changes"], json!([]));
+    assert_eq!(
+        h.cx.update(|cx| cx.read_from_clipboard().and_then(|item| item.text()))
+            .as_deref(),
+        Some("later")
+    );
     h.invoke("tabs.close", json!(null));
     let main = h.file("main.py");
     h.window

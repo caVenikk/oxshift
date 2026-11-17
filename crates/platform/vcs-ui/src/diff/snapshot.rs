@@ -25,6 +25,7 @@ pub fn snapshot_view(
     snapshot(
         title,
         Some(path),
+        true,
         (before.map(Into::into), after.as_deref()),
         labels,
         window,
@@ -32,8 +33,8 @@ pub fn snapshot_view(
     )
 }
 
-/// Compare two text snapshots that have no backing file.
-pub fn text_snapshot_view(
+/// Compare a temporary editable text with a read-only value, without a backing file.
+pub fn editable_text_snapshot_view(
     title: SharedString,
     before: &str,
     after: &str,
@@ -44,6 +45,7 @@ pub fn text_snapshot_view(
     snapshot(
         title,
         None,
+        false,
         (Some(before.into()), Some(after)),
         labels,
         window,
@@ -54,22 +56,23 @@ pub fn text_snapshot_view(
 fn snapshot(
     title: SharedString,
     path: Option<PathBuf>,
+    left_read_only: bool,
     (before, after): (Option<std::sync::Arc<str>>, Option<&str>),
     labels: (&str, &str),
     window: &mut Window,
     cx: &mut App,
 ) -> Entity<DiffView> {
-    let side = |label: &str| SideTitle {
+    let side = |label: &str, read_only| SideTitle {
         label: label.to_owned().into(),
         path: path.as_ref().map(|_| title.clone()),
-        read_only: true,
+        read_only,
         ..Default::default()
     };
     let request = DiffRequest {
         path: path.clone().unwrap_or_default(),
         title: title.clone(),
-        left: side(labels.0),
-        right: side(labels.1),
+        left: side(labels.0, left_read_only),
+        right: side(labels.1, true),
         included: None,
         excluded: Vec::new(),
         one_side: if before.is_none() {

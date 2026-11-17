@@ -100,6 +100,17 @@ fn check_diff(h: &mut H, command: &str, keys: &str, what: &str) {
                 d["changes"].as_array().is_some_and(|c| c.len() == 1)
             });
         }
+        "diff.apply-right-side" => {
+            h.window.update(h.cx, |w, window, cx| {
+                w.open_tab_view(|_, _| false, |window, cx| {
+                    vcs_ui::diff::editable_text_snapshot_view("Comparison".into(), "one", "two", ("From clipboard", "Selected Value"), window, cx)
+                }, window, cx);
+            }).unwrap();
+            h.draw();
+            wait_diff(h, what, |d| d["changes"].as_array().is_some_and(|c| c.len() == 1));
+            h.press(keys);
+            wait_diff(h, what, |d| d["changes"] == json!([]));
+        }
         "diff.focus-opposite" => {
             open_diff(h, what);
             h.press(keys);

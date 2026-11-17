@@ -260,6 +260,8 @@ pub struct OutgoingCommit {
     /// Seconds since the Unix epoch.
     pub time: i64,
     pub subject: String,
+    #[serde(default)]
+    pub body: String,
 }
 
 impl OutgoingCommit {

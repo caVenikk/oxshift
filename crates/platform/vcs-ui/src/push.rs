@@ -13,20 +13,24 @@
 //! the [`PushData`] its owner gives it, and reports what to push with
 //! [`PushDialogEvent`]; the owner pushes.
 
+use std::collections::BTreeSet;
+use std::path::{Path, PathBuf};
+use std::rc::Rc;
 use std::sync::Arc;
 
 use gpui::{
-    AnyElement, App, ClickEvent, Context, Corner, DismissEvent, Entity, EventEmitter, FocusHandle,
-    Focusable, FontWeight, IntoElement, MouseButton, Pixels, Point, Render, SharedString,
-    Subscription, Task, Window, div, point, prelude::*, px,
+    AnyElement, App, ClickEvent, Context, Entity, EventEmitter, FocusHandle, Focusable, FontWeight,
+    IntoElement, MouseButton, Pixels, Point, Render, SharedString, Subscription, Task, Window, div,
+    point, prelude::*, px,
 };
 use serde_json::{Value as Json, json};
 use text::Buffer;
 use themes::UiRole;
 use ui::components::{Tooltip, checkbox, input_frame, popup_shadow};
+use ui::form::MenuPopup;
 use ui::form::{BarButton, BottomBar, ButtonRole};
 use ui::icons::{Icon, IconName};
-use ui::menu::{ContextMenu, MenuItem, PopupOptions};
+use ui::menu::MenuItem;
 use ui::theme::ThemeExt;
 use vcs::{
     CommitFile, ForceMode, OutgoingCommit, PushSpec, PushTarget, TagMode, VcsError,
@@ -35,7 +39,8 @@ use vcs::{
 
 use editor::{Editor, EditorConfig};
 
-use crate::status_colors::status_role;
+use crate::changes_browser::{BrowserEvent, ChangesBrowser};
+use crate::diff::{DiffEvent, DiffView, SnapshotWindow, snapshot_view};
 
 ui::ui_commands! {
     COMMANDS, scope = "PushDialog";
@@ -55,6 +60,10 @@ ui::ui_commands! {
     Select { row: usize } => "push-dialog.select", "Select Row",
         "Selects a row of the push log: 0 is the repository (all commits), then the commits newest first; the files of the selection show on the right.",
         r#"{"row": 1}"#;
+    /// Open the Git push documentation.
+    PushHelp => "push-dialog.help", "Push Help", "Opens the documentation for Git push.";
+    /// Compare a file in the selected commits.
+    Compare => "push-dialog.compare", "Show Diff", "Shows the committed change for a file in the Push dialog.";
     /// Edit the target branch.
     EditTarget => "push-dialog.edit-target", "Edit Target",
         "Edits the target branch of the Push dialog in place (as a click on it does).";
@@ -87,10 +96,10 @@ pub const KEY_CONTEXT: &str = "PushDialog";
 pub const WIDTH: f32 = 800.0;
 const LOG_HEIGHT: f32 = 450.0;
 const TITLE_HEIGHT: f32 = 40.0;
-const ROW: f32 = 24.0;
+const ROW: f32 = 19.0;
 /// Indent of commit rows (`"   "` before the subject) and of the rows.
-const ROW_X: f32 = 12.0;
-const COMMIT_X: f32 = 36.0;
+const ROW_X: f32 = 15.0;
+const COMMIT_X: f32 = 30.0;
 const FIELD_HEIGHT: f32 = 24.0;
 
 /// Branches force push is prohibited for by default
@@ -107,12 +116,20 @@ pub trait PushData: Send + Sync {
     fn target(&self, remote: &str, branch: &str) -> Result<PushTarget, VcsError>;
     /// The commits a push of `source` to `target` sends, newest first.
     fn outgoing(&self, source: &str, target: &PushTarget) -> Result<Vec<OutgoingCommit>, VcsError>;
+    /// The immutable snapshots of a file in the selected commits.
+    fn versions(
+        &self,
+        commits: &[String],
+        path: &str,
+    ) -> Result<(Option<String>, Option<String>), VcsError>;
     /// The files the commits change, as one change.
     fn files(&self, commits: &[String]) -> Result<Vec<CommitFile>, VcsError>;
 }
 
 /// What the dialog opens with.
 pub struct PushSetup {
+    pub root: PathBuf,
+    pub file_icon: Rc<dyn Fn(&Path) -> IconName>,
     /// The repository's short name (its folder).
     pub repository: String,
     /// The local branch pushed.
@@ -131,6 +148,7 @@ pub struct PushSetup {
 pub enum PushDialogEvent {
     /// Push (force pushes ask first, the dialog stays until then).
     Push(PushSpec),
+    EditSource(PathBuf),
     Cancelled,
 }
 
@@ -144,10 +162,12 @@ enum Files {
     None,
     Loading,
     Loaded(Vec<CommitFile>),
+    Failed(String),
 }
 
 pub struct PushDialog {
     focus: FocusHandle,
+    tag_mode_focus: FocusHandle,
     repository: String,
     source: String,
     remotes: Vec<String>,
@@ -158,13 +178,24 @@ pub struct PushDialog {
     files: Files,
     /// 0: the repository row; then the commits.
     selected: usize,
+    selected_rows: BTreeSet<usize>,
+    anchor: usize,
+    root: PathBuf,
+    browser: Entity<ChangesBrowser>,
+    browser_events: Option<Subscription>,
+    show_details: bool,
+    comparison: Option<SnapshotWindow>,
+    comparison_view: Option<gpui::WeakEntity<DiffView>>,
+    comparison_events: Option<Subscription>,
+    comparison_error: Option<String>,
+    comparison_task: Option<Task<()>>,
     /// The field of the target branch while it is edited.
     editing: Option<Entity<Editor>>,
     set_upstream: bool,
     push_tags: bool,
     tag_mode: TagMode,
     /// The remotes' list, the tags' modes or Push's options, where it is.
-    menu: Option<(Entity<ContextMenu>, Point<Pixels>, Subscription)>,
+    menu: Option<MenuPopup>,
     _commits_task: Option<Task<()>>,
     _files_task: Option<Task<()>>,
 }
@@ -192,8 +223,22 @@ fn label_text(new: bool, upstream: bool) -> Option<&'static str> {
 
 impl PushDialog {
     pub fn new(setup: PushSetup, cx: &mut Context<Self>) -> Self {
+        let browser =
+            cx.new(|cx| ChangesBrowser::new(setup.root.clone(), false, setup.file_icon, cx));
         let mut dialog = Self {
+            root: setup.root,
+            browser,
+            browser_events: None,
+            show_details: true,
+            comparison: None,
+            comparison_view: None,
+            comparison_events: None,
+            comparison_error: None,
+            comparison_task: None,
+            selected_rows: BTreeSet::from([0]),
+            anchor: 0,
             focus: cx.focus_handle(),
+            tag_mode_focus: cx.focus_handle(),
             repository: setup.repository,
             source: setup.source,
             remotes: setup.remotes,
@@ -295,6 +340,8 @@ impl PushDialog {
                     Err(e) => Commits::Failed(e.message),
                 };
                 this.selected = 0;
+                this.selected_rows = BTreeSet::from([0]);
+                this.anchor = 0;
                 this.load_files(cx);
                 cx.notify();
             });
@@ -304,16 +351,34 @@ impl PushDialog {
     /// The commits of the selection: all for the repository row.
     fn selected_commits(&self) -> Vec<String> {
         let commits = self.commits();
-        match self.selected {
-            0 => commits.iter().map(|c| c.oid.clone()).collect(),
-            i => commits
-                .get(i - 1)
-                .map(|c| vec![c.oid.clone()])
-                .unwrap_or_default(),
+        commits
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| {
+                self.selected_rows.contains(&0) || self.selected_rows.contains(&(i + 1))
+            })
+            .map(|(_, c)| c.oid.clone())
+            .collect()
+    }
+
+    fn detail_commit(&self) -> Option<&OutgoingCommit> {
+        if self.selected_rows.len() != 1 {
+            return None;
         }
+        self.selected_rows
+            .first()?
+            .checked_sub(1)
+            .and_then(|index| self.commits().get(index))
     }
 
     fn load_files(&mut self, cx: &mut Context<Self>) {
+        self.comparison_task = None;
+        self.comparison_error = None;
+        let details = self.detail_commit().is_some();
+        self.browser.update(cx, |b, cx| {
+            b.set_commit_details(details, self.show_details, cx);
+            b.set_changes(Vec::new(), &[], cx);
+        });
         let commits = self.selected_commits();
         if commits.is_empty() {
             self.files = Files::None;
@@ -326,7 +391,22 @@ impl PushDialog {
         self._files_task = Some(cx.spawn(async move |this, cx| {
             let result = work.await;
             let _ = this.update(cx, |this, cx| {
-                this.files = Files::Loaded(result.unwrap_or_default());
+                this.files = match result {
+                    Ok(files) => {
+                        let changes = files
+                            .iter()
+                            .map(|f| vcs::Change {
+                                path: this.root.join(&f.path),
+                                status: f.status,
+                                old_path: f.old_path.as_ref().map(|p| this.root.join(p)),
+                            })
+                            .collect();
+                        this.browser
+                            .update(cx, |b, cx| b.set_changes(changes, &[], cx));
+                        Files::Loaded(files)
+                    }
+                    Err(e) => Files::Failed(e.message),
+                };
                 cx.notify();
             });
         }));
@@ -338,10 +418,37 @@ impl PushDialog {
 
     fn select_row(&mut self, row: usize, cx: &mut Context<Self>) {
         let row = row.min(self.rows() - 1);
-        if row != self.selected {
+        if self.selected_rows != BTreeSet::from([row]) {
             self.selected = row;
+            self.anchor = row;
+            self.selected_rows = BTreeSet::from([row]);
             self.load_files(cx);
         }
+        cx.notify();
+    }
+
+    fn click_row(
+        &mut self,
+        row: usize,
+        event: &ClickEvent,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        window.focus(&self.focus);
+        let modifiers = event.modifiers();
+        if modifiers.shift {
+            self.selected_rows = (row.min(self.anchor)..=row.max(self.anchor)).collect();
+        } else if modifiers.secondary() {
+            if !self.selected_rows.remove(&row) {
+                self.selected_rows.insert(row);
+            }
+            self.anchor = row;
+        } else {
+            self.select_row(row, cx);
+            return;
+        }
+        self.selected = row;
+        self.load_files(cx);
         cx.notify();
     }
 
@@ -388,13 +495,13 @@ impl PushDialog {
         }
     }
 
-    fn cancel(&mut self, _: &CancelPush, _: &mut Window, cx: &mut Context<Self>) {
+    fn cancel(&mut self, _: &CancelPush, window: &mut Window, cx: &mut Context<Self>) {
         if self.menu.is_some() {
             self.close_menu(cx);
             return;
         }
         if self.editing.is_some() {
-            self.stop_editing(cx);
+            self.cancel_target(&CancelTarget, window, cx);
             return;
         }
         cx.emit(PushDialogEvent::Cancelled);
@@ -503,7 +610,8 @@ impl PushDialog {
     // ---- menus -------------------------------------------------------------
 
     fn close_menu(&mut self, cx: &mut Context<Self>) {
-        if self.menu.take().is_some() {
+        if let Some(menu) = self.menu.take() {
+            menu.close(cx);
             cx.notify();
         }
     }
@@ -515,18 +623,18 @@ impl PushDialog {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let return_focus = window.focused(cx).unwrap_or_else(|| self.focus.clone());
-        let menu = ContextMenu::popup(items, PopupOptions::default(), window, cx);
-        let subscription = cx.subscribe_in(
-            &menu,
+        self.close_menu(cx);
+        let focus = window.focused(cx).unwrap_or_else(|| self.focus.clone());
+        self.menu = MenuPopup::open(
+            items,
+            None,
+            at,
+            &focus,
+            window.is_window_active(),
             window,
-            move |this, _, _: &DismissEvent, window, cx| {
-                this.menu = None;
-                window.focus(&return_focus);
-                cx.notify();
-            },
+            cx,
+            Self::close_menu,
         );
-        self.menu = Some((menu, at, subscription));
         cx.notify();
     }
 
@@ -608,6 +716,7 @@ impl PushDialog {
         let (files, files_text) = match &self.files {
             Files::None => (Vec::new(), Some("No commits selected")),
             Files::Loading => (Vec::new(), None),
+            Files::Failed(e) => (Vec::new(), Some(e.as_str())),
             Files::Loaded(f) if f.is_empty() => (Vec::new(), Some("No differences")),
             Files::Loaded(f) => (
                 f.iter()
@@ -616,6 +725,10 @@ impl PushDialog {
                 None,
             ),
         };
+        let comparing = self
+            .comparison
+            .as_ref()
+            .is_some_and(|host| host.is_open(cx));
         json!({
             "title": self.title(),
             "source": self.source,
@@ -625,6 +738,11 @@ impl PushDialog {
             "error": match &self.commits { Commits::Failed(e) => Some(e.clone()), _ => None },
             "rows": rows,
             "selected": self.selected,
+            "selected_rows": self.selected_rows,
+            "browser": self.browser.read(cx).state_json(),
+            "show_details": self.show_details && self.detail_commit().is_some(),
+            "comparison": self.comparison_view.as_ref().filter(|_| comparing).and_then(|v| v.upgrade()).map(|v| v.read(cx).state_json(cx)),
+            "comparison_error": self.comparison_error.as_ref().filter(|_| comparing),
             "files": files,
             "files_text": files_text,
             "editing": self.editing.as_ref().map(|f| f.read(cx).text()),
@@ -634,7 +752,7 @@ impl PushDialog {
             "tag_mode": self.tag_mode.id(),
             "can_push": self.can_push(),
             "force_push": self.force_prohibited().map_or(json!(true), |d| json!(d)),
-            "menu": self.menu.as_ref().map(|(m, _, _)| m.read(cx).state_json()),
+            "menu": self.menu.as_ref().map(|m| m.menu.read(cx).state_json()),
         })
     }
 
@@ -656,7 +774,7 @@ impl PushDialog {
 
     fn render_repository_row(&self, window: &Window, cx: &mut Context<Self>) -> AnyElement {
         let theme = cx.theme();
-        let selected = self.selected == 0;
+        let selected = self.selected_rows.contains(&0);
         let selection = theme.color(UiRole::Selection);
         let mut row = div()
             .id("push-row-0")
@@ -665,11 +783,14 @@ impl PushDialog {
             .flex_row()
             .items_center()
             .h(px(ROW))
+            .flex_none()
             .px(px(ROW_X))
             .gap(px(0.0))
             .whitespace_nowrap()
             .when(selected, |d| d.bg(selection))
-            .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.select_row(0, cx)))
+            .on_click(
+                cx.listener(|this, e: &ClickEvent, window, cx| this.click_row(0, e, window, cx)),
+            )
             .child(format!("{} \u{2192} ", self.source));
         let Some(target) = self.target.clone() else {
             return row
@@ -681,14 +802,16 @@ impl PushDialog {
                 .into_any_element();
         };
         row = row.child(
-            ui::link::link("push-remote", target.remote.clone(), cx).on_mouse_down(
-                MouseButton::Left,
-                cx.listener(|this, e: &gpui::MouseDownEvent, window, cx| {
-                    cx.stop_propagation();
-                    let at = e.position + point(px(0.0), px(14.0));
-                    this.open_remotes(at, window, cx);
-                }),
-            ),
+            ui::link::link("push-remote", target.remote.clone(), cx)
+                .underline()
+                .on_mouse_down(
+                    MouseButton::Left,
+                    cx.listener(|this, e: &gpui::MouseDownEvent, window, cx| {
+                        cx.stop_propagation();
+                        let at = e.position + point(px(0.0), px(14.0));
+                        this.open_remotes(at, window, cx);
+                    }),
+                ),
         );
         row = row.child(" : ");
         match &self.editing {
@@ -728,12 +851,12 @@ impl PushDialog {
             }
             None => {
                 row = row.child(
-                    ui::link::link("push-target", target.branch.clone(), cx).on_click(cx.listener(
-                        |this, _: &ClickEvent, window, cx| {
+                    ui::link::link("push-target", target.branch.clone(), cx)
+                        .underline()
+                        .on_click(cx.listener(|this, _: &ClickEvent, window, cx| {
                             cx.stop_propagation();
                             this.start_editing(window, cx)
-                        },
-                    )),
+                        })),
                 );
                 let new_upstream = self.upstream_offered()
                     && self.set_upstream
@@ -782,15 +905,16 @@ impl PushDialog {
                             .flex()
                             .items_center()
                             .h(px(ROW))
+                            .flex_none()
                             .pl(px(COMMIT_X))
                             .pr(px(ROW_X))
                             .whitespace_nowrap()
                             .overflow_hidden()
-                            .when(self.selected == row, |d| d.bg(selection))
+                            .when(self.selected_rows.contains(&row), |d| d.bg(selection))
                             .child(SharedString::from(c.subject.clone()))
                             .tooltip(Tooltip::text(tip, None))
-                            .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
-                                this.select_row(row, cx)
+                            .on_click(cx.listener(move |this, e: &ClickEvent, window, cx| {
+                                this.click_row(row, e, window, cx)
                             }))
                             .into_any_element(),
                     );
@@ -804,84 +928,194 @@ impl PushDialog {
             .flex_1()
             .min_w(px(0.0))
             .h_full()
-            .pt(px(4.0))
+            .pt(px(10.0))
             .overflow_y_scroll()
             .children(rows)
             .into_any_element()
     }
 
     fn render_files(&self, cx: &App) -> AnyElement {
-        let theme = cx.theme();
-        let muted = theme.color(UiRole::TextMuted);
-        let text = theme.color(UiRole::Text);
-        let body: Vec<AnyElement> = match &self.files {
-            Files::None | Files::Loaded(_) if self.files_message().is_some() => vec![
-                div()
-                    .flex()
-                    .flex_1()
-                    .items_center()
-                    .justify_center()
-                    .text_color(muted)
-                    .child(self.files_message().unwrap_or_default())
-                    .into_any_element(),
-            ],
-            Files::Loaded(files) => files
-                .iter()
-                .map(|f| {
-                    let (dir, name) = match f.path.rsplit_once('/') {
-                        Some((d, n)) => (Some(d.to_owned()), n.to_owned()),
-                        None => (None, f.path.clone()),
-                    };
-                    let color = status_role(f.status).map_or(text, |r| theme.color(r));
-                    div()
-                        .flex()
-                        .flex_row()
-                        .items_center()
-                        .gap(px(6.0))
-                        .h(px(ROW))
-                        .px(px(ROW_X))
-                        .whitespace_nowrap()
-                        .overflow_hidden()
-                        .child(div().text_color(color).child(name))
-                        .children(dir.map(|d| div().text_color(muted).child(d)))
-                        .into_any_element()
-                })
-                .collect(),
-            _ => Vec::new(),
+        let muted = cx.theme().color(UiRole::TextMuted);
+        let border = cx.theme().color(UiRole::Border);
+        let message = match &self.files {
+            Files::None => Some("No commits selected"),
+            Files::Loaded(files) if files.is_empty() => Some("No differences"),
+            Files::Failed(error) => Some(error.as_str()),
+            Files::Loading => Some("Loading…"),
+            _ => None,
         };
-        div()
-            .id("push-files")
+        let mut pane = div()
             .flex()
             .flex_col()
             .flex_1()
             .min_w(px(0.0))
             .h_full()
-            .pt(px(4.0))
-            .overflow_y_scroll()
-            .children(body)
-            .into_any_element()
+            .child(
+                div()
+                    .relative()
+                    .flex()
+                    .flex_col()
+                    .flex_1()
+                    .min_h(px(0.0))
+                    .child(self.browser.clone())
+                    .children(message.map(|m| {
+                        div()
+                            .absolute()
+                            .top(gpui::relative(0.5))
+                            .w_full()
+                            .text_center()
+                            .text_color(muted)
+                            .child(m.to_owned())
+                    })),
+            );
+        if self.show_details
+            && let Some(commit) = self.detail_commit()
+        {
+            pane = pane.child(
+                div()
+                    .id("push-details")
+                    .h(gpui::relative(0.33))
+                    .overflow_y_scroll()
+                    .border_t_1()
+                    .border_color(border)
+                    .p(px(10.0))
+                    .child(
+                        div()
+                            .font_weight(FontWeight::SEMIBOLD)
+                            .child(commit.subject.clone()),
+                    )
+                    .child(div().child(commit.body.clone()))
+                    .child(div().text_color(muted).child(format!(
+                        "{}  {}",
+                        commit.short_oid(),
+                        commit.author
+                    ))),
+            );
+        }
+        pane.into_any_element()
     }
 
-    fn files_message(&self) -> Option<&'static str> {
-        match &self.files {
-            Files::None => Some("No commits selected"),
-            Files::Loaded(f) if f.is_empty() => Some("No differences"),
-            _ => None,
+    fn bind_browser(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.browser_events.is_some() {
+            return;
         }
+        self.browser_events = Some(cx.subscribe_in(
+            &self.browser,
+            window,
+            |this, _, event: &BrowserEvent, window, cx| match event {
+                BrowserEvent::ShowDiff(path) => this.open_comparison(path.clone(), window, cx),
+                BrowserEvent::EditSource(path) => {
+                    cx.emit(PushDialogEvent::EditSource(path.clone()))
+                }
+                BrowserEvent::ToggleDetails => {
+                    this.show_details = !this.show_details;
+                    this.browser.update(cx, |b, cx| {
+                        b.set_commit_details(true, this.show_details, cx)
+                    });
+                    cx.notify();
+                }
+                _ => {}
+            },
+        ));
+    }
+
+    fn compare(&mut self, _: &Compare, window: &mut Window, cx: &mut Context<Self>) {
+        if let Files::Loaded(files) = &self.files
+            && let Some(file) = files.first()
+        {
+            self.open_comparison(self.root.join(&file.path), window, cx);
+        }
+    }
+
+    fn open_comparison(&mut self, path: PathBuf, window: &mut Window, cx: &mut Context<Self>) {
+        if self
+            .comparison
+            .as_ref()
+            .is_some_and(|host| host.is_open(cx))
+        {
+            return;
+        }
+        let title = path
+            .file_name()
+            .unwrap_or(path.as_os_str())
+            .to_string_lossy()
+            .into_owned();
+        let Some(host) = SnapshotWindow::open(title.into(), window, cx) else {
+            return;
+        };
+        let child = host.handle();
+        self.comparison = Some(host);
+        self.comparison_view = None;
+        self.comparison_error = None;
+        self.comparison_events = None;
+        let relative = path
+            .strip_prefix(&self.root)
+            .unwrap_or(&path)
+            .to_string_lossy()
+            .replace(std::path::MAIN_SEPARATOR, "/");
+        let commits = self.selected_commits();
+        let data = self.data.clone();
+        let work = cx.background_spawn(async move { data.versions(&commits, &relative) });
+        self.comparison_task = Some(cx.spawn(async move |this, cx| {
+            let versions = work.await;
+            let _ = this.update(cx, |this, cx| {
+                let Some(host) = this
+                    .comparison
+                    .as_ref()
+                    .filter(|host| host.handle() == child && host.is_open(cx))
+                else {
+                    return;
+                };
+                match versions {
+                    Ok((before, after)) => {
+                        let Ok(view) = child.update(cx, |_, window, cx| {
+                            snapshot_view(
+                                path.clone(),
+                                before,
+                                after,
+                                ("Before", "After"),
+                                window,
+                                cx,
+                            )
+                        }) else {
+                            return;
+                        };
+                        this.comparison_events =
+                            Some(cx.subscribe(&view, move |this, _, event: &DiffEvent, cx| {
+                                if matches!(event, DiffEvent::JumpToSource { .. }) {
+                                    if let Some(host) = this.comparison.take() {
+                                        host.close(cx);
+                                    }
+                                    cx.emit(PushDialogEvent::EditSource(path.clone()));
+                                }
+                            }));
+                        this.comparison_view = Some(view.downgrade());
+                        host.set_view(view, cx);
+                    }
+                    Err(e) => {
+                        host.set_error(e.message.clone(), cx);
+                        this.comparison_error = Some(e.message);
+                    }
+                }
+                cx.notify();
+            });
+        }));
+        cx.notify();
     }
 
     fn render_options(&self, cx: &mut Context<Self>) -> AnyElement {
         let theme = cx.theme();
         let disabled = theme.color(UiRole::TextDisabled);
-        let tags = div()
-            .id("push-tags")
+        let tags =
+            ui::form::check_row(
+                "push-tags",
+                "push-tags-box",
+                self.push_tags,
+                "Push tags:",
+                cx,
+            )
+            .gap(px(8.0))
             .debug_selector(|| "push-tags".into())
-            .flex()
-            .flex_row()
-            .items_center()
-            .gap(px(6.0))
-            .child(checkbox("push-tags-box", self.push_tags, cx))
-            .child("Push tags:")
             .on_click(cx.listener(|this, _: &ClickEvent, window, cx| {
                 this.toggle_tags(&ToggleTags, window, cx)
             }));
@@ -891,7 +1125,8 @@ impl PushDialog {
             cx,
         )
         .debug_selector(|| "push-tag-mode".into())
-        .w(px(150.0))
+        .track_focus(&self.tag_mode_focus)
+        .w(px(140.0))
         .tab_stop(self.push_tags)
         .when(!self.push_tags, |d| d.text_color(disabled).opacity(0.6))
         .when(self.push_tags, |d| {
@@ -913,7 +1148,7 @@ impl PushDialog {
             .flex()
             .flex_row()
             .items_center()
-            .gap(px(8.0))
+            .gap(px(11.0))
             .child(tags)
             .child(combo)
             .into_any_element()
@@ -935,7 +1170,10 @@ impl PushDialog {
             .flex_row()
             .items_center()
             .h(px(ui::form::BUTTON_HEIGHT))
+            .w(px(103.0))
             .rounded(radius)
+            .border_1()
+            .border_color(theme.color(UiRole::ButtonDefaultBorder))
             .bg(accent)
             .text_color(on_accent)
             .when(!enabled, |d| d.opacity(ui::components::DISABLED_ALPHA))
@@ -945,22 +1183,20 @@ impl PushDialog {
                     .flex()
                     .items_center()
                     .h_full()
-                    .px(px(14.0))
+                    .flex_1()
+                    .justify_center()
                     .child("Push")
                     .when(enabled, |d| {
-                        d.on_click(cx.listener(|this, _: &ClickEvent, window, cx| {
-                            this.push(&Push, window, cx)
-                        }))
+                        d.focusable().tab_stop(true).on_click(cx.listener(
+                            |this, _: &ClickEvent, window, cx| this.push(&Push, window, cx),
+                        ))
                     }),
             )
             .child(
                 div()
                     .w(px(1.0))
                     .h(px(ui::form::BUTTON_HEIGHT - 10.0))
-                    .bg(gpui::Hsla {
-                        a: 0.4,
-                        ..on_accent
-                    }),
+                    .bg(theme.color(UiRole::ButtonBorder)),
             )
             .child(
                 div()
@@ -969,17 +1205,25 @@ impl PushDialog {
                     .flex()
                     .items_center()
                     .h_full()
-                    .px(px(7.0))
+                    .w(px(26.0))
+                    .justify_center()
                     .child(Icon::new(IconName::CHEVRON_DOWN).tint(on_accent))
                     .when(enabled, |d| {
-                        d.on_mouse_down(
-                            MouseButton::Left,
-                            cx.listener(|this, e: &gpui::MouseDownEvent, window, cx| {
-                                cx.stop_propagation();
-                                let at = e.position + point(px(-20.0), px(16.0));
-                                this.open_push_options(at, window, cx);
-                            }),
-                        )
+                        d.focusable()
+                            .tab_stop(true)
+                            .on_click(cx.listener(|this, e: &ClickEvent, window, cx| {
+                                if let ClickEvent::Keyboard(event) = e {
+                                    this.open_push_options(event.bounds.bottom_left(), window, cx);
+                                }
+                            }))
+                            .on_mouse_down(
+                                MouseButton::Left,
+                                cx.listener(|this, e: &gpui::MouseDownEvent, window, cx| {
+                                    cx.stop_propagation();
+                                    let at = e.position + point(px(-20.0), px(16.0));
+                                    this.open_push_options(at, window, cx);
+                                }),
+                            )
                     }),
             )
             .into_any_element()
@@ -988,6 +1232,7 @@ impl PushDialog {
 
 impl Render for PushDialog {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        self.bind_browser(window, cx);
         let owned = cfg!(target_os = "macos");
         let size = window.viewport_size();
         let theme = cx.theme();
@@ -1011,14 +1256,19 @@ impl Render for PushDialog {
             .flex_none()
             .when(owned, |d| d.flex_1().min_h(px(0.0)))
             .when(!owned, |d| d.h(px(LOG_HEIGHT)))
-            .border_t_1()
-            .border_b_1()
+            .when(!owned, |d| d.border_t_1())
             .border_color(border)
             .child(self.render_log(window, cx))
             .child(div().flex_none().w(px(1.0)).h_full().bg(border))
             .child(self.render_files(cx));
         let bar = BottomBar::new()
-            .help(ui::form::help_button("push-dialog-help", None, cx))
+            .metrics(53.0, 15.0)
+            .status_padding(27.0)
+            .help(ui::form::help_button(
+                "push-dialog-help",
+                Some(Box::new(PushHelp)),
+                cx,
+            ))
             .status(self.render_options(cx))
             .button(BarButton::new(
                 "push-dialog-cancel",
@@ -1028,14 +1278,14 @@ impl Render for PushDialog {
             ))
             .element(self.render_push_button(cx), 100, 0.0)
             .render(cx);
-        let menu = self
-            .menu
-            .as_ref()
-            .map(|(menu, at, _)| ui::menu::overlay_at(menu, *at, Corner::TopLeft, window));
         let dialog = div()
             .id("push-dialog")
             .debug_selector(|| "push-dialog".into())
             .key_context(KEY_CONTEXT)
+            .on_action(cx.listener(|_, _: &PushHelp, _, cx| {
+                cx.open_url("https://git-scm.com/docs/git-push")
+            }))
+            .on_action(cx.listener(Self::compare))
             .track_focus(&self.focus)
             .on_action(cx.listener(Self::push))
             .on_action(cx.listener(Self::force_push))
@@ -1070,7 +1320,7 @@ impl Render for PushDialog {
             .child(log)
             .child(bar);
         if owned {
-            return dialog.children(menu).into_any_element();
+            return dialog.into_any_element();
         }
         div()
             .id("push-dialog-backdrop")
@@ -1084,7 +1334,6 @@ impl Render for PushDialog {
             .items_center()
             .justify_center()
             .child(dialog)
-            .children(menu)
             .into_any_element()
     }
 }
@@ -1101,6 +1350,13 @@ mod tests {
         }
         fn outgoing(&self, _: &str, _: &PushTarget) -> Result<Vec<OutgoingCommit>, VcsError> {
             unreachable!("this dialog has no remote")
+        }
+        fn versions(
+            &self,
+            _: &[String],
+            _: &str,
+        ) -> Result<(Option<String>, Option<String>), VcsError> {
+            unreachable!("this dialog has no commits")
         }
         fn files(&self, _: &[String]) -> Result<Vec<CommitFile>, VcsError> {
             unreachable!("this dialog has no commits")
@@ -1120,6 +1376,8 @@ mod tests {
         let (dialog, cx) = cx.add_window_view(|_, cx| {
             PushDialog::new(
                 PushSetup {
+                    root: PathBuf::from("project"),
+                    file_icon: Rc::new(|_| IconName::FILE_TEXT),
                     repository: "project".into(),
                     source: "main".into(),
                     remotes: Vec::new(),
@@ -1135,10 +1393,9 @@ mod tests {
                 dialog.update(cx, |dialog, cx| {
                     dialog.close_menu(cx);
                     dialog.push_tags = true;
-                    window.focus(&dialog.focus);
+                    window.focus(&dialog.tag_mode_focus);
                 });
                 window.draw(cx).clear();
-                window.focus_next();
                 window.draw(cx).clear();
             });
             let opener = cx.update(|window, cx| window.focused(cx).unwrap());
@@ -1154,8 +1411,13 @@ mod tests {
                 window.draw(cx).clear();
             });
             cx.run_until_parked();
-            cx.simulate_keystrokes("down");
-            cx.simulate_keystrokes(close_key);
+            let popup = cx.read(|cx| dialog.read(cx).menu.as_ref().unwrap().window);
+            let mut popup = gpui::VisualTestContext::from_window(popup, cx);
+            popup.update(|w, cx| {
+                w.draw(cx).clear();
+            });
+            popup.simulate_keystrokes("down");
+            popup.simulate_keystrokes(close_key);
             cx.run_until_parked();
             cx.update(|window, cx| {
                 window.draw(cx).clear();

@@ -75,6 +75,7 @@ struct OpenUpdate {
 enum Asking {
     /// "Push Rejected": update with Merge or Rebase and push again.
     Rejected(PushSpec),
+    ResetToRemote(Arc<GitRepo>, git::remote::ResetTarget),
     /// "Force Push": push the Push dialog's commits with force.
     ForcePush(PushSpec),
 }
@@ -96,6 +97,14 @@ impl PushData for GitPushData {
 
     fn outgoing(&self, source: &str, target: &PushTarget) -> Result<Vec<OutgoingCommit>, VcsError> {
         self.0.outgoing(source, target, &Cancel::new())
+    }
+
+    fn versions(
+        &self,
+        commits: &[String],
+        path: &str,
+    ) -> Result<(Option<String>, Option<String>), VcsError> {
+        self.0.commit_file_versions(commits, path, &Cancel::new())
     }
 
     fn files(&self, commits: &[String]) -> Result<Vec<CommitFile>, VcsError> {
@@ -386,7 +395,10 @@ impl Workbench {
                 let Some(repo) = this.git_repo() else {
                     return;
                 };
+                let file_types = this.file_types.clone();
                 let setup = PushSetup {
+                    root: repo.repository().root.clone(),
+                    file_icon: std::rc::Rc::new(move |path| file_types.icon(path)),
                     repository: repo
                         .repository()
                         .root
@@ -413,7 +425,7 @@ impl Workbench {
         let Some(host) = GitDialog::open(
             &dialog,
             title,
-            (800.0, 528.0),
+            (800.0, 531.0),
             PushDialogEvent::Cancelled,
             window,
             cx,
@@ -446,6 +458,10 @@ impl Workbench {
     ) {
         match event {
             PushDialogEvent::Cancelled => self.close_push_dialog(window, cx),
+            PushDialogEvent::EditSource(path) => {
+                self.close_push_dialog(window, cx);
+                self.open_file(path.clone(), window, cx);
+            }
             PushDialogEvent::Push(spec) => {
                 let key = (spec.target.remote.clone(), spec.target.branch.clone());
                 if spec.force != ForceMode::None && !self.remote_ui.silent_force.contains(&key) {
@@ -684,6 +700,26 @@ impl Workbench {
         cx: &mut Context<Self>,
     ) {
         match asking {
+            Asking::ResetToRemote(confirmed_repo, target) => {
+                if button == Some("reset") {
+                    self.with_repo(
+                        window,
+                        cx,
+                        move |repo| {
+                            if !std::ptr::eq(repo, confirmed_repo.as_ref()) {
+                                return Err(VcsError::failed(
+                                    "The project repository changed. Open Update Project again.",
+                                ));
+                            }
+                            repo.reset_to_remote(&target, &Cancel::new())
+                        },
+                        |this, result, _, cx| match result {
+                            Ok(result) => this.notify_all(update_notifications(&result), cx),
+                            Err(e) => this.error_balloon("Update failed".into(), e.message, cx),
+                        },
+                    );
+                }
+            }
             Asking::Rejected(spec) => {
                 let method = match button {
                     Some("merge") => UpdateMethod::Merge,
@@ -760,7 +796,7 @@ impl Workbench {
         let Some(host) = GitDialog::open(
             &dialog,
             dialog.read(cx).title(),
-            (592.0, 166.0),
+            (594.0, 165.0),
             UpdateDialogEvent::Cancelled,
             window,
             cx,
@@ -772,7 +808,9 @@ impl Workbench {
                 open.host.close(window, cx);
             }
             cx.notify();
-            if let UpdateDialogEvent::Confirmed { method, dont_show } = event {
+            if *event == UpdateDialogEvent::ResetToRemote {
+                this.ask_reset_to_remote(window, cx);
+            } else if let UpdateDialogEvent::Confirmed { method, dont_show } = event {
                 this.remote_ui.method = *method;
                 this.remote_ui.update_silently = *dont_show;
                 this.run_update(*method, None, window, cx);
@@ -784,6 +822,41 @@ impl Workbench {
             _subscription: subscription,
         });
         cx.notify();
+    }
+
+    fn ask_reset_to_remote(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let Some(repo) = self.git_repo() else { return };
+        self.with_repo(
+            window,
+            cx,
+            GitRepo::reset_target,
+            move |this, result, window, cx| {
+                let target = match result {
+                    Ok(target) => target,
+                    Err(e) => {
+                        this.error_balloon("Cannot update".to_owned(), e.message, cx);
+                        return;
+                    }
+                };
+                let message = format!(
+                    "Do you want to reset local branch '{}' to '{}/{}'? Local commits will be dropped.",
+                    target.local, target.remote, target.branch
+                );
+                let dialog = cx.new(|cx| {
+                    Dialog::new(
+                        "Reset to the Remote Branch",
+                        message,
+                        vec![
+                            DialogButton { id: "cancel", label: "Cancel".into() },
+                            DialogButton { id: "reset", label: "OK".into() },
+                        ],
+                        cx,
+                    )
+                    .with_icon(IconName::WARNING_DIALOG)
+                });
+                this.open_message(dialog, Asking::ResetToRemote(repo, target), window, cx);
+            },
+        );
     }
 
     /// Update Project with `method`, from `from` (a remote and its branch)

@@ -280,36 +280,80 @@ fn parse_name_status(out: &[u8]) -> Vec<CommitFile> {
 /// reference's changes browser zips them: added then modified is added,
 /// added then deleted is gone.
 pub fn zip_changes(per_commit: Vec<Vec<CommitFile>>) -> Vec<CommitFile> {
-    let mut order: Vec<String> = Vec::new();
-    let mut by_path: HashMap<String, CommitFile> = HashMap::new();
-    for files in per_commit {
-        for f in files {
-            let key = f.path.clone();
-            match by_path.get(&key).map(|e| e.status) {
-                Some(FileStatus::Added) if f.status == FileStatus::Deleted => {
-                    by_path.remove(&key);
-                    order.retain(|p| *p != key);
+    let commits = per_commit.into_iter().map(|files| (String::new(), files));
+    zip_revisions(commits).into_iter().map(|r| r.file).collect()
+}
+
+struct FileRevision {
+    file: CommitFile,
+    before: Option<String>,
+    after: Option<String>,
+}
+
+fn zip_revisions(
+    commits: impl IntoIterator<Item = (String, Vec<CommitFile>)>,
+) -> Vec<FileRevision> {
+    let mut rows: Vec<Option<FileRevision>> = Vec::new();
+    let mut by_path = HashMap::<String, usize>::new();
+    for (oid, changes) in commits {
+        for mut file in changes {
+            let from = file.old_path.as_ref().unwrap_or(&file.path);
+            let previous = by_path.remove(from);
+            let before = match previous {
+                Some(i) => {
+                    let prior = rows[i].take().expect("indexed change");
+                    file.old_path = prior.file.old_path.or(file.old_path);
+                    prior.before
                 }
-                Some(FileStatus::Added) => {}
-                Some(_) => {
-                    by_path.insert(key, f);
+                None => (file.status != FileStatus::Added).then(|| format!("{oid}^:{from}")),
+            };
+            let after =
+                (file.status != FileStatus::Deleted).then(|| format!("{oid}:{}", file.path));
+            file.status = match (&before, &after) {
+                (None, None) => continue,
+                (None, Some(_)) => {
+                    file.old_path = None;
+                    FileStatus::Added
                 }
-                None => {
-                    order.push(key.clone());
-                    by_path.insert(key, f);
+                (Some(_), None) => FileStatus::Deleted,
+                (Some(_), Some(_)) if file.old_path.as_ref().is_some_and(|p| p != &file.path) => {
+                    FileStatus::Renamed
                 }
+                _ => FileStatus::Modified,
+            };
+            let i = previous.unwrap_or(rows.len());
+            by_path.insert(file.path.clone(), i);
+            let revision = Some(FileRevision {
+                file,
+                before,
+                after,
+            });
+            if i == rows.len() {
+                rows.push(revision);
+            } else {
+                rows[i] = revision;
             }
         }
     }
-    order
-        .into_iter()
-        .filter_map(|p| by_path.remove(&p))
-        .collect()
+    rows.into_iter().flatten().collect()
 }
 
 /// The stash message of the changes put aside by an update
 /// (`stash.changes.message`).
 const UPDATE_STASH_MESSAGE: &str = "Uncommitted changes before Update";
+
+/// The branch and tracking configuration approved by the user.
+#[derive(Debug, PartialEq, Eq)]
+pub struct ResetTarget {
+    pub local: String,
+    pub remote: String,
+    pub branch: String,
+}
+
+enum UpdateOperation<'a> {
+    Integrate(UpdateMethod),
+    Reset(&'a ResetTarget),
+}
 
 impl GitRepo {
     fn run_root(&self, args: &[&str], access: Access, cancel: &Cancel) -> Result<Output, VcsError> {
@@ -401,7 +445,7 @@ impl GitRepo {
         target: &PushTarget,
         cancel: &Cancel,
     ) -> Result<Vec<OutgoingCommit>, VcsError> {
-        let format = "--format=%H%x1f%an%x1f%at%x1f%s%x1e";
+        let format = "--format=%H%x1f%an%x1f%at%x1f%s%x1f%b%x1e";
         let src = format!("refs/heads/{source}");
         let out = if target.new {
             let remotes = format!("--remotes={}", target.remote);
@@ -436,6 +480,7 @@ impl GitRepo {
                     author: f.next().unwrap_or_default().to_owned(),
                     time: f.next().and_then(|t| t.parse().ok()).unwrap_or_default(),
                     subject: f.next().unwrap_or_default().to_owned(),
+                    body: f.next().unwrap_or_default().trim_end().to_owned(),
                 })
             })
             .collect())
@@ -447,31 +492,77 @@ impl GitRepo {
         commits: &[String],
         cancel: &Cancel,
     ) -> Result<Vec<CommitFile>, VcsError> {
+        Ok(zip_revisions(self.commit_changes(commits, cancel)?)
+            .into_iter()
+            .map(|r| r.file)
+            .collect())
+    }
+
+    fn commit_changes(
+        &self,
+        commits: &[String],
+        cancel: &Cancel,
+    ) -> Result<Vec<(String, Vec<CommitFile>)>, VcsError> {
         if commits.is_empty() {
             return Ok(Vec::new());
         }
-        // Oldest first: `rev-list --no-walk` with the topological order.
-        let mut args: Vec<&str> = vec!["rev-list", "--no-walk=sorted", "--reverse"];
+        // Empty NUL-delimited fields mark commit boundaries: Git paths
+        // cannot contain NUL, including names containing newlines.
+        let mut args = vec![
+            "log",
+            "--no-walk=sorted",
+            "--reverse",
+            "--format=%x00%H",
+            "-z",
+            "--name-status",
+            "-M",
+            "--root",
+            "--diff-merges=first-parent",
+        ];
         args.extend(commits.iter().map(String::as_str));
-        let ordered = self.read(&args, cancel)?.stdout_text();
-        let mut per_commit = Vec::new();
-        for oid in ordered.lines().map(str::trim).filter(|l| !l.is_empty()) {
-            let out = self.read(
-                [
-                    "diff-tree",
-                    "--no-commit-id",
-                    "-r",
-                    "-z",
-                    "--name-status",
-                    "-M",
-                    "--root",
-                    oid,
-                ],
-                cancel,
-            )?;
-            per_commit.push(parse_name_status(&out.stdout));
-        }
-        Ok(zip_changes(per_commit))
+        args.push("--");
+        let output = self.read(args, cancel)?;
+        let records = String::from_utf8_lossy(&output.stdout);
+        Ok(records
+            .trim_start_matches('\0')
+            .split("\0\0")
+            .filter_map(|record| {
+                let (oid, files) = record.split_once('\0').unwrap_or((record, ""));
+                if oid.is_empty() {
+                    return None;
+                }
+                Some((
+                    oid.to_owned(),
+                    parse_name_status(files.trim_start_matches('\n').as_bytes()),
+                ))
+            })
+            .collect())
+    }
+
+    /// The before and after snapshots of the selected commits' change.
+    /// Follow the path backwards through renames, reading only committed blobs.
+    pub fn commit_file_versions(
+        &self,
+        commits: &[String],
+        path: &str,
+        cancel: &Cancel,
+    ) -> Result<(Option<String>, Option<String>), VcsError> {
+        let revision = zip_revisions(self.commit_changes(commits, cancel)?)
+            .into_iter()
+            .find(|r| r.file.path == path)
+            .ok_or_else(|| VcsError::failed("The file is absent from the selected changes"))?;
+        let read = |object: String| {
+            let blob = self.read(["cat-file", "blob", &object], cancel)?;
+            if blob.stdout.contains(&0) {
+                return Err(VcsError::failed("Binary file cannot be displayed as text"));
+            }
+            String::from_utf8(blob.stdout)
+                .map_err(|_| VcsError::failed("File cannot be displayed as UTF-8 text"))
+        };
+        Ok((
+            revision.before.map(read).transpose()?,
+            revision.after.map(read).transpose()?,
+        ))
     }
 
     /// Pushes as `spec` says. Errors of git (no such remote, an
@@ -634,6 +725,45 @@ impl GitRepo {
         target: Option<(&str, &str)>,
         cancel: &Cancel,
     ) -> Result<UpdateResult, VcsError> {
+        self.update_from(UpdateOperation::Integrate(method), target, cancel)
+    }
+
+    /// Resolves both names for the reset confirmation without changing the repository.
+    pub fn reset_target(&self) -> Result<ResetTarget, VcsError> {
+        let info = vcs::Backend::info(self)?;
+        let local = info
+            .head
+            .branch()
+            .ok_or_else(|| VcsError::failed("HEAD is not on a branch"))?;
+        let (remote, branch) = self
+            .upstream_of(local)
+            .ok_or_else(|| VcsError::failed(format!("{local} has no tracked branch")))?;
+        Ok(ResetTarget {
+            local: local.to_owned(),
+            remote,
+            branch,
+        })
+    }
+
+    /// Fetches and resets the confirmed current branch only when incoming commits exist.
+    pub fn reset_to_remote(
+        &self,
+        target: &ResetTarget,
+        cancel: &Cancel,
+    ) -> Result<UpdateResult, VcsError> {
+        self.update_from(
+            UpdateOperation::Reset(target),
+            Some((&target.remote, &target.branch)),
+            cancel,
+        )
+    }
+
+    fn update_from(
+        &self,
+        operation: UpdateOperation<'_>,
+        target: Option<(&str, &str)>,
+        cancel: &Cancel,
+    ) -> Result<UpdateResult, VcsError> {
         let not_ready = |title: &str, message: &str| {
             Ok(UpdateResult::NotReady {
                 title: title.to_owned(),
@@ -697,6 +827,36 @@ impl GitRepo {
         // The commits that came in are counted from where the branches
         // met (`GitUpdatedRanges`): the merge commit is not one of them.
         let before = self.merge_base("HEAD", &upstream, cancel)?;
+        let method = match operation {
+            UpdateOperation::Integrate(method) => method,
+            UpdateOperation::Reset(confirmed) => {
+                if self.reset_target()? != *confirmed {
+                    return not_ready(
+                        "Cannot update",
+                        "The current branch or its tracked branch changed. Open Update Project again.",
+                    );
+                }
+                // Checkout -B carries local edits forward. Git normally overwrites ignored
+                // files on checkout; protect them just like ordinary untracked files.
+                let out = self.write(
+                    [
+                        "checkout",
+                        "--no-overwrite-ignore",
+                        "--no-track",
+                        "-B",
+                        &confirmed.local,
+                        &upstream,
+                    ],
+                    cancel,
+                )?;
+                if !out.success() {
+                    return Err(VcsError::failed(
+                        crate::branches::checkout_error(&out).to_string(),
+                    ));
+                }
+                return self.updated(before, &upstream, false, cancel);
+            }
+        };
         let changed = self.has_tracked_changes(cancel)?;
         // A rebase with local changes first tries a fast-forward, which
         // needs no stash.

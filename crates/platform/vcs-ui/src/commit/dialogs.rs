@@ -7,7 +7,6 @@
 //! - "Git User Name Is Not Defined" (`GitUserNameNotDefinedDialog`):
 //!   Name, E-mail, "Set properties globally", Cancel and "Set and Commit".
 
-use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
@@ -18,14 +17,15 @@ use gpui::{
 };
 use serde_json::{Value as Json, json};
 use themes::UiRole;
-use ui::components::{checkbox, popup_shadow};
+use ui::components::popup_shadow;
 use ui::form::{BarButton, BottomBar, ButtonRole};
-use ui::icons::{Icon, IconName};
+use ui::icons::IconName;
 use ui::theme::ThemeExt;
 use vcs::{Change, FileStatus};
 
 use super::legend::Legend;
-use super::tree::{origin_text, parent_text};
+use crate::changes_browser::{BrowserEvent, ChangesBrowser};
+use crate::diff::{DiffEvent, SnapshotWindow};
 use crate::status_colors::status_role;
 
 ui::ui_commands! {
@@ -77,9 +77,8 @@ pub const USER_NAME_TITLE: &str = "Git User Name Is Not Defined";
 pub const NAME_EMAIL_MISSING: &str = "You need to specify username and email for Git";
 pub const EMAIL_NO_AT: &str = "The email address must contain the '@' symbol";
 
-const ROLLBACK_WIDTH: f32 = 520.0;
+const ROLLBACK_WIDTH: f32 = 380.0;
 const USER_NAME_WIDTH: f32 = 440.0;
-const LIST_HEIGHT: f32 = 220.0;
 const LABEL_WIDTH: f32 = 64.0;
 
 /// The frame of a dialog over the main window: centred, with a backdrop
@@ -142,30 +141,36 @@ fn panel(
 
 // ---- Rollback Changes ----------------------------------------------------------
 
-/// How the Rollback Changes dialog was closed.
-#[derive(Debug, Clone, PartialEq)]
+/// Requests emitted by the Rollback Changes dialog.
+#[derive(Clone, PartialEq)]
 pub enum RollbackEvent {
     Confirmed {
         changes: Vec<Change>,
         delete_added: bool,
     },
     Cancelled,
+    ShowDiff(Change, gpui::AnyWindowHandle),
 }
 
 pub struct RollbackDialog {
     focus: FocusHandle,
     root: PathBuf,
-    changes: Vec<Change>,
-    included: HashSet<PathBuf>,
+    browser: Entity<ChangesBrowser>,
     delete_added: bool,
-    file_icon: Rc<dyn Fn(&Path) -> IconName>,
+    preview: Option<SnapshotWindow>,
+    inclusion_subscription: Option<gpui::Subscription>,
+    browser_subscription: Option<gpui::Subscription>,
 }
 
 impl EventEmitter<RollbackEvent> for RollbackDialog {}
 
 impl Focusable for RollbackDialog {
-    fn focus_handle(&self, _: &App) -> FocusHandle {
-        self.focus.clone()
+    fn focus_handle(&self, cx: &App) -> FocusHandle {
+        if !self.browser.read(cx).changes().is_empty() {
+            self.browser.focus_handle(cx)
+        } else {
+            self.focus.clone()
+        }
     }
 }
 
@@ -180,34 +185,118 @@ impl RollbackDialog {
         file_icon: Rc<dyn Fn(&Path) -> IconName>,
         cx: &mut Context<Self>,
     ) -> Self {
-        let included = included
-            .iter()
-            .filter(|p| changes.iter().any(|c| &c.path == *p))
-            .cloned()
-            .collect();
+        let browser = cx.new(|cx| {
+            let mut browser = ChangesBrowser::new(root.to_owned(), true, file_icon, cx);
+            browser.set_changes(changes, included, cx);
+            browser
+        });
         Self {
             focus: cx.focus_handle(),
             root: root.to_owned(),
-            changes,
-            included,
+            browser,
             delete_added,
-            file_icon,
+            preview: None,
+            inclusion_subscription: None,
+            browser_subscription: None,
         }
     }
 
-    fn included_changes(&self) -> Vec<Change> {
-        self.changes
-            .iter()
-            .filter(|c| self.included.contains(&c.path))
-            .cloned()
-            .collect()
+    fn bind_browser(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.browser_subscription.is_some() {
+            return;
+        }
+        self.browser_subscription =
+            Some(
+                cx.subscribe_in(&self.browser, window, |this, browser, event, window, cx| {
+                    if let BrowserEvent::ShowDiff(path) = event
+                        && !this.preview_open(cx)
+                        && let Some(change) = browser
+                            .read(cx)
+                            .changes()
+                            .iter()
+                            .find(|c| c.path == *path)
+                            .cloned()
+                    {
+                        let name = path.file_name().unwrap_or_default().to_string_lossy();
+                        let directory = path.parent().unwrap_or(&this.root).display();
+                        let title = format!("{name} ({directory}) [Changes]");
+                        window.focus(&browser.focus_handle(cx));
+                        if let Some(preview) = SnapshotWindow::open(title.into(), window, cx) {
+                            let handle = preview.handle();
+                            this.preview = Some(preview);
+                            this.inclusion_subscription = None;
+                            cx.emit(RollbackEvent::ShowDiff(change, handle));
+                        }
+                    }
+                    cx.notify();
+                }),
+            );
     }
 
-    /// An added file is ticked: the check box can be used.
-    fn has_added(&self) -> bool {
-        self.included_changes()
+    fn preview_open(&self, cx: &App) -> bool {
+        self.preview
+            .as_ref()
+            .is_some_and(|window| window.is_open(cx))
+    }
+
+    pub fn diff_loaded(
+        &mut self,
+        handle: gpui::AnyWindowHandle,
+        path: PathBuf,
+        revision: &str,
+        result: Result<(Option<String>, Option<String>), String>,
+        cx: &mut Context<Self>,
+    ) {
+        let Some(preview) = self
+            .preview
+            .as_ref()
+            .filter(|w| w.handle() == handle && w.is_open(cx))
+        else {
+            return;
+        };
+        let (before, after) = match result {
+            Ok(text) => text,
+            Err(error) => {
+                preview.set_error(error, cx);
+                return;
+            }
+        };
+        let checked = self.browser.read(cx).is_included(&path);
+        let Ok(view) = handle.update(cx, |_, window, cx| {
+            let view = crate::diff::snapshot_view(
+                path.clone(),
+                before,
+                after,
+                (revision, "Current version"),
+                window,
+                cx,
+            );
+            view.update(cx, |v, cx| v.set_rollback_included(checked, cx));
+            view
+        }) else {
+            return;
+        };
+        self.inclusion_subscription = Some(cx.subscribe(&view, move |this, view, event, cx| {
+            if let DiffEvent::SetIncluded(checked) = event {
+                this.browser.update(cx, |browser, cx| {
+                    if browser.is_included(&path) != *checked {
+                        browser.toggle_file(&path, cx);
+                    }
+                });
+                view.update(cx, |view, cx| view.set_rollback_included(*checked, cx));
+                cx.notify();
+            }
+        }));
+        preview.set_view(view, cx);
+        cx.notify();
+    }
+
+    fn has_added(&self, cx: &App) -> bool {
+        let browser = self.browser.read(cx);
+        browser
+            .changes()
             .iter()
-            .any(|c| c.status == FileStatus::Added)
+            .any(|c| c.status == FileStatus::Added && browser.is_included(&c.path))
     }
 
     pub fn delete_added(&self) -> bool {
@@ -215,11 +304,11 @@ impl RollbackDialog {
     }
 
     fn confirm(&mut self, _: &ConfirmRollback, _: &mut Window, cx: &mut Context<Self>) {
-        let changes = self.included_changes();
-        if changes.is_empty() {
+        let changes = self.browser.read(cx).included_changes();
+        if changes.is_empty() || self.preview_open(cx) {
             return;
         }
-        let delete_added = self.delete_added && self.has_added();
+        let delete_added = self.delete_added && self.has_added(cx);
         cx.emit(RollbackEvent::Confirmed {
             changes,
             delete_added,
@@ -227,21 +316,16 @@ impl RollbackDialog {
     }
 
     fn cancel(&mut self, _: &CancelRollback, _: &mut Window, cx: &mut Context<Self>) {
-        cx.emit(RollbackEvent::Cancelled);
+        if !self.preview_open(cx) {
+            cx.emit(RollbackEvent::Cancelled);
+        }
     }
 
     fn toggle_delete(&mut self, _: &ToggleDeleteAdded, _: &mut Window, cx: &mut Context<Self>) {
-        if self.has_added() {
+        if self.has_added(cx) {
             self.delete_added = !self.delete_added;
             cx.notify();
         }
-    }
-
-    fn toggle_path(&mut self, path: &Path, cx: &mut Context<Self>) {
-        if !self.included.remove(path) && self.changes.iter().any(|c| c.path == path) {
-            self.included.insert(path.to_owned());
-        }
-        cx.notify();
     }
 
     fn toggle_file(&mut self, action: &ToggleRollbackFile, _: &mut Window, cx: &mut Context<Self>) {
@@ -249,75 +333,53 @@ impl RollbackDialog {
         for part in action.path.split('/').filter(|p| !p.is_empty()) {
             path.push(part);
         }
-        self.toggle_path(&path, cx);
+        self.browser.update(cx, |b, cx| b.toggle_file(&path, cx));
     }
 
-    pub fn state_json(&self) -> Json {
+    pub fn state_json(&self, cx: &App) -> Json {
         let rel = |p: &Path| {
             p.strip_prefix(&self.root)
                 .map(|r| r.to_string_lossy().replace('\\', "/"))
                 .unwrap_or_else(|_| p.display().to_string())
         };
-        let legend = Legend::of(&self.included_changes(), 0);
+        let included = self.browser.read(cx).included_changes();
+        let legend = Legend::of(&included, 0);
         json!({
             "kind": "rollback",
+            "browser": self.browser.read(cx).state_json(),
+            "preview": self.preview_open(cx),
+            "preview_ready": self.preview_open(cx) && self.inclusion_subscription.is_some(),
             "title": ROLLBACK_TITLE,
-            "files": self.changes.iter().map(|c| json!({
+            "files": self.browser.read(cx).changes().iter().map(|c| json!({
                 "path": rel(&c.path),
                 "status": c.status.id(),
-                "included": self.included.contains(&c.path),
+                "included": self.browser.read(cx).is_included(&c.path),
             })).collect::<Vec<_>>(),
             "legend": legend.text(false),
             "delete_added": self.delete_added,
-            "delete_added_enabled": self.has_added(),
+            "delete_added_enabled": self.has_added(cx),
             "ok": "Rollback",
-            "ok_enabled": !self.included.is_empty(),
+            "ok_enabled": !included.is_empty(),
         })
     }
 }
 
 impl Render for RollbackDialog {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        self.bind_browser(window, cx);
+        let owned = cfg!(target_os = "macos");
+        let dialog = panel("rollback-dialog", ROLLBACK_TITLE, ROLLBACK_WIDTH, owned, cx)
+            .gap(px(0.))
+            .when(!owned, |d| d.h(px(552.)))
+            .key_context(ROLLBACK_KEY_CONTEXT)
+            .track_focus(&self.focus)
+            .on_action(cx.listener(Self::confirm))
+            .on_action(cx.listener(Self::cancel))
+            .on_action(cx.listener(Self::toggle_delete))
+            .on_action(cx.listener(Self::toggle_file));
         let theme = cx.theme();
-        let muted = theme.color(UiRole::TextMuted);
-        let rows: Vec<AnyElement> = self
-            .changes
-            .iter()
-            .enumerate()
-            .map(|(i, c)| {
-                let included = self.included.contains(&c.path);
-                let name = c
-                    .path
-                    .file_name()
-                    .map(|n| n.to_string_lossy().into_owned())
-                    .unwrap_or_default();
-                let color =
-                    status_role(c.status).map_or(theme.color(UiRole::Text), |r| theme.color(r));
-                let path = c.path.clone();
-                div()
-                    .id(("rollback-file", i))
-                    .flex()
-                    .flex_row()
-                    .items_center()
-                    .gap(px(6.0))
-                    .h(px(24.0))
-                    .px(px(8.0))
-                    .child(checkbox(("rollback-check", i), included, cx))
-                    .child(Icon::new((self.file_icon)(&c.path)))
-                    .child(div().text_color(color).child(name))
-                    .children(origin_text(c, &self.root).map(|o| div().child(o)))
-                    .child(
-                        div()
-                            .text_color(muted)
-                            .child(parent_text(&c.path, &self.root)),
-                    )
-                    .on_click(
-                        cx.listener(move |this, _: &ClickEvent, _, cx| this.toggle_path(&path, cx)),
-                    )
-                    .into_any_element()
-            })
-            .collect();
-        let legend = Legend::of(&self.included_changes(), 0);
+        let included = self.browser.read(cx).included_changes();
+        let legend = Legend::of(&included, 0);
         let legend_el =
             div()
                 .flex()
@@ -337,21 +399,36 @@ impl Render for RollbackDialog {
                             })
                         }),
                 );
-        let has_added = self.has_added();
-        let delete = ui::form::check_row(
-            "rollback-delete-added",
-            "rollback-delete-added-check",
-            self.delete_added,
-            DELETE_ADDED,
-            cx,
-        )
-        .debug_selector(|| "rollback-delete-added".into())
-        .tab_stop(has_added)
-        .when(!has_added, |d| d.opacity(ui::components::DISABLED_ALPHA))
-        .on_click(cx.listener(|this, _: &ClickEvent, window, cx| {
-            this.toggle_delete(&ToggleDeleteAdded, window, cx)
-        }));
+        let has_added = self.has_added(cx);
+        let delete = if has_added {
+            ui::form::check_row(
+                "rollback-delete-added",
+                "rollback-delete-added-check",
+                self.delete_added,
+                DELETE_ADDED,
+                cx,
+            )
+            .on_click(cx.listener(|this, _: &ClickEvent, window, cx| {
+                this.toggle_delete(&ToggleDeleteAdded, window, cx)
+            }))
+        } else {
+            div()
+                .id("rollback-delete-added")
+                .flex()
+                .items_center()
+                .text_color(theme.color(UiRole::TextDisabled))
+                .child(ui::components::checkbox_with(
+                    "rollback-delete-added-check",
+                    self.delete_added,
+                    false,
+                    cx,
+                ))
+                .child(DELETE_ADDED)
+        }
+        .gap(px(8.))
+        .debug_selector(|| "rollback-delete-added".into());
         let buttons = BottomBar::new()
+            .separator(false)
             .button(
                 BarButton::new(
                     "rollback-dialog-ok",
@@ -359,7 +436,7 @@ impl Render for RollbackDialog {
                     ButtonRole::Ok,
                     Box::new(ConfirmRollback),
                 )
-                .enabled(!self.included.is_empty()),
+                .enabled(!included.is_empty()),
             )
             .button(BarButton::new(
                 "rollback-dialog-cancel",
@@ -368,29 +445,27 @@ impl Render for RollbackDialog {
                 Box::new(CancelRollback),
             ))
             .render(cx);
-        let owned = cfg!(target_os = "macos");
-        let dialog = panel("rollback-dialog", ROLLBACK_TITLE, ROLLBACK_WIDTH, owned, cx)
-            .key_context(ROLLBACK_KEY_CONTEXT)
-            .track_focus(&self.focus)
-            .on_action(cx.listener(Self::confirm))
-            .on_action(cx.listener(Self::cancel))
-            .on_action(cx.listener(Self::toggle_delete))
-            .on_action(cx.listener(Self::toggle_file))
+        let dialog = dialog
             .child(
                 div()
-                    .id("rollback-files")
-                    .mx(px(20.0))
-                    .when(owned, |d| d.flex_1().min_h(px(0.0)))
-                    .when(!owned, |d| d.h(px(LIST_HEIGHT)))
-                    .overflow_y_scroll()
-                    .rounded(px(4.0))
-                    .border_1()
-                    .border_color(theme.color(UiRole::Border))
-                    .py(px(4.0))
-                    .children(rows),
+                    .flex_1()
+                    .min_h(px(0.))
+                    .ml(px(16.))
+                    .mr(px(12.))
+                    .pt(px(8.))
+                    .child(self.browser.clone()),
             )
-            .child(div().px(px(20.0)).child(legend_el))
-            .child(div().px(px(20.0)).child(delete))
+            .when(!included.is_empty(), |d| {
+                d.child(div().px(px(16.)).pt(px(4.)).child(legend_el))
+            })
+            .child(
+                div()
+                    .flex_none()
+                    .ml(px(16.))
+                    .pt(px(5.))
+                    .pb(px(4.))
+                    .child(delete),
+            )
             .child(buttons);
         if owned {
             dialog.into_any_element()

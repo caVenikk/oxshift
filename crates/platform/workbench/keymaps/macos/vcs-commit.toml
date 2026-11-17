@@ -67,3 +67,13 @@ name = "UserNameDialog > Editor"
 "enter" = "user-name-dialog.confirm"
 "escape" = "user-name-dialog.cancel"
 "tab" = "user-name-dialog.next-field"
+
+[[context]]
+name = "DialogChangesBrowser"
+[context.bindings]
+"up" = "dialog-changes.up"
+"down" = "dialog-changes.down"
+"left" = "dialog-changes.left"
+"right" = "dialog-changes.right"
+"space" = "dialog-changes.toggle"
+"cmd-d" = "dialog-changes.diff"

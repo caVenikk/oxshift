@@ -491,6 +491,9 @@ pub fn help_button(
         .rounded_full()
         .border_1()
         .border_color(cx.theme().color(UiRole::BorderInput))
+        .when(enabled, |d| {
+            d.bg(cx.theme().color(UiRole::ButtonBackground))
+        })
         .when(!enabled, |d| d.opacity(DISABLED_ALPHA))
         .child(Icon::new(IconName::HELP))
         .tooltip(Tooltip::text("Help", None))
@@ -515,6 +518,7 @@ pub struct BarButton {
     id: SharedString,
     label: SharedString,
     role: ButtonRole,
+    focus_handle: Option<FocusHandle>,
     primary: bool,
     enabled: bool,
     action: Box<dyn Action>,
@@ -532,6 +536,7 @@ impl BarButton {
             id: id.into(),
             label: label.into(),
             role,
+            focus_handle: None,
             primary: role == ButtonRole::Ok,
             enabled: true,
             action,
@@ -549,6 +554,12 @@ impl BarButton {
         self
     }
 
+    /// An explicit focus target, for example the dialog's initial default button.
+    pub fn focus_handle(mut self, handle: FocusHandle) -> Self {
+        self.focus_handle = Some(handle);
+        self
+    }
+
     /// Where it goes on macOS (`DialogWrapper.MAC_ACTION_ORDER`): Cancel
     /// before the others, the default button last.
     fn mac_order(&self) -> i32 {
@@ -559,7 +570,8 @@ impl BarButton {
         }
     }
 
-    fn render(self, cx: &App) -> AnyElement {
+    /// Renders a standard dialog action with a custom position in the bottom bar.
+    pub fn render(self, cx: &App) -> AnyElement {
         let theme = cx.theme();
         let (accent, on_accent) = (theme.color(UiRole::Accent), theme.color(UiRole::OnAccent));
         let hover = theme.color(UiRole::Hover);
@@ -572,6 +584,7 @@ impl BarButton {
             primary,
             enabled,
             action,
+            focus_handle,
             ..
         } = self;
         let (border, focused_border) = if primary {
@@ -607,15 +620,17 @@ impl BarButton {
             .rounded(field_radius(cx))
             .border_1()
             .map(|d| {
-                if primary {
+                if !enabled {
+                    d.border_color(theme.color(UiRole::BorderInput))
+                        .text_color(disabled)
+                } else if primary {
                     d.bg(accent).border_color(border).text_color(on_accent)
                 } else {
                     d.bg(background)
                         .border_color(border)
-                        .when(enabled, |d| d.hover(move |s| s.bg(hover)))
+                        .hover(move |s| s.bg(hover))
                 }
             })
-            .when(!enabled, |d| d.text_color(disabled))
             .child(label)
             .when(enabled, |d| {
                 // A press focuses it (`DarculaButtonPainter`): the focus
@@ -623,6 +638,7 @@ impl BarButton {
                 // `Component.focusWidth` wide), its outline in the focused
                 // colour; Space presses it, Enter stays the dialog's.
                 tab_control(d)
+                    .when_some(focus_handle, |d, handle| d.track_focus(&handle))
                     .focus(move |s| {
                         s.bg(focused_background)
                             .border_color(focused_border)
@@ -709,6 +725,7 @@ pub struct BottomBar {
     separator: bool,
     height: Option<f32>,
     inset: f32,
+    status_padding: f32,
 }
 
 impl Default for BottomBar {
@@ -727,6 +744,7 @@ impl BottomBar {
             separator: true,
             height: None,
             inset: BAR_INSET,
+            status_padding: 12.0,
         }
     }
 
@@ -750,6 +768,12 @@ impl BottomBar {
     /// The help button at the left ([`help_button`]).
     pub fn help(mut self, help: AnyElement) -> Self {
         self.help = Some(help);
+        self
+    }
+
+    /// Space on either side of the status or option next to the help button.
+    pub fn status_padding(mut self, padding: f32) -> Self {
+        self.status_padding = padding;
         self
     }
 
@@ -847,7 +871,7 @@ impl BottomBar {
                 div()
                     .flex_1()
                     .min_w(px(0.0))
-                    .px(px(12.0))
+                    .px(px(self.status_padding))
                     .whitespace_nowrap()
                     .overflow_hidden()
                     .children(self.status),

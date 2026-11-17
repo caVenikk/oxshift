@@ -82,6 +82,7 @@ pub(super) struct GitWindow {
 impl Render for GitWindow {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         div()
+            .on_action(crate::simulate::simulate_mouse)
             .on_key_down(|event, window, cx| {
                 let key = &event.keystroke;
                 if key.key == "tab"
@@ -107,7 +108,7 @@ impl Render for GitWindow {
             .flex()
             .flex_col()
             .bg(cx.theme().color(themes::UiRole::SurfaceRaised))
-            .children(dialog_window::title_bar(self.title.clone(), true, cx))
+            .children(dialog_window::compact_title_bar(self.title.clone(), cx))
             .child(div().flex_1().min_h(px(0.0)).child(self.view.clone()))
             .children(dialog_window::blocker(window, cx))
             .child(ui::pointer::frame())

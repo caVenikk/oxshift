@@ -196,9 +196,7 @@ impl H<'_> {
     /// The window that takes input: an open dialog, else the main one.
     fn target(&mut self) -> gpui::AnyWindowHandle {
         let main: gpui::AnyWindowHandle = self.window.into();
-        self.cx
-            .update(|cx| ui::dialog_window::modal_of(main, cx))
-            .unwrap_or(main)
+        self.cx.update(|cx| ui::dialog_window::innermost(main, cx))
     }
 
     fn invoke(&mut self, id: &str, args: Value) -> Value {

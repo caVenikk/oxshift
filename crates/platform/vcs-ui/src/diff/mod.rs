@@ -18,6 +18,8 @@
 
 pub mod divider;
 pub mod model;
+mod snapshot;
+pub use snapshot::{SnapshotWindow, snapshot_view};
 pub mod view;
 
 pub use model::{
@@ -27,6 +29,11 @@ pub use view::{DiffEvent, DiffRequest, DiffView, ScrollTo, SideTitle};
 
 /// The key context of the diff viewer.
 pub const CONTEXT: &str = "Diff";
+
+ui::ui_commands! {
+    WINDOW_COMMANDS, scope = "SnapshotDiffWindow";
+    CloseWindow => "diff.close-window", "Close Comparison", "Closes the comparison and returns to its file list.";
+}
 
 ui::ui_commands! {
     COMMANDS, scope = "Diff";
@@ -64,6 +71,8 @@ ui::ui_commands! {
     IncludeChange { index: Option<usize>, included: Option<bool> } => "diff.include-change", "Include into Commit",
         "Includes a change of the active diff into the commit or leaves it out (the gutter's check box; the commit then takes the file in part): the change at index, else the one at the caret of the current side; included sets it, else it toggles.",
         r#"{"index": 0, "included": false}"#;
+    /// Include the displayed file in the parent rollback dialog.
+    ToggleRollbackInclusion => "diff.toggle-rollback-inclusion", "Include in rollback", "Toggles the displayed file in the parent Rollback Changes dialog.";
     /// The settings popup of the toolbar's gear.
     ShowSettings => "diff.settings", "Show Diff Settings Popup\u{2026}",
         "Opens the diff's settings popup: Ignore Differences and Highlighting Differences.";
@@ -81,4 +90,5 @@ ui::ui_commands! {
 pub fn init(cx: &mut gpui::App) {
     ui::command::register(cx, COMMANDS);
     ui::command::register(cx, OPEN_COMMANDS);
+    ui::command::register(cx, WINDOW_COMMANDS);
 }

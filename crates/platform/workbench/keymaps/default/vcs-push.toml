@@ -21,6 +21,13 @@ name = "PushDialog"
 "escape" = "push-dialog.cancel"
 "up" = "push-dialog.up"
 "down" = "push-dialog.down"
+"ctrl-d" = "push-dialog.compare"
+"f2" = "push-dialog.edit-target"
+
+[[context]]
+name = "PushComparison"
+[context.bindings]
+"escape" = "push-dialog.close-comparison"
 
 [[context]]
 name = "PushDialog > Editor"

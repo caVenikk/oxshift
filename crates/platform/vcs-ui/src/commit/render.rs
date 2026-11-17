@@ -52,7 +52,11 @@ const OPTIONS_WIDTH: f32 = 300.0;
 
 /// A check box that may be partly ticked (a group with some of its files
 /// included): the accent fill with a dash.
-fn tri_checkbox(id: impl Into<gpui::ElementId>, state: Inclusion, cx: &App) -> AnyElement {
+pub(crate) fn tri_checkbox(
+    id: impl Into<gpui::ElementId>,
+    state: Inclusion,
+    cx: &App,
+) -> AnyElement {
     match state {
         Inclusion::All => checkbox(id, true, cx).into_any_element(),
         Inclusion::None => checkbox(id, false, cx).into_any_element(),

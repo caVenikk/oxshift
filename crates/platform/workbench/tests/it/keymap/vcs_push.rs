@@ -33,7 +33,12 @@ fn with_remote(h: &mut H) {
         git(h, &["init", "-q", "--bare", &path]);
         git(h, &["remote", "add", "origin", &path]);
     }
-    git(h, &["commit", "-q", "--allow-empty", "-m", "outgoing"]);
+    let file = h.root.join("outgoing.txt");
+    let mut contents = std::fs::read_to_string(&file).unwrap_or_default();
+    contents.push_str("outgoing change\n");
+    std::fs::write(file, contents).unwrap();
+    git(h, &["add", "outgoing.txt"]);
+    git(h, &["commit", "-q", "-m", "outgoing"]);
 }
 
 /// Opens the Push dialog of `main` and waits for its commits.
@@ -82,6 +87,35 @@ fn check_remote(h: &mut H, command: &str, keys: &str, what: &str) {
             if command == "update-dialog.ok" {
                 // `main` tracks nothing: the update cannot start.
                 wait_vcs(h, "the update's balloon", |_| true);
+            }
+        }
+        "push-dialog.edit-target" => {
+            open_push(h);
+            h.press(keys);
+            assert_eq!(remote_ui(h)["push_dialog"]["editing"], "main", "{what}");
+        }
+        "push-dialog.compare" | "push-dialog.close-comparison" => {
+            open_push(h);
+            wait_vcs(h, "outgoing files", |v| {
+                v["remote"]["push_dialog"]["files"]
+                    .as_array()
+                    .is_some_and(|f| !f.is_empty())
+            });
+            if command == "push-dialog.compare" {
+                h.press(keys);
+            } else {
+                h.invoke("push-dialog.compare", json!(null));
+            }
+            wait_vcs(h, "committed file comparison", |v| {
+                v["remote"]["push_dialog"]["comparison"]["computed"] == true
+            });
+            if command == "push-dialog.close-comparison" {
+                h.press(keys);
+                let dialog = remote_ui(h)["push_dialog"].clone();
+                assert!(
+                    dialog.is_object() && dialog["comparison"].is_null(),
+                    "{what}: {dialog}"
+                );
             }
         }
         "push-dialog.cancel" => {

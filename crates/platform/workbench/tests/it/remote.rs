@@ -532,6 +532,39 @@ fn commit_and_push_opens_the_push_dialog(cx: &mut TestAppContext) {
 }
 
 #[gpui::test]
+fn update_reset_asks_before_fetching_and_accepts_cancel(cx: &mut TestAppContext) {
+    let repos = repos();
+    let mut h = open(cx, &repos.root);
+    let old_head = git(&repos.root, &["rev-parse", "HEAD"]);
+    let old_remote = git(&repos.root, &["rev-parse", "origin/main"]);
+    remote_commit(&repos, "arrived.py", "incoming", "incoming");
+    for choice in ["Cancel", "OK"] {
+        h.invoke("vcs.update-project", Value::Null);
+        h.invoke("update-dialog.reset-to-remote", Value::Null);
+        let state = h.wait("the reset confirmation", |v| {
+            !v["remote"]["remote_dialog"].is_null()
+        });
+        assert!(state["remote"]["update_dialog"].is_null());
+        let dialog = &state["remote"]["remote_dialog"];
+        assert_eq!(dialog["title"], "Reset to the Remote Branch");
+        assert!(
+            dialog["message"]
+                .as_str()
+                .unwrap()
+                .contains("'main' to 'origin/main'")
+        );
+        assert_eq!(git(&repos.root, &["rev-parse", "origin/main"]), old_remote);
+        assert_eq!(git(&repos.root, &["rev-parse", "HEAD"]), old_head);
+        h.invoke("dialog.choose", json!({ "button": choice }));
+    }
+    h.wait_balloon("information: 1 file updated in 1 commit | ");
+    assert_eq!(
+        git(&repos.root, &["rev-parse", "HEAD"]),
+        git(&repos.remote, &["rev-parse", "main"])
+    );
+}
+
+#[gpui::test]
 fn update_project_with_local_changes(cx: &mut TestAppContext) {
     let repos = repos();
     let mut h = open(cx, &repos.root);

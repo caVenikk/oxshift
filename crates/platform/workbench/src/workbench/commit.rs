@@ -453,8 +453,7 @@ impl Workbench {
         }
     }
 
-    /// Opens "Rollback Changes" with `files` ticked (every change when
-    /// none of them is one).
+    /// Opens "Rollback Changes" with only the changes under the explicit selection ticked.
     fn open_rollback(&mut self, files: Vec<PathBuf>, window: &mut Window, cx: &mut Context<Self>) {
         let changes = self.snapshot_changes();
         let Some(root) = self
@@ -468,13 +467,11 @@ impl Workbench {
         if changes.is_empty() {
             return;
         }
-        let mut included: Vec<PathBuf> = files
-            .into_iter()
-            .filter(|f| changes.iter().any(|c| &c.path == f))
+        let included: Vec<_> = changes
+            .iter()
+            .filter(|c| files.iter().any(|file| c.path.starts_with(file)))
+            .map(|c| c.path.clone())
             .collect();
-        if included.is_empty() {
-            included = changes.iter().map(|c| c.path.clone()).collect();
-        }
         let file_types = self.file_types.clone();
         let icon: Rc<dyn Fn(&Path) -> IconName> = Rc::new(move |p: &Path| file_types.icon(p));
         let delete_added = self.commit_ui.delete_added;
@@ -486,7 +483,7 @@ impl Workbench {
         let Some(host) = GitDialog::open(
             &dialog,
             vcs_ui::commit::dialogs::ROLLBACK_TITLE,
-            (480.0, 550.0),
+            (380.0, 552.0),
             RollbackEvent::Cancelled,
             window,
             cx,
@@ -497,6 +494,10 @@ impl Workbench {
             &dialog,
             window,
             |this, dialog, event: &RollbackEvent, window, cx| {
+                if let RollbackEvent::ShowDiff(change) = event {
+                    this.load_rollback_diff(dialog.clone(), change, cx);
+                    return;
+                }
                 this.commit_ui.delete_added = dialog.read(cx).delete_added();
                 this.close_commit_dialog(window, cx);
                 if let RollbackEvent::Confirmed {
@@ -514,6 +515,43 @@ impl Workbench {
             _subscription: subscription,
         });
         cx.notify();
+    }
+
+    fn load_rollback_diff(
+        &self,
+        dialog: Entity<RollbackDialog>,
+        change: &Change,
+        cx: &mut Context<Self>,
+    ) {
+        let Some(repo) = self.git_repo() else { return };
+        let path = change.path.clone();
+        let base = change.old_path.clone().unwrap_or_else(|| path.clone());
+        let status = change.status;
+        let open_text = self.editor_for(&path).map(|editor| editor.read(cx).text());
+        let file = path.clone();
+        let work = cx.background_spawn(async move {
+            use vcs::Backend as _;
+            let before = if status == FileStatus::Added {
+                None
+            } else {
+                repo.base_text(&base, &Cancel::new())
+                    .map_err(|e| e.message)?
+                    .map(|s| s.to_string())
+            };
+            let after = if status == FileStatus::Deleted {
+                None
+            } else if let Some(text) = open_text {
+                Some(text)
+            } else {
+                Some(std::fs::read_to_string(file).map_err(|e| e.to_string())?)
+            };
+            Ok((before, after))
+        });
+        cx.spawn(async move |_, cx| {
+            let result = work.await;
+            let _ = dialog.update(cx, |dialog, cx| dialog.diff_loaded(path, result, cx));
+        })
+        .detach();
     }
 
     /// Rolls back after writing the open documents; the open files reload.
@@ -918,7 +956,7 @@ impl Workbench {
         let mut state = self.commit_ui.view.read(cx).state_json(None, cx);
         state["visible"] = json!(self.is_visible(COMMIT));
         state["dialog"] = match &self.commit_ui.dialog {
-            Some(OpenDialog::Rollback { dialog, .. }) => dialog.read(cx).state_json(),
+            Some(OpenDialog::Rollback { dialog, .. }) => dialog.read(cx).state_json(cx),
             Some(OpenDialog::UserName { dialog, .. }) => dialog.read(cx).state_json(cx),
             Some(OpenDialog::Detached { dialog, .. }) => {
                 let mut d = dialog.read(cx).state_json();

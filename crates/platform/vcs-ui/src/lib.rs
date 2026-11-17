@@ -20,6 +20,7 @@
 //!   the remote ones ([`REMOTE_COMMANDS`]); the workbench handles them.
 
 pub mod branches;
+pub mod changes_browser;
 pub mod commit;
 pub mod diff;
 pub mod marker_popup;
@@ -150,6 +151,7 @@ pub fn init(cx: &mut gpui::App) {
     ui::command::register(cx, branches::COMMANDS);
     ui::command::register(cx, branches::INTERNAL_COMMANDS);
     ui::command::register(cx, new_branch::COMMANDS);
+    ui::command::register(cx, changes_browser::COMMANDS);
     commit::init(cx);
     ui::command::register(cx, REMOTE_COMMANDS);
     ui::command::register(cx, push::COMMANDS);

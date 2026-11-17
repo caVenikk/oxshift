@@ -340,6 +340,16 @@ pub fn innermost(window: AnyWindowHandle, cx: &App) -> AnyWindowHandle {
 /// buttons; it moves the window like the system's (macOS drags it) and
 /// zooms it on a double click. `None` where the system draws it.
 pub fn title_bar(title: impl Into<SharedString>, themed: bool, cx: &App) -> Option<AnyElement> {
+    title_bar_with_label(title.into(), TITLE_BAR, themed, cx)
+}
+
+/// A themed title bar with the dialog's own title label and height.
+pub fn title_bar_with_label(
+    label: impl IntoElement,
+    height: f32,
+    themed: bool,
+    cx: &App,
+) -> Option<AnyElement> {
     if !own_title(themed) {
         return None;
     }
@@ -352,7 +362,7 @@ pub fn title_bar(title: impl Into<SharedString>, themed: bool, cx: &App) -> Opti
             .flex_none()
             .flex_row()
             .items_center()
-            .h(px(TITLE_BAR))
+            .h(px(height))
             .pl(px(TITLE_LEFT))
             .pr(px(12.0))
             .bg(theme.color(UiRole::Surface))
@@ -360,7 +370,7 @@ pub fn title_bar(title: impl Into<SharedString>, themed: bool, cx: &App) -> Opti
             .font_weight(FontWeight::SEMIBOLD)
             .whitespace_nowrap()
             .overflow_hidden()
-            .child(title.into())
+            .child(label)
             .on_click(|event, window, _| {
                 if event.click_count() == 2 {
                     window.titlebar_double_click();

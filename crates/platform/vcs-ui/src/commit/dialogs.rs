@@ -25,7 +25,7 @@ use vcs::{Change, FileStatus};
 
 use super::legend::Legend;
 use crate::changes_browser::{BrowserEvent, ChangesBrowser};
-use crate::diff::DiffView;
+use crate::diff::{DiffEvent, SnapshotWindow};
 use crate::status_colors::status_role;
 
 ui::ui_commands! {
@@ -141,15 +141,15 @@ fn panel(
 
 // ---- Rollback Changes ----------------------------------------------------------
 
-/// How the Rollback Changes dialog was closed.
-#[derive(Debug, Clone, PartialEq)]
+/// Requests emitted by the Rollback Changes dialog.
+#[derive(Clone, PartialEq)]
 pub enum RollbackEvent {
     Confirmed {
         changes: Vec<Change>,
         delete_added: bool,
     },
     Cancelled,
-    ShowDiff(Change),
+    ShowDiff(Change, gpui::AnyWindowHandle),
 }
 
 pub struct RollbackDialog {
@@ -157,22 +157,16 @@ pub struct RollbackDialog {
     root: PathBuf,
     browser: Entity<ChangesBrowser>,
     delete_added: bool,
-    preview: Option<RollbackPreview>,
-    _browser_subscription: gpui::Subscription,
-}
-
-enum RollbackPreview {
-    Loading(PathBuf),
-    Ready(PathBuf, Option<String>, Option<String>),
-    Error(String),
-    View(Entity<DiffView>),
+    preview: Option<SnapshotWindow>,
+    inclusion_subscription: Option<gpui::Subscription>,
+    browser_subscription: Option<gpui::Subscription>,
 }
 
 impl EventEmitter<RollbackEvent> for RollbackDialog {}
 
 impl Focusable for RollbackDialog {
     fn focus_handle(&self, cx: &App) -> FocusHandle {
-        if self.preview.is_none() && !self.browser.read(cx).changes().is_empty() {
+        if !self.browser.read(cx).changes().is_empty() {
             self.browser.focus_handle(cx)
         } else {
             self.focus.clone()
@@ -196,40 +190,105 @@ impl RollbackDialog {
             browser.set_changes(changes, included, cx);
             browser
         });
-        let subscription = cx.subscribe(&browser, |this, browser, event, cx| {
-            if let BrowserEvent::ShowDiff(path) = event
-                && let Some(change) = browser.read(cx).changes().iter().find(|c| c.path == *path)
-            {
-                let change = change.clone();
-                this.preview = Some(RollbackPreview::Loading(path.clone()));
-                cx.emit(RollbackEvent::ShowDiff(change));
-            }
-            cx.notify();
-        });
         Self {
             focus: cx.focus_handle(),
             root: root.to_owned(),
             browser,
             delete_added,
             preview: None,
-            _browser_subscription: subscription,
+            inclusion_subscription: None,
+            browser_subscription: None,
         }
+    }
+
+    fn bind_browser(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.browser_subscription.is_some() {
+            return;
+        }
+        self.browser_subscription =
+            Some(
+                cx.subscribe_in(&self.browser, window, |this, browser, event, window, cx| {
+                    if let BrowserEvent::ShowDiff(path) = event
+                        && !this.preview_open(cx)
+                        && let Some(change) = browser
+                            .read(cx)
+                            .changes()
+                            .iter()
+                            .find(|c| c.path == *path)
+                            .cloned()
+                    {
+                        let name = path.file_name().unwrap_or_default().to_string_lossy();
+                        let directory = path.parent().unwrap_or(&this.root).display();
+                        let title = format!("{name} ({directory}) [Changes]");
+                        window.focus(&browser.focus_handle(cx));
+                        if let Some(preview) = SnapshotWindow::open(title.into(), window, cx) {
+                            let handle = preview.handle();
+                            this.preview = Some(preview);
+                            this.inclusion_subscription = None;
+                            cx.emit(RollbackEvent::ShowDiff(change, handle));
+                        }
+                    }
+                    cx.notify();
+                }),
+            );
+    }
+
+    fn preview_open(&self, cx: &App) -> bool {
+        self.preview
+            .as_ref()
+            .is_some_and(|window| window.is_open(cx))
     }
 
     pub fn diff_loaded(
         &mut self,
+        handle: gpui::AnyWindowHandle,
         path: PathBuf,
+        revision: &str,
         result: Result<(Option<String>, Option<String>), String>,
         cx: &mut Context<Self>,
     ) {
-        if matches!(&self.preview, Some(RollbackPreview::Loading(requested)) if *requested == path)
-        {
-            self.preview = Some(match result {
-                Ok((before, after)) => RollbackPreview::Ready(path, before, after),
-                Err(error) => RollbackPreview::Error(error),
-            });
-            cx.notify();
-        }
+        let Some(preview) = self
+            .preview
+            .as_ref()
+            .filter(|w| w.handle() == handle && w.is_open(cx))
+        else {
+            return;
+        };
+        let (before, after) = match result {
+            Ok(text) => text,
+            Err(error) => {
+                preview.set_error(error, cx);
+                return;
+            }
+        };
+        let checked = self.browser.read(cx).is_included(&path);
+        let Ok(view) = handle.update(cx, |_, window, cx| {
+            let view = crate::diff::snapshot_view(
+                path.clone(),
+                before,
+                after,
+                (revision, "Current version"),
+                window,
+                cx,
+            );
+            view.update(cx, |v, cx| v.set_rollback_included(checked, cx));
+            view
+        }) else {
+            return;
+        };
+        self.inclusion_subscription = Some(cx.subscribe(&view, move |this, view, event, cx| {
+            if let DiffEvent::SetIncluded(checked) = event {
+                this.browser.update(cx, |browser, cx| {
+                    if browser.is_included(&path) != *checked {
+                        browser.toggle_file(&path, cx);
+                    }
+                });
+                view.update(cx, |view, cx| view.set_rollback_included(*checked, cx));
+                cx.notify();
+            }
+        }));
+        preview.set_view(view, cx);
+        cx.notify();
     }
 
     fn has_added(&self, cx: &App) -> bool {
@@ -246,7 +305,7 @@ impl RollbackDialog {
 
     fn confirm(&mut self, _: &ConfirmRollback, _: &mut Window, cx: &mut Context<Self>) {
         let changes = self.browser.read(cx).included_changes();
-        if changes.is_empty() || self.preview.is_some() {
+        if changes.is_empty() || self.preview_open(cx) {
             return;
         }
         let delete_added = self.delete_added && self.has_added(cx);
@@ -256,11 +315,8 @@ impl RollbackDialog {
         });
     }
 
-    fn cancel(&mut self, _: &CancelRollback, window: &mut Window, cx: &mut Context<Self>) {
-        if self.preview.take().is_some() {
-            window.focus(&self.browser.focus_handle(cx));
-            cx.notify();
-        } else {
+    fn cancel(&mut self, _: &CancelRollback, _: &mut Window, cx: &mut Context<Self>) {
+        if !self.preview_open(cx) {
             cx.emit(RollbackEvent::Cancelled);
         }
     }
@@ -291,7 +347,8 @@ impl RollbackDialog {
         json!({
             "kind": "rollback",
             "browser": self.browser.read(cx).state_json(),
-            "preview": self.preview.is_some(),
+            "preview": self.preview_open(cx),
+            "preview_ready": self.preview_open(cx) && self.inclusion_subscription.is_some(),
             "title": ROLLBACK_TITLE,
             "files": self.browser.read(cx).changes().iter().map(|c| json!({
                 "path": rel(&c.path),
@@ -309,18 +366,7 @@ impl RollbackDialog {
 
 impl Render for RollbackDialog {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        if matches!(self.preview, Some(RollbackPreview::Ready(..)))
-            && let Some(RollbackPreview::Ready(path, before, after)) = self.preview.take()
-        {
-            self.preview = Some(RollbackPreview::View(crate::diff::snapshot_view(
-                path,
-                before,
-                after,
-                ("HEAD", "Local"),
-                window,
-                cx,
-            )));
-        }
+        self.bind_browser(window, cx);
         let owned = cfg!(target_os = "macos");
         let dialog = panel("rollback-dialog", ROLLBACK_TITLE, ROLLBACK_WIDTH, owned, cx)
             .gap(px(0.))
@@ -331,35 +377,6 @@ impl Render for RollbackDialog {
             .on_action(cx.listener(Self::cancel))
             .on_action(cx.listener(Self::toggle_delete))
             .on_action(cx.listener(Self::toggle_file));
-        if let Some(preview) = &self.preview {
-            if self.browser.focus_handle(cx).is_focused(window) || window.focused(cx).is_none() {
-                window.focus(&self.focus);
-            }
-            let view = match preview {
-                RollbackPreview::View(view) => view.clone().into_any_element(),
-                RollbackPreview::Error(error) => {
-                    div().p(px(16.)).child(error.clone()).into_any_element()
-                }
-                _ => div().p(px(16.)).child("Loading diff…").into_any_element(),
-            };
-            let back = BottomBar::new()
-                .separator(false)
-                .button(BarButton::new(
-                    "rollback-diff-back",
-                    "Back",
-                    ButtonRole::Cancel,
-                    Box::new(CancelRollback),
-                ))
-                .render(cx);
-            let dialog = dialog
-                .child(div().flex_1().min_h(px(0.)).child(view))
-                .child(back);
-            return if owned {
-                dialog.into_any_element()
-            } else {
-                frame("rollback-dialog-backdrop", dialog, window)
-            };
-        }
         let theme = cx.theme();
         let included = self.browser.read(cx).included_changes();
         let legend = Legend::of(&included, 0);

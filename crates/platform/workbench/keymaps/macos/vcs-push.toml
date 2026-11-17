@@ -25,11 +25,6 @@ name = "PushDialog"
 "f2" = "push-dialog.edit-target"
 
 [[context]]
-name = "PushComparison"
-[context.bindings]
-"escape" = "push-dialog.close-comparison"
-
-[[context]]
 name = "PushDialog > Editor"
 [context.bindings]
 "enter" = "push-dialog.confirm-target"

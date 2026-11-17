@@ -187,6 +187,7 @@ pub struct DiffView {
     left: Entity<Editor>,
     right: Entity<Editor>,
     request: Option<DiffRequest>,
+    rollback_included: Option<bool>,
     settings: DiffSettings,
     changes: Rc<Vec<DiffChange>>,
     /// The right text's version the changes are for.
@@ -257,6 +258,7 @@ impl DiffView {
             left,
             right,
             request: None,
+            rollback_included: None,
             settings: DiffSettings::default(),
             changes: Rc::new(Vec::new()),
             computed_for: None,
@@ -338,6 +340,29 @@ impl DiffView {
             r.included = included;
             r.excluded = excluded;
             self.decorate(cx);
+        }
+    }
+
+    pub fn set_rollback_included(&mut self, included: bool, cx: &mut Context<Self>) {
+        self.rollback_included = Some(included);
+        if let Some(request) = &mut self.request {
+            request.left.path = request
+                .path
+                .file_name()
+                .map(|s| s.to_string_lossy().into_owned().into());
+            request.right.path = None;
+        }
+        cx.notify();
+    }
+
+    fn toggle_rollback_inclusion(
+        &mut self,
+        _: &super::ToggleRollbackInclusion,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if let Some(included) = self.rollback_included {
+            cx.emit(DiffEvent::SetIncluded(!included));
         }
     }
 
@@ -992,6 +1017,7 @@ impl DiffView {
             "title": self.request.as_ref().map(|r| r.title.to_string()),
             "left_title": self.request.as_ref().map(|r| title(&r.left)),
             "right_title": self.request.as_ref().map(|r| title(&r.right)),
+            "rollback_included": self.rollback_included,
             "included": self.request.as_ref().and_then(|r| r.included),
             "files": self.request.as_ref().map(|r| json!([r.files.0, r.files.1])),
             "steps": self.request.as_ref().map(|r| json!([r.steps.0, r.steps.1])),
@@ -1025,7 +1051,8 @@ impl DiffView {
     fn files_text(&self) -> Option<String> {
         let r = self.request.as_ref()?;
         let (index, count) = r.files;
-        (count > 1 || r.preview).then(|| model::files_text(index, count))
+        (count > 1 || r.preview || self.rollback_included.is_some())
+            .then(|| model::files_text(index, count))
     }
 
     /// "Press again to go to the next file" (`DiffBundle`).
@@ -1146,6 +1173,20 @@ impl DiffView {
                     cx,
                     |this, window, cx| this.next_file(&NextFile, window, cx),
                 ));
+        }
+        if let Some(included) = self.rollback_included {
+            left = left.child(vertical_separator()).child(
+                ui::form::check_row(
+                    "diff-rollback-inclusion",
+                    "diff-rollback-check",
+                    included,
+                    "Include in rollback",
+                    cx,
+                )
+                .on_click(cx.listener(|this, _: &ClickEvent, window, cx| {
+                    this.toggle_rollback_inclusion(&super::ToggleRollbackInclusion, window, cx)
+                })),
+            );
         }
         // One side alone has no status (`SimpleOnesideDiffViewer`).
         let status = self.status_text();
@@ -1540,6 +1581,7 @@ impl Render for DiffView {
             .id("diff")
             .debug_selector(|| "diff".into())
             .key_context(CONTEXT)
+            .on_action(cx.listener(Self::toggle_rollback_inclusion))
             .track_focus(&self.focus)
             .flex()
             .flex_col()

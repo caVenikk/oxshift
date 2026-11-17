@@ -494,8 +494,8 @@ impl Workbench {
             &dialog,
             window,
             |this, dialog, event: &RollbackEvent, window, cx| {
-                if let RollbackEvent::ShowDiff(change) = event {
-                    this.load_rollback_diff(dialog.clone(), change, cx);
+                if let RollbackEvent::ShowDiff(change, handle) = event {
+                    this.load_rollback_diff(dialog.clone(), *handle, change, cx);
                     return;
                 }
                 this.commit_ui.delete_added = dialog.read(cx).delete_added();
@@ -520,6 +520,7 @@ impl Workbench {
     fn load_rollback_diff(
         &self,
         dialog: Entity<RollbackDialog>,
+        handle: gpui::AnyWindowHandle,
         change: &Change,
         cx: &mut Context<Self>,
     ) {
@@ -528,6 +529,14 @@ impl Workbench {
         let base = change.old_path.clone().unwrap_or_else(|| path.clone());
         let status = change.status;
         let open_text = self.editor_for(&path).map(|editor| editor.read(cx).text());
+        let revision = self
+            .version_control
+            .snapshot
+            .as_ref()
+            .and_then(|s| s.info.head.oid())
+            .and_then(|oid| oid.get(..8))
+            .unwrap_or("HEAD")
+            .to_owned();
         let file = path.clone();
         let work = cx.background_spawn(async move {
             use vcs::Backend as _;
@@ -549,7 +558,9 @@ impl Workbench {
         });
         cx.spawn(async move |_, cx| {
             let result = work.await;
-            let _ = dialog.update(cx, |dialog, cx| dialog.diff_loaded(path, result, cx));
+            let _ = dialog.update(cx, |dialog, cx| {
+                dialog.diff_loaded(handle, path, &revision, result, cx)
+            });
         })
         .detach();
     }

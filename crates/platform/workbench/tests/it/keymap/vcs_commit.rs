@@ -280,7 +280,14 @@ fn check_commit(h: &mut H, command: &str, keys: &str, what: &str) {
                 "dialog-changes.diff" => {
                     h.press(keys);
                     assert_eq!(dialog(h)["preview"], true, "{what}");
-                    h.invoke("rollback-dialog.cancel", json!(null));
+                    wait_vcs(h, "snapshot ready", |v| {
+                        v["commit"]["dialog"]["preview_ready"] == true
+                    });
+                    h.invoke("diff.toggle-rollback-inclusion", json!(null));
+                    assert_eq!(dialog(h)["ok_enabled"], false);
+                    h.invoke("diff.close-window", json!(null));
+                    assert_eq!(dialog(h)["preview"], false);
+                    assert_eq!(dialog(h)["kind"], "rollback");
                 }
                 _ => unreachable!(),
             }

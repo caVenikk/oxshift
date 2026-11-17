@@ -40,7 +40,7 @@ use vcs::{
 use editor::{Editor, EditorConfig};
 
 use crate::changes_browser::{BrowserEvent, ChangesBrowser};
-use crate::diff::{DiffEvent, DiffView, snapshot_view};
+use crate::diff::{DiffEvent, DiffView, SnapshotWindow, snapshot_view};
 
 ui::ui_commands! {
     COMMANDS, scope = "PushDialog";
@@ -62,8 +62,6 @@ ui::ui_commands! {
         r#"{"row": 1}"#;
     /// Open the Git push documentation.
     PushHelp => "push-dialog.help", "Push Help", "Opens the documentation for Git push.";
-    /// Return from the committed file comparison.
-    CloseComparison => "push-dialog.close-comparison", "Back", "Returns from the committed file comparison to the Push dialog.";
     /// Compare a file in the selected commits.
     Compare => "push-dialog.compare", "Show Diff", "Shows the committed change for a file in the Push dialog.";
     /// Edit the target branch.
@@ -186,7 +184,8 @@ pub struct PushDialog {
     browser: Entity<ChangesBrowser>,
     browser_events: Option<Subscription>,
     show_details: bool,
-    comparison: Option<Entity<DiffView>>,
+    comparison: Option<SnapshotWindow>,
+    comparison_view: Option<gpui::WeakEntity<DiffView>>,
     comparison_events: Option<Subscription>,
     comparison_error: Option<String>,
     comparison_task: Option<Task<()>>,
@@ -232,6 +231,7 @@ impl PushDialog {
             browser_events: None,
             show_details: true,
             comparison: None,
+            comparison_view: None,
             comparison_events: None,
             comparison_error: None,
             comparison_task: None,
@@ -725,6 +725,10 @@ impl PushDialog {
                 None,
             ),
         };
+        let comparing = self
+            .comparison
+            .as_ref()
+            .is_some_and(|host| host.is_open(cx));
         json!({
             "title": self.title(),
             "source": self.source,
@@ -737,8 +741,8 @@ impl PushDialog {
             "selected_rows": self.selected_rows,
             "browser": self.browser.read(cx).state_json(),
             "show_details": self.show_details && self.detail_commit().is_some(),
-            "comparison": self.comparison.as_ref().map(|v| v.read(cx).state_json(cx)),
-            "comparison_error": self.comparison_error,
+            "comparison": self.comparison_view.as_ref().filter(|_| comparing).and_then(|v| v.upgrade()).map(|v| v.read(cx).state_json(cx)),
+            "comparison_error": self.comparison_error.as_ref().filter(|_| comparing),
             "files": files,
             "files_text": files_text,
             "editing": self.editing.as_ref().map(|f| f.read(cx).text()),
@@ -1024,6 +1028,26 @@ impl PushDialog {
     }
 
     fn open_comparison(&mut self, path: PathBuf, window: &mut Window, cx: &mut Context<Self>) {
+        if self
+            .comparison
+            .as_ref()
+            .is_some_and(|host| host.is_open(cx))
+        {
+            return;
+        }
+        let title = path
+            .file_name()
+            .unwrap_or(path.as_os_str())
+            .to_string_lossy()
+            .into_owned();
+        let Some(host) = SnapshotWindow::open(title.into(), window, cx) else {
+            return;
+        };
+        let child = host.handle();
+        self.comparison = Some(host);
+        self.comparison_view = None;
+        self.comparison_error = None;
+        self.comparison_events = None;
         let relative = path
             .strip_prefix(&self.root)
             .unwrap_or(&path)
@@ -1032,49 +1056,50 @@ impl PushDialog {
         let commits = self.selected_commits();
         let data = self.data.clone();
         let work = cx.background_spawn(async move { data.versions(&commits, &relative) });
-        self.comparison_error = None;
-        self.comparison_task = Some(cx.spawn_in(window, async move |this, cx| {
+        self.comparison_task = Some(cx.spawn(async move |this, cx| {
             let versions = work.await;
-            let _ = this.update_in(cx, |this, window, cx| {
-                this.comparison_task = None;
+            let _ = this.update(cx, |this, cx| {
+                let Some(host) = this
+                    .comparison
+                    .as_ref()
+                    .filter(|host| host.handle() == child && host.is_open(cx))
+                else {
+                    return;
+                };
                 match versions {
                     Ok((before, after)) => {
-                        let view = snapshot_view(
-                            path.clone(),
-                            before,
-                            after,
-                            ("Before", "After"),
-                            window,
-                            cx,
-                        );
+                        let Ok(view) = child.update(cx, |_, window, cx| {
+                            snapshot_view(
+                                path.clone(),
+                                before,
+                                after,
+                                ("Before", "After"),
+                                window,
+                                cx,
+                            )
+                        }) else {
+                            return;
+                        };
                         this.comparison_events =
-                            Some(cx.subscribe(&view, move |_, _, event: &DiffEvent, cx| {
+                            Some(cx.subscribe(&view, move |this, _, event: &DiffEvent, cx| {
                                 if matches!(event, DiffEvent::JumpToSource { .. }) {
+                                    if let Some(host) = this.comparison.take() {
+                                        host.close(cx);
+                                    }
                                     cx.emit(PushDialogEvent::EditSource(path.clone()));
                                 }
                             }));
-                        window.focus(&view.focus_handle(cx));
-                        this.comparison = Some(view);
+                        this.comparison_view = Some(view.downgrade());
+                        host.set_view(view, cx);
                     }
-                    Err(e) => this.comparison_error = Some(e.message),
+                    Err(e) => {
+                        host.set_error(e.message.clone(), cx);
+                        this.comparison_error = Some(e.message);
+                    }
                 }
                 cx.notify();
             });
         }));
-        cx.notify();
-    }
-
-    fn close_comparison(
-        &mut self,
-        _: &CloseComparison,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        self.comparison_task = None;
-        self.comparison = None;
-        self.comparison_events = None;
-        self.comparison_error = None;
-        window.focus(&self.focus);
         cx.notify();
     }
 
@@ -1236,70 +1261,30 @@ impl Render for PushDialog {
             .child(self.render_log(window, cx))
             .child(div().flex_none().w(px(1.0)).h_full().bg(border))
             .child(self.render_files(cx));
-        let comparing = self.comparison.is_some()
-            || self.comparison_task.is_some()
-            || self.comparison_error.is_some();
-        let bar = if comparing {
-            BottomBar::new()
-                .button(BarButton::new(
-                    "push-comparison-back",
-                    "Back",
-                    ButtonRole::Ok,
-                    Box::new(CloseComparison),
-                ))
-                .render(cx)
-        } else {
-            BottomBar::new()
-                .metrics(53.0, 15.0)
-                .status_padding(27.0)
-                .help(ui::form::help_button(
-                    "push-dialog-help",
-                    Some(Box::new(PushHelp)),
-                    cx,
-                ))
-                .status(self.render_options(cx))
-                .button(BarButton::new(
-                    "push-dialog-cancel",
-                    "Cancel",
-                    ButtonRole::Cancel,
-                    Box::new(CancelPush),
-                ))
-                .element(self.render_push_button(cx), 100, 0.0)
-                .render(cx)
-        };
-        let content = if let Some(view) = &self.comparison {
-            div()
-                .flex_1()
-                .min_h(px(0.0))
-                .when(!owned, |d| d.h(px(LOG_HEIGHT)).flex_none())
-                .child(view.clone())
-                .into_any_element()
-        } else if comparing {
-            div()
-                .flex_1()
-                .when(!owned, |d| d.h(px(LOG_HEIGHT)).flex_none())
-                .p(px(15.0))
-                .child(
-                    self.comparison_error
-                        .clone()
-                        .unwrap_or_else(|| "Loading…".to_owned()),
-                )
-                .into_any_element()
-        } else {
-            log.into_any_element()
-        };
+        let bar = BottomBar::new()
+            .metrics(53.0, 15.0)
+            .status_padding(27.0)
+            .help(ui::form::help_button(
+                "push-dialog-help",
+                Some(Box::new(PushHelp)),
+                cx,
+            ))
+            .status(self.render_options(cx))
+            .button(BarButton::new(
+                "push-dialog-cancel",
+                "Cancel",
+                ButtonRole::Cancel,
+                Box::new(CancelPush),
+            ))
+            .element(self.render_push_button(cx), 100, 0.0)
+            .render(cx);
         let dialog = div()
             .id("push-dialog")
             .debug_selector(|| "push-dialog".into())
-            .key_context(if comparing {
-                "PushComparison"
-            } else {
-                KEY_CONTEXT
-            })
+            .key_context(KEY_CONTEXT)
             .on_action(cx.listener(|_, _: &PushHelp, _, cx| {
                 cx.open_url("https://git-scm.com/docs/git-push")
             }))
-            .on_action(cx.listener(Self::close_comparison))
             .on_action(cx.listener(Self::compare))
             .track_focus(&self.focus)
             .on_action(cx.listener(Self::push))
@@ -1332,7 +1317,7 @@ impl Render for PushDialog {
             .text_color(text_color)
             .overflow_hidden()
             .when(!owned, |d| d.child(title))
-            .child(content)
+            .child(log)
             .child(bar);
         if owned {
             return dialog.into_any_element();

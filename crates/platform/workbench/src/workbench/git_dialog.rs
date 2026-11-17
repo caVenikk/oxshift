@@ -1,7 +1,7 @@
 use gpui::{
     AnyView, App, AppContext as _, Context, Entity, EventEmitter, FocusHandle, Focusable,
-    FontWeight, InteractiveElement, IntoElement, ParentElement, Render, SharedString, Size, Styled,
-    Window, WindowHandle, div, px,
+    InteractiveElement, IntoElement, ParentElement, Render, SharedString, Size, Styled, Window,
+    WindowHandle, div, px,
 };
 use ui::dialog_window::{self, DialogOptions};
 use ui::theme::ThemeExt as _;
@@ -81,15 +81,6 @@ pub(super) struct GitWindow {
 
 impl Render for GitWindow {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let theme = cx.theme();
-        let title = div()
-            .pt(px(3.0))
-            .font_family(theme.ui_family())
-            .text_size(theme.ui_size() + px(0.35))
-            .line_height(px(18.0))
-            .font_weight(FontWeight::BOLD)
-            .text_color(theme.color(themes::UiRole::Text).opacity(0.69))
-            .child(self.title.clone());
         div()
             .on_action(crate::simulate::simulate_mouse)
             .on_key_down(|event, window, cx| {
@@ -117,7 +108,7 @@ impl Render for GitWindow {
             .flex()
             .flex_col()
             .bg(cx.theme().color(themes::UiRole::SurfaceRaised))
-            .children(dialog_window::title_bar_with_label(title, 29.0, true, cx))
+            .children(dialog_window::compact_title_bar(self.title.clone(), cx))
             .child(div().flex_1().min_h(px(0.0)).child(self.view.clone()))
             .children(dialog_window::blocker(window, cx))
             .child(ui::pointer::frame())

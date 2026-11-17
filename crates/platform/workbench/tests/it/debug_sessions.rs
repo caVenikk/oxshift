@@ -655,6 +655,63 @@ impl H<'_> {
     }
 }
 
+/// A debugger comparison belongs beside the source tab even when the
+/// source is not the last file. Both snapshots survive later clipboard edits.
+#[gpui::test]
+fn compare_with_clipboard_opens_a_read_only_tab(cx: &mut TestAppContext) {
+    use vcs_ui::diff::Side;
+
+    let (mut h, _dir) = setup(cx);
+    h.invoke("project.open-file", json!({"path": "other.py"}));
+    push_debug_script(watches_script(&h.root));
+    h.invoke("project.open-file", json!({"path": "main.py"}));
+    h.invoke("debug.debug", json!(null));
+    h.wait("local b", |s| {
+        s["tool_window"]["tabs"][0]["variables"]["rows"]
+            .as_array()
+            .is_some_and(|rows| rows.iter().any(|r| r["name"] == "b"))
+    });
+    h.invoke("debug.variables.select", json!({"path": ["Locals", "b"]}));
+    h.cx.update(|cx| {
+        cx.write_to_clipboard(gpui::ClipboardItem::new_string("first\nsecond".into()))
+    });
+    let windows = h.cx.update(|cx| cx.windows().len());
+    h.invoke("debug.variables.compare-with-clipboard", json!(null));
+    h.cx.update(|cx| cx.write_to_clipboard(gpui::ClipboardItem::new_string("later".into())));
+    let state = h.state();
+    let diff = &state["diff"];
+    assert_eq!(diff["title"], "Clipboard vs Selected Value", "{state:#}");
+    assert_eq!(diff["left_title"]["label"], "From clipboard");
+    assert_eq!(diff["right_title"]["label"], "Selected Value");
+    assert_eq!(diff["one_side"], Value::Null);
+    assert_eq!(h.cx.update(|cx| cx.windows().len()), windows);
+    h.window
+        .update(h.cx, |w, window, cx| {
+            let diff = w.active_diff().unwrap();
+            assert!(diff.focus_handle(cx).contains_focused(window, cx));
+            for (side, expected) in [(Side::Left, "first\nsecond"), (Side::Right, "2")] {
+                let editor = diff.read(cx).editor(side).read(cx);
+                assert_eq!(editor.buffer().text(), expected);
+                assert!(editor.buffer().is_read_only());
+            }
+        })
+        .unwrap();
+    h.invoke("tabs.close", json!(null));
+    let main = h.file("main.py");
+    h.window
+        .update(h.cx, |w, window, cx| {
+            assert_eq!(w.active_file(cx), Some(main));
+            assert!(
+                w.active_editor()
+                    .unwrap()
+                    .focus_handle(cx)
+                    .contains_focused(window, cx)
+            );
+        })
+        .unwrap();
+    assert_eq!(h.tab()["state"], "suspended");
+}
+
 /// debugger-evaluate-watches.md: Pause Watch keeps a watch's value and
 /// leaves it out at the next stop ("… Evaluate" evaluates it once), View as
 /// renders a value, Remove All Watches; the evaluate field's history list

@@ -19,7 +19,7 @@
 pub mod divider;
 pub mod model;
 mod snapshot;
-pub use snapshot::{SnapshotWindow, snapshot_view};
+pub use snapshot::{SnapshotWindow, snapshot_view, text_snapshot_view};
 pub mod view;
 
 pub use model::{

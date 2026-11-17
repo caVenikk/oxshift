@@ -21,16 +21,53 @@ pub fn snapshot_view(
     window: &mut Window,
     cx: &mut App,
 ) -> Entity<DiffView> {
-    let name = path.to_string_lossy().into_owned();
+    let title = path.to_string_lossy().into_owned().into();
+    snapshot(
+        title,
+        Some(path),
+        (before.map(Into::into), after.as_deref()),
+        labels,
+        window,
+        cx,
+    )
+}
+
+/// Compare two text snapshots that have no backing file.
+pub fn text_snapshot_view(
+    title: SharedString,
+    before: &str,
+    after: &str,
+    labels: (&str, &str),
+    window: &mut Window,
+    cx: &mut App,
+) -> Entity<DiffView> {
+    snapshot(
+        title,
+        None,
+        (Some(before.into()), Some(after)),
+        labels,
+        window,
+        cx,
+    )
+}
+
+fn snapshot(
+    title: SharedString,
+    path: Option<PathBuf>,
+    (before, after): (Option<std::sync::Arc<str>>, Option<&str>),
+    labels: (&str, &str),
+    window: &mut Window,
+    cx: &mut App,
+) -> Entity<DiffView> {
     let side = |label: &str| SideTitle {
         label: label.to_owned().into(),
-        path: Some(name.clone().into()),
+        path: path.as_ref().map(|_| title.clone()),
         read_only: true,
         ..Default::default()
     };
     let request = DiffRequest {
-        path: path.clone(),
-        title: name.clone().into(),
+        path: path.clone().unwrap_or_default(),
+        title: title.clone(),
         left: side(labels.0),
         right: side(labels.1),
         included: None,
@@ -47,18 +84,18 @@ pub fn snapshot_view(
         preview: false,
     };
     let right = cx.new(|cx| {
-        let mut buffer = Buffer::new(after.as_deref().unwrap_or_default());
+        let mut buffer = Buffer::new(after.unwrap_or_default());
         buffer.set_read_only(true);
         let mut editor = Editor::new(buffer, window, cx);
         editor.set_viewer(true);
-        editor.set_path(Some(path));
+        editor.set_path(path);
         editor
     });
     cx.new(|cx| {
         let mut view = DiffView::new(right, window, cx);
         view.set_request(
             request,
-            before.map(Into::into),
+            before,
             None,
             EditorConfig::default(),
             ScrollTo::FirstChange,

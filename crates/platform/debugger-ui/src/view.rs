@@ -45,6 +45,8 @@ pub enum DebuggerViewEvent {
         line: u32,
         column: u32,
     },
+    /// Show the two text snapshots in a comparison tab.
+    CompareWithClipboard(crate::inspect::ClipboardComparison),
     /// Show a line (from 1) where the program is suspended, without
     /// bringing the window to the front.
     Navigate {

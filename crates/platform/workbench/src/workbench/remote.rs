@@ -980,11 +980,30 @@ impl Workbench {
             return;
         }
         let git = self.version_control.service.is_some();
-        let diff_path = self
-            .diff_context_file(window, cx)
-            .filter(|path| self.vcs_file_status(path, cx).is_change())
-            .map(|path| path.display().to_string());
-        let items = vcs_ui::operations::items(git, diff_path, cx);
+        let files = self.diff_context_files(window, cx);
+        let snapshot = self
+            .version_control
+            .snapshot
+            .as_deref()
+            .filter(|_| self.version_control.problem.is_none());
+        let project = self.project(cx);
+        let diff_path = match (files.as_slice(), snapshot) {
+            ([file], Some(s))
+                if project.is_some_and(|p| file.starts_with(p.root()))
+                    && super::version_control::base_of(s, file).is_some() =>
+            {
+                file.to_str().map(str::to_owned)
+            }
+            _ => None,
+        };
+        let unversioned = files
+            .iter()
+            .filter(|path| {
+                snapshot.is_some_and(|s| s.status.status(path) == vcs::FileStatus::Unversioned)
+            })
+            .filter_map(|path| path.to_str().map(str::to_owned))
+            .collect();
+        let items = vcs_ui::operations::items(git, diff_path, unversioned, cx);
         let options = PopupOptions {
             title: Some(vcs_ui::operations::TITLE.into()),
             speed_search: true,

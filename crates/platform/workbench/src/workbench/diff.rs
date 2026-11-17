@@ -143,7 +143,7 @@ impl Workbench {
     ) {
         let path = match &action.path {
             Some(path) => Some(self.diff_path(path, cx)),
-            None => self.diff_context_file(window, cx),
+            None => self.diff_context_files(window, cx).into_iter().next(),
         };
         if let Some(path) = path {
             self.show_diff_of(path, ScrollTo::FirstChange, window, cx);
@@ -167,18 +167,21 @@ impl Workbench {
         }
     }
 
-    pub(super) fn diff_context_file(&self, window: &Window, cx: &App) -> Option<PathBuf> {
+    pub(super) fn diff_context_files(&self, window: &Window, cx: &App) -> Vec<PathBuf> {
         let commit = self.commit_ui.view.read(cx);
         if commit.contains_focus(window, cx) {
-            return commit.selected_files().into_iter().next();
+            return commit.selected_files();
         }
         let panel = self.panel.read(cx);
         if panel.focus_handle(cx).contains_focused(window, cx) {
             return panel
                 .selected_path()
-                .and_then(|(path, dir)| (!dir).then(|| path.to_owned()));
+                .filter(|(_, dir)| !dir)
+                .map(|(path, _)| path.to_owned())
+                .into_iter()
+                .collect();
         }
-        self.active_file(cx)
+        self.active_file(cx).into_iter().collect()
     }
 
     /// Opens the diff of `path`. A file of the Commit tool window's list

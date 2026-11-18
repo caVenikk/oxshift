@@ -13,7 +13,6 @@
 //!   goes to the credential store like the Data Sources dialog's.
 
 use std::cell::RefCell;
-use std::collections::HashSet;
 use std::path::Path;
 use std::rc::Rc;
 
@@ -25,15 +24,7 @@ use ui::notification::{Notification, NotificationKind};
 
 use super::{Explorer, Explorers};
 use crate::prompt::Answer;
-use crate::store::{PasswordChange, SaveRequest};
-
-/// What the tool window keeps of the passwords it asked for.
-#[derive(Default)]
-pub(super) struct State {
-    /// Data sources whose typed password is forgotten when they are
-    /// disconnected.
-    never: HashSet<String>,
-}
+use crate::store::PasswordChange;
 
 /// A connection of `source` in the project `root` found no password: asks
 /// in the tool window of that project. `None` when there is no such tool
@@ -41,6 +32,7 @@ pub(super) struct State {
 pub(crate) fn ask_password(
     root: &Path,
     source: &str,
+    session: &crate::store::CredentialSession,
     cx: &mut App,
 ) -> Option<oneshot::Receiver<bool>> {
     let active = cx.active_window();
@@ -49,7 +41,14 @@ pub(crate) fn ask_password(
         .0
         .iter()
         .filter_map(|(w, e)| e.upgrade().map(|e| (*w, e)))
-        .filter(|(_, e)| e.read(cx).root.as_deref() == Some(root))
+        .filter(|(_, e)| {
+            e.read(cx).root.as_deref() == Some(root)
+                && e.read(cx)
+                    .tree
+                    .lives
+                    .get(source)
+                    .is_some_and(|live| live.credentials.same(session))
+        })
         .collect();
     let (window, explorer) = explorers
         .iter()
@@ -77,10 +76,21 @@ impl Explorer {
             let _ = tx.send(false);
             return rx;
         };
+        let Some(session) = self
+            .tree
+            .lives
+            .get(name)
+            .map(|live| live.credentials.clone())
+        else {
+            let _ = tx.send(false);
+            return rx;
+        };
+        let generation = session.generation();
         let store = crate::store(cx);
         let check = cx.background_spawn({
             let (store, root, source) = (store.clone(), root.clone(), source.clone());
-            async move { store.needs_prompt(&root, &source) }
+            let session = session.clone();
+            async move { store.needs_session_prompt(&root, &source, &session) }
         });
         let tx = Rc::new(RefCell::new(Some(tx)));
         let reply = move |ok: bool| {
@@ -94,7 +104,7 @@ impl Explorer {
                 return;
             }
             let save = source.profile.gui_options().password_save;
-            let name = source.name.clone();
+            let original = source.clone();
             let asked = cx.update(|cx| {
                 let reply = reply.clone();
                 window.update(cx, |_, window, cx| {
@@ -103,7 +113,9 @@ impl Explorer {
                             reply(false);
                             return;
                         };
-                        this.update(cx, |this, cx| this.password_typed(&name, answer, reply, cx));
+                        this.update(cx, |this, cx| {
+                            this.password_typed(original, answer, (session, generation), reply, cx)
+                        });
                     });
                 })
             });
@@ -119,8 +131,9 @@ impl Explorer {
     /// connection that asks, for as long as chosen.
     fn password_typed(
         &mut self,
-        name: &str,
+        original: crate::DataSource,
         mut answer: Answer,
+        (session, generation): (crate::store::CredentialSession, u64),
         reply: impl FnOnce(bool) + 'static,
         cx: &mut Context<Self>,
     ) {
@@ -128,77 +141,110 @@ impl Explorer {
             reply(false);
             return;
         };
-        let mut sources = self.sources().to_vec();
-        let Some(source) = sources.iter_mut().find(|s| s.name == name) else {
+        let name = original.name.clone();
+        if !self.sources().contains(&original)
+            || !self
+                .tree
+                .lives
+                .get(&name)
+                .is_some_and(|live| live.credentials.same(&session))
+            || session.generation() != generation
+        {
             reply(false);
             return;
-        };
-        let before = source.profile.gui_options().password_save;
-        let store = crate::store(cx);
-        if answer.auth == db_core::profile::AuthMethod::None {
+        }
+        let old = original.profile.gui_options();
+        let mut updated = original.clone();
+        let using_password = answer.auth == db_core::profile::AuthMethod::UserPassword;
+        if !using_password {
             answer.save = PasswordSave::Never;
         }
-        if answer.save == PasswordSave::Never {
-            self.connect.never.insert(name.to_owned());
-        } else {
-            self.connect.never.remove(name);
+        if !using_password || answer.save == PasswordSave::Forever || answer.auth != old.auth {
+            answer.apply(&mut updated.profile);
         }
-        if answer.save != PasswordSave::Forever && before != PasswordSave::Forever {
-            store.hold_answer(&root, source, answer);
-            reply(true);
-            return;
+        if old.password_save != answer.save {
+            updated
+                .profile
+                .gui
+                .get_or_insert_with(Default::default)
+                .password_save = answer.save;
         }
-        // Moving away from Forever must remove the old stored credential.
-        // Only Forever persists the identity typed into this prompt.
-        if answer.save == PasswordSave::Forever {
-            answer.apply(&mut source.profile);
-        }
-        source
-            .profile
-            .gui
-            .get_or_insert_with(Default::default)
-            .password_save = answer.save;
-        let source = source.clone();
-        let request = SaveRequest {
-            sources,
-            passwords: vec![(
-                name.to_owned(),
-                if answer.save == PasswordSave::Forever {
-                    PasswordChange::Set(answer.password.clone())
-                } else {
-                    PasswordChange::Clear
-                },
-            )],
-            ..SaveRequest::default()
-        };
-        let saved_profile = source.profile.clone();
-        let name = source.name.clone();
+        let save_to_store = using_password && answer.save == PasswordSave::Forever;
+        let write = updated != original || save_to_store;
+        let store = crate::store(cx);
+        let saved_profile = updated.profile.clone();
+        let current = session.clone();
         let save = cx.background_spawn(async move {
-            store.save(&root, request)?;
-            store.hold_answer(&root, &source, answer);
+            if session.generation() != generation {
+                return Err("The session ended.".to_owned());
+            }
+            if write {
+                let change = if save_to_store {
+                    PasswordChange::Set(answer.password.clone())
+                } else if old.auth == db_core::profile::AuthMethod::UserPassword
+                    && old.password_save == PasswordSave::Forever
+                {
+                    PasswordChange::Clear
+                } else {
+                    PasswordChange::Keep
+                };
+                store.save_prompt(&root, &original, &updated, change)?;
+            } else if !store.load(&root)?.contains(&original) {
+                return Err(
+                    "The data source changed while the credentials dialog was open.".to_owned(),
+                );
+            }
+            if session.generation() != generation {
+                return Err("The session ended.".to_owned());
+            }
+            if !using_password {
+                store.clear_rejected(&root, &updated.name);
+            } else if matches!(answer.save, PasswordSave::Never | PasswordSave::ForSession) {
+                if !session.hold(generation, answer) {
+                    return Err("The session ended.".to_owned());
+                }
+            } else {
+                store.hold_answer(&root, &updated, answer);
+            }
             Ok::<_, String>(())
         });
         cx.spawn(async move |this, cx| {
             let result = save.await;
-            let ok = result.is_ok();
-            let _ = this.update(cx, |this, cx| match result {
-                Ok(()) => {
-                    // This handle is already opening with the new credentials.
-                    // Reloading its saved user must not discard the pending request.
-                    if let Some(live) = this.tree.lives.get_mut(&name) {
-                        live.profile = saved_profile;
+            let ok = this
+                .update(cx, |this, cx| match result {
+                    Ok(()) => {
+                        // This handle is already opening with the new credentials.
+                        // Reloading its saved user must not discard the pending request.
+                        if !this
+                            .tree
+                            .lives
+                            .get(&name)
+                            .is_some_and(|live| live.credentials.same(&current))
+                            || current.generation() != generation
+                        {
+                            return false;
+                        }
+                        if let Some(live) = this.tree.lives.get_mut(&name) {
+                            live.profile = saved_profile;
+                        }
+                        if write {
+                            this.load(cx);
+                        }
+                        true
                     }
-                    this.load(cx);
-                }
-                Err(e) => this.notify(
-                    Notification::new(
-                        NotificationKind::Error,
-                        "Connection credentials",
-                        format!("Cannot update the saved credentials: {e}"),
-                    ),
-                    cx,
-                ),
-            });
+                    Err(e) => {
+                        this.notify(
+                            Notification::new(
+                                NotificationKind::Error,
+                                "Connection credentials",
+                                format!("Cannot update the saved credentials: {e}"),
+                            ),
+                            cx,
+                        );
+                        false
+                    }
+                })
+                .unwrap_or(false);
             reply(ok);
         })
         .detach();
@@ -213,12 +259,8 @@ impl Explorer {
     ) {
         match state {
             DataSourceState::Disconnected | DataSourceState::Failed { .. } => {
-                // A password typed for one connect is not kept for the
-                // next: a connect that did not come about is one, too.
-                if self.connect.never.remove(name)
-                    && let Some(root) = self.root.clone()
-                {
-                    crate::store(cx).release_password(&root, name);
+                if let Some(live) = self.tree.lives.get(name) {
+                    live.credentials.clear();
                 }
                 if *state == DataSourceState::Disconnected {
                     crate::console::disconnected(name, cx);

@@ -1009,6 +1009,18 @@ impl Workbench {
         }
     }
 
+    /// Open a file in an independent editor window while a modal operation
+    /// remains pending in this workbench.
+    pub fn open_file_window(&self, path: PathBuf, cx: &mut Context<Self>) {
+        let product = self.product.clone();
+        cx.defer(move |cx| {
+            let editor = crate::app::open_main_window(cx, product);
+            let _ = editor.update(cx, |workbench, window, cx| {
+                workbench.open_file(path, window, cx)
+            });
+        });
+    }
+
     /// Opens a file in a tab (or selects its tab); reading happens off the
     /// UI thread.
     pub fn open_file(&mut self, path: PathBuf, window: &mut Window, cx: &mut Context<Self>) {

@@ -111,14 +111,20 @@ struct Current {
 /// The group of the editor decorations a console draws.
 pub(crate) const MARK_GROUP: &str = "db-console-run";
 
-/// The statement the editor shows the marks of: the box around it, the
-/// check mark in the gutter and the time after it.
+/// Completed statement outcomes and the latest statement outline in one editor.
 struct Mark {
     /// Char range of the statement in the editor's text, kept through
     /// edits.
-    range: Range<usize>,
+    active: Option<Range<usize>>,
+    completed: Vec<CompletedMark>,
     editor: WeakEntity<Editor>,
     _subscription: Subscription,
+}
+
+struct CompletedMark {
+    range: Range<usize>,
+    ok: bool,
+    ms: u64,
 }
 
 /// An event of the console for its observers.
@@ -167,6 +173,8 @@ pub(crate) struct Console {
     /// The explain the running job is.
     explain: Option<explain::Run>,
     mark: Option<Mark>,
+    /// Snapshot whose byte offsets the running job reports.
+    run_text: Option<String>,
     /// The output log wraps long lines.
     pub soft_wrap: bool,
     /// Wall time of every line is taken when it is written.
@@ -220,6 +228,7 @@ impl Console {
             current: None,
             explain: None,
             mark: None,
+            run_text: None,
             soft_wrap: false,
             lines: Vec::new(),
         };
@@ -323,6 +332,13 @@ impl Console {
 
     /// Starts the job of `statements`.
     fn start(&mut self, statements: Vec<JobStatement>, cx: &mut Context<Self>) {
+        self.run_text = self.editor(cx).map(|editor| editor.read(cx).text());
+        if let Some(mark) = &mut self.mark {
+            mark.active = None;
+            // Outcomes belong only to the current job, even while it is pending.
+            mark.completed.clear();
+        }
+        self.refresh_marks(cx);
         let job = Job::statements(statements).on_error(ErrorPolicy::Stop);
         self.running = Some(self.session.execute(job));
         self.pane = Pane::Output;
@@ -586,8 +602,14 @@ impl Console {
                 self.running = None;
                 self.current = None;
                 self.explain = None;
+                self.run_text = None;
                 if outcome == JobOutcome::Cancelled {
-                    self.clear_mark(cx);
+                    if let Some(mark) = &mut self.mark {
+                        mark.completed
+                            .retain(|done| done.ok || Some(&done.range) != mark.active.as_ref());
+                        mark.active = None;
+                    }
+                    self.refresh_marks(cx);
                     self.print(ContentKind::System, "Cancelled", cx);
                 }
                 cx.notify();
@@ -646,55 +668,93 @@ impl Console {
             .and_then(|wb| wb.read(cx).editor_for(&self.path))
     }
 
-    /// The statement that starts running is boxed in the editor, the marks
-    /// of the one before are gone.
+    /// Box the running statement without discarding completed statements.
     fn mark_started(&mut self, range: Range<usize>, cx: &mut Context<Self>) {
-        self.clear_mark(cx);
         let Some(editor) = self.editor(cx) else {
             return;
         };
         let text = editor.read(cx).text();
+        if self
+            .mark
+            .as_ref()
+            .is_some_and(|mark| mark.editor.upgrade().is_none_or(|old| old != editor))
+        {
+            self.clear_mark(cx);
+        }
+        if let Some(mark) = &mut self.mark {
+            mark.active = None;
+        }
+        // A queued statement still reports offsets into the original script.
+        // Do not attribute its result to text edited while the job was running.
+        if self.run_text.as_ref() != Some(&text) {
+            self.refresh_marks(cx);
+            return;
+        }
         let range = byte_to_char(&text, range.start)..byte_to_char(&text, range.end);
-        let subscription = cx.subscribe(&editor, |this, _, event: &EditorEvent, cx| {
-            this.on_editor_event(event, cx)
-        });
-        editor.update(cx, |e, cx| {
-            e.set_range_outline(Some((range.clone(), UiRole::Accent)), cx)
-        });
-        self.mark = Some(Mark {
-            range,
-            editor: editor.downgrade(),
-            _subscription: subscription,
-        });
+        if self.mark.is_none() {
+            let subscription = cx.subscribe(&editor, |this, _, event: &EditorEvent, cx| {
+                this.on_editor_event(event, cx)
+            });
+            self.mark = Some(Mark {
+                active: None,
+                completed: Vec::new(),
+                editor: editor.downgrade(),
+                _subscription: subscription,
+            });
+        }
+        if let Some(mark) = &mut self.mark {
+            mark.active = Some(range);
+        }
+        self.refresh_marks(cx);
     }
 
-    /// The statement ended: the check mark (or the error mark) in the
-    /// gutter of its first line and the time after its last.
     fn mark_done(&mut self, ok: bool, ms: u64, cx: &mut Context<Self>) {
+        if let Some(mark) = &mut self.mark
+            && let Some(range) = &mark.active
+        {
+            mark.completed.push(CompletedMark {
+                range: range.clone(),
+                ok,
+                ms,
+            });
+        }
+        self.refresh_marks(cx);
+    }
+
+    /// Replace the group's decorations together, keeping each statement's
+    /// outcome and timing at its own current location.
+    fn refresh_marks(&self, cx: &mut Context<Self>) {
         let Some(mark) = &self.mark else {
             return;
         };
         let Some(editor) = mark.editor.upgrade() else {
             return;
         };
-        let range = mark.range.clone();
         let show_time = crate::query_settings::get(cx).show_execution_time;
         editor.update(cx, |e, cx| {
-            let first = e.buffer().char_to_line(range.start);
-            let last = e.buffer().char_to_line(range.end.max(range.start));
-            let icon = if ok {
-                crate::icons::STATEMENT_OK
-            } else {
-                crate::icons::ERROR
-            };
-            let mut decoration = Decoration::default().lane_icon(icon);
-            if show_time {
-                decoration = decoration.after_text(
-                    vec![TextPiece::new(format!("{ms} ms"), TextRole::Comment)],
-                    false,
-                );
-            }
-            e.set_decorations(MARK_GROUP, vec![(first..last + 1, decoration)], cx);
+            let decorations = mark
+                .completed
+                .iter()
+                .map(|mark| {
+                    let first = e.buffer().char_to_line(mark.range.start);
+                    let last = e.buffer().char_to_line(mark.range.end);
+                    let icon = if mark.ok {
+                        crate::icons::STATEMENT_OK
+                    } else {
+                        crate::icons::ERROR
+                    };
+                    let mut decoration = Decoration::default().lane_icon(icon);
+                    if show_time {
+                        decoration = decoration.after_text(
+                            vec![TextPiece::new(format!("{} ms", mark.ms), TextRole::Comment)],
+                            false,
+                        );
+                    }
+                    (first..last + 1, decoration)
+                })
+                .collect();
+            e.set_decorations(MARK_GROUP, decorations, cx);
+            e.set_range_outline(mark.active.clone().map(|range| (range, UiRole::Accent)), cx);
         });
     }
 
@@ -709,38 +769,36 @@ impl Console {
         }
     }
 
-    /// An edit of the statement removes its marks, an edit before it moves
-    /// them.
+    /// Edits invalidate only the statements they touch and shift the rest.
     fn on_editor_event(&mut self, event: &EditorEvent, cx: &mut Context<Self>) {
-        let Some(mark) = &mut self.mark else {
-            return;
-        };
         let edits = match event {
             EditorEvent::Edited(edits) => edits,
             EditorEvent::Reloaded => {
+                self.run_text = None;
                 self.clear_mark(cx);
                 return;
             }
             _ => return,
         };
-        let mut range = mark.range.clone();
-        for e in edits {
-            match shift_for_edit(&range, e.start, e.old_end, e.new_end) {
-                Some(moved) => range = moved,
-                None => {
-                    self.clear_mark(cx);
-                    return;
+        let Some(mark) = &mut self.mark else {
+            return;
+        };
+        for edit in edits {
+            mark.active = mark
+                .active
+                .as_ref()
+                .and_then(|range| shift_for_edit(range, edit.start, edit.old_end, edit.new_end));
+            mark.completed.retain_mut(|mark| {
+                match shift_for_edit(&mark.range, edit.start, edit.old_end, edit.new_end) {
+                    Some(range) => {
+                        mark.range = range;
+                        true
+                    }
+                    None => false,
                 }
-            }
+            });
         }
-        if range != mark.range {
-            mark.range = range.clone();
-            if let Some(editor) = mark.editor.upgrade() {
-                editor.update(cx, |e, cx| {
-                    e.set_range_outline(Some((range, UiRole::Accent)), cx)
-                });
-            }
-        }
+        self.refresh_marks(cx);
     }
 
     // ---- results ----------------------------------------------------------------

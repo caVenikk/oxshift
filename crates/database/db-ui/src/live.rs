@@ -224,7 +224,7 @@ impl ConnectionSource for Prompting {
             && e.kind == db_core::ErrorKind::Auth
         {
             // The server refused it: the next connect asks again.
-            self.store.release_password(&self.root, &self.source.name);
+            self.store.reject_password(&self.root, &self.source.name);
         }
         opened
     }

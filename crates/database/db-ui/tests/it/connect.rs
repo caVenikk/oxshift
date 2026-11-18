@@ -152,6 +152,65 @@ fn a_never_data_source_asks_on_every_connect_and_disconnects(cx: &mut TestAppCon
     assert!(!notified(&mut h).contains("no password"));
 }
 
+/// The focused user field replaces the suggested login. Tab moves into the
+/// protected field, and Escape cancels independently of which field has focus.
+#[gpui::test]
+fn credential_prompt_focus_input_and_escape(cx: &mut TestAppContext) {
+    let (_dir, root) = project();
+    let (mut h, store, _server, _consoles) = open(cx, &root, PasswordSave::Never);
+    select(&mut h);
+    h.invoke("db.explorer.refresh", Value::Null);
+    wait(&mut h, "the prompt", asking);
+    let dialog = h.target();
+    h.cx.simulate_input(dialog, "another_login");
+    h.draw();
+    assert_eq!(state(&mut h)["prompt"]["user"], "another_login");
+    h.press("tab");
+    h.press("p");
+    assert_eq!(state(&mut h)["prompt"]["field"]["empty"], false);
+    h.press("escape");
+    wait(&mut h, "cancelled prompt", |h| !asking(h));
+    assert!(!connected(&mut h));
+    assert!(store.password(SOURCE).is_none());
+}
+
+/// Both selectors open their own popup window. Escape closes only that
+/// window, and closing the dialog directly releases the outstanding request.
+#[gpui::test]
+fn credential_lists_and_window_close_release_the_prompt(cx: &mut TestAppContext) {
+    use gpui::{AppContext as _, Modifiers, MouseButton, VisualTestContext};
+    let (_dir, root) = project();
+    let (mut h, _, _, _consoles) = open(cx, &root, PasswordSave::Never);
+    select(&mut h);
+    h.invoke("db.explorer.refresh", Value::Null);
+    wait(&mut h, "the prompt", asking);
+    let dialog = h.target();
+    for selector in ["password-prompt-auth", "password-prompt-save"] {
+        let before = h.cx.update(|cx| cx.windows());
+        let mut vcx = VisualTestContext::from_window(dialog, h.cx);
+        let center = vcx.debug_bounds(selector).unwrap().center();
+        vcx.simulate_mouse_down(center, MouseButton::Left, Modifiers::none());
+        vcx.simulate_mouse_up(center, MouseButton::Left, Modifiers::none());
+        h.draw();
+        let popup =
+            h.cx.update(|cx| cx.windows().into_iter().find(|w| !before.contains(w)))
+                .expect("list has its own window");
+        h.cx.simulate_keystrokes(popup, "escape");
+        h.draw();
+        assert!(asking(&mut h));
+        assert!(!h.cx.update(|cx| cx.windows().contains(&popup)));
+    }
+    h.cx.update_window(dialog, |_, window, _| window.remove_window())
+        .unwrap();
+    wait(&mut h, "the cancelled connection", |h| {
+        !asking(h) && !can_disconnect(h)
+    });
+    h.invoke("db.explorer.refresh", Value::Null);
+    wait(&mut h, "a new prompt", asking);
+    h.press("escape");
+    wait(&mut h, "dismissal from the user field", |h| !asking(h));
+}
+
 /// A cached model shows without the database; Refresh is still a request to
 /// connect, the first time as well, and asks for the password.
 #[gpui::test]
@@ -277,11 +336,13 @@ fn the_choice_in_the_prompt_says_how_long_the_password_is_kept(cx: &mut TestAppC
     assert_eq!(store.saves(), 0);
     h.invoke("db.explorer.refresh", Value::Null);
     wait(&mut h, "the prompt", asking);
+    h.invoke("db.password-prompt.user", json!({"value": "updated_login"}));
     h.invoke("db.password-prompt.save", json!({"value": "forever"}));
     type_password(&mut h);
     wait(&mut h, "the save", |_| store.saves() == 1);
     wait(&mut h, "the connection", connected);
     let saved = store.sources(&root);
+    assert_eq!(saved[0].profile.user, "updated_login");
     assert_eq!(
         saved[0].profile.gui_options().password_save,
         PasswordSave::Forever

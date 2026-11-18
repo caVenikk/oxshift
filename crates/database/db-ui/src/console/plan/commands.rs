@@ -4,7 +4,7 @@
 
 use gpui::{App, Entity};
 
-use super::view::{Mode, PlanView};
+use super::view::{Direction, Mode, PlanView};
 use crate::console::{RunMode, target};
 use crate::explorer;
 
@@ -24,6 +24,11 @@ ui::ui_commands! {
     TogglePlanNode { path: Vec<usize> } => "db.plan.toggle", "Collapse or Expand Plan Node",
         "Collapses the node at `path` of the Query Plan tab (indexes of the children from the root), or expands it when it is collapsed.",
         r#"{"path": [0]}"#;
+    PlanUp => "db.plan.up", "Previous Plan Operation", "Selects the previous visible operation.";
+    PlanDown => "db.plan.down", "Next Plan Operation", "Selects the next visible operation.";
+    PlanLeft => "db.plan.left", "Collapse or Select Parent Operation", "Collapses an expanded operation or selects its parent.";
+    PlanRight => "db.plan.right", "Expand or Select Child Operation", "Expands a collapsed operation or selects its first child.";
+    SwitchPlanView => "db.plan.switch-view", "Switch Plan View", "Switches between Operations Tree and Raw.";
     /// Switch the plan between the tree and the raw text.
     ShowPlanAs { mode: String } => "db.plan.view", "Show Plan As",
         "Shows the Query Plan tab as `tree` or as the raw `text` of the server's answer.",
@@ -59,14 +64,41 @@ pub(crate) fn init(cx: &mut App) {
             plan.update(cx, |p, cx| p.toggle(path, cx));
         }
     });
+    cx.on_action(|_: &PlanUp, cx| navigate(Direction::Up, cx));
+    cx.on_action(|_: &PlanDown, cx| navigate(Direction::Down, cx));
+    cx.on_action(|_: &PlanLeft, cx| navigate(Direction::Left, cx));
+    cx.on_action(|_: &PlanRight, cx| navigate(Direction::Right, cx));
+    cx.on_action(|_: &SwitchPlanView, cx| show_view(None, cx));
     cx.on_action(|a: &ShowPlanAs, cx| {
         let mode = match a.mode.as_str() {
             "tree" => Mode::Tree,
             "text" => Mode::Text,
             _ => return,
         };
-        if let Some(plan) = current(cx) {
-            plan.update(cx, |p, cx| p.set_mode(mode, cx));
-        }
+        show_view(Some(mode), cx);
+    });
+}
+
+fn navigate(direction: Direction, cx: &mut App) {
+    if let Some(plan) = current(cx) {
+        plan.update(cx, |p, cx| p.navigate(direction, cx));
+    }
+}
+
+fn show_view(mode: Option<Mode>, cx: &mut App) {
+    let Some(console) = target(cx) else {
+        return;
+    };
+    let Some(plan) = console.read(cx).current_plan() else {
+        return;
+    };
+    let window = console.read(cx).window;
+    cx.defer(move |cx| {
+        let _ = window.update(cx, |_, window, cx| {
+            plan.update(cx, |p, cx| {
+                p.set_mode(mode.unwrap_or_else(|| p.other_mode()), cx);
+                p.focus_mode(window, cx);
+            });
+        });
     });
 }

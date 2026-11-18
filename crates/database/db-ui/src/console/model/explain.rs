@@ -2,7 +2,8 @@
 //! `sql_syntax::explain_statements` run as a job like any other, and the
 //! rows they answer with become a Query Plan tab instead of a grid.
 
-use db_core::Row;
+use crate::grid::{GridTarget, TableGrid};
+use db_core::{Column, Row};
 use db_session::JobStatement;
 use sql_syntax::{ExplainOptions, Statement, StatementKind};
 
@@ -130,19 +131,31 @@ impl Console {
         }
     }
 
-    /// The answer of `EXPLAIN` as a tab; `false` when no explain is
-    /// running (the rows are an ordinary result).
+    /// Opens both views on the result of the current explain job.
     pub(super) fn show_plan(
         &mut self,
-        rows: &[Row],
+        columns: Vec<Column>,
+        rows: Vec<Row>,
         window: &mut Window,
         cx: &mut Context<Self>,
-    ) -> bool {
+    ) {
         let Some(run) = &self.explain else {
-            return false;
+            return;
         };
-        let plan = Plan::from_rows(self.dialect(), &run.statement, rows, run.analyze);
-        let view = cx.new(|cx| PlanView::new(plan, window, cx));
+        let plan = Plan::from_rows(self.dialect(), &run.statement, &rows, run.analyze);
+        let raw_grid = (self.dialect() == sql_syntax::Dialect::Postgres).then(|| {
+            let target = GridTarget {
+                source: self.source.clone(),
+                backend: self.backend,
+                handle: self.handle.clone(),
+                table: db_session::TableRef::new(None, PLAN_TITLE),
+                columns: Vec::new(),
+            };
+            let grid = cx.new(|cx| TableGrid::result(target, columns, None, window, cx));
+            grid.update(cx, |g, cx| g.show_page(rows, 0, false, cx));
+            grid
+        });
+        let view = cx.new(|cx| PlanView::new(plan, raw_grid, window, cx));
         let tab = ResultTab {
             title: PLAN_TITLE.into(),
             pinned: false,
@@ -167,7 +180,6 @@ impl Console {
         };
         self.pane = Pane::Result(index);
         cx.notify();
-        true
     }
 
     /// The plan the console shows now, if its pane is one.

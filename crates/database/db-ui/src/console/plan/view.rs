@@ -16,6 +16,7 @@ use serde_json::{Value as Json, json};
 use themes::UiRole;
 use ui::components::tree_arrow;
 use ui::icons::Icon;
+use ui::pointer::PointerExt as _;
 use ui::theme::ThemeExt;
 
 use super::{Col, NodeKind, Plan, number};
@@ -263,7 +264,7 @@ impl PlanView {
                 } else {
                     gpui::transparent_black()
                 })
-                .cursor_pointer()
+                .pointing_hand()
                 .child(label)
                 .on_click(cx.listener(move |this, _: &ClickEvent, window, cx| {
                     this.set_mode(mode, cx);

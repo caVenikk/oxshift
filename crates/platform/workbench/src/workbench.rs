@@ -897,10 +897,11 @@ impl Workbench {
                         "modified": editor.read(cx).is_modified(),
                         "deleted": self.is_deleted_on_disk(path),
                     });
-                    // Only a decorated tab (a query file attached to a data
-                    // source) has these keys.
+                    // Dialect-only decorations have an icon without a source hint.
                     if let Some(hint) = decoration.hint {
                         tab["hint"] = json!(hint);
+                    }
+                    if decoration.icon.is_some() {
                         tab["icon"] = json!(self.file_types.icon(path).0);
                     }
                     // Only an autosaved tab has the key.

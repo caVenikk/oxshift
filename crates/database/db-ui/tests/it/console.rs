@@ -251,10 +251,16 @@ fn an_executed_statement_gets_a_check_a_time_and_a_box_until_it_is_edited(cx: &m
 }
 
 #[gpui::test]
-fn a_script_keeps_each_statement_mark_and_reruns_replace_only_their_scope(cx: &mut TestAppContext) {
+fn a_new_run_clears_all_old_marks_before_accumulating_its_own_outcomes(cx: &mut TestAppContext) {
     let (_dir, root) = project();
     let server = server();
-    server.on("select 10", Reaction::column("first_value", &["10"]));
+    server.on(
+        "select 40",
+        Reaction::Delay(
+            Duration::from_secs(1),
+            Box::new(Reaction::column("first_value", &["40"])),
+        ),
+    );
     server.on(
         "select (select 20)",
         Reaction::column("second_value", &["21"]),
@@ -264,7 +270,7 @@ fn a_script_keeps_each_statement_mark_and_reruns_replace_only_their_scope(cx: &m
     open_console(&mut h);
     h.invoke(
         "editor.type",
-        json!({"text": "select 10 as first_value;\n\nselect (select 20) + 1 as second_value;\n\nselect 30 as third_value;"}),
+        json!({"text": "select 40 as first_value;\n\nselect (select 20) + 1 as second_value;\n\nselect 30 as third_value;"}),
     );
     h.invoke("editor.move-document-start", Value::Null);
     h.invoke("editor.move-down", Value::Null);
@@ -282,17 +288,46 @@ fn a_script_keeps_each_statement_mark_and_reruns_replace_only_their_scope(cx: &m
         assert_eq!(mark["lane_icon"], "db/statementOk");
         assert!(mark["after_text"].as_str().unwrap().ends_with(" ms"));
     }
-    // A single-statement rerun replaces its old outcome, keeping the others.
+    // Starting a single-statement run clears every old outcome immediately.
     h.invoke(
         "settings.set",
         json!({"key": "database.query-execution.execute.caret-inside", "value": "largest"}),
     );
     h.invoke("editor.move-document-start", Value::Null);
     h.invoke("db.console.execute", Value::Null);
+    assert_eq!(console_state(&mut h)["running"], true);
+    assert!(
+        marks(&mut h).is_empty(),
+        "old marks disappear before completion"
+    );
     wait_console(&mut h, "rerun", |s| {
         idle(s) && output(s).matches("retrieved starting").count() == 4
     });
-    assert_eq!(marks(&mut h).len(), 3);
+    let single = marks(&mut h);
+    assert_eq!(single.len(), 1, "{single:?}");
+    assert_eq!(single[0]["lines"], json!([0, 1]));
+    assert_eq!(single[0]["lane_icon"], "db/statementOk");
+    assert!(single[0]["after_text"].as_str().unwrap().ends_with(" ms"));
+
+    // Running the whole script again replaces that outcome with three new ones.
+    h.invoke("editor.select-all", Value::Null);
+    h.invoke("db.console.execute", Value::Null);
+    assert_eq!(console_state(&mut h)["running"], true);
+    assert!(
+        marks(&mut h).is_empty(),
+        "the single old mark also disappears"
+    );
+    wait_console(&mut h, "all three statements again", |s| {
+        idle(s) && output(s).matches("retrieved starting").count() == 7
+    });
+    let all = marks(&mut h);
+    assert_eq!(all.len(), 3, "{all:?}");
+    for (mark, line) in all.iter().zip([0, 2, 4]) {
+        assert_eq!(mark["lines"], json!([line, line + 1]));
+        assert_eq!(mark["lane_icon"], "db/statementOk");
+        assert!(mark["after_text"].as_str().unwrap().ends_with(" ms"));
+    }
+    h.invoke("editor.move-document-start", Value::Null);
     // Editing one statement invalidates it, shifting the untouched statements.
     h.invoke("editor.type", json!({"text": "-- changed\n"}));
     let remaining = marks(&mut h);

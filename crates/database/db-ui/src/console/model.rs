@@ -333,22 +333,10 @@ impl Console {
     /// Starts the job of `statements`.
     fn start(&mut self, statements: Vec<JobStatement>, cx: &mut Context<Self>) {
         self.run_text = self.editor(cx).map(|editor| editor.read(cx).text());
-        if let (Some(mark), Some(text)) = (&mut self.mark, &self.run_text) {
+        if let Some(mark) = &mut self.mark {
             mark.active = None;
-            // A new attempt supersedes prior outcomes only within its scope,
-            // including statements it may never reach after an error or cancel.
-            let ranges: Vec<_> = statements
-                .iter()
-                .map(|statement| {
-                    byte_to_char(text, statement.range.start)
-                        ..byte_to_char(text, statement.range.end)
-                })
-                .collect();
-            mark.completed.retain(|mark| {
-                !ranges
-                    .iter()
-                    .any(|range| range.start < mark.range.end && mark.range.start < range.end)
-            });
+            // Outcomes belong only to the current job, even while it is pending.
+            mark.completed.clear();
         }
         self.refresh_marks(cx);
         let job = Job::statements(statements).on_error(ErrorPolicy::Stop);

@@ -46,8 +46,6 @@ pub const CHOOSE_DECLARATION: &str = "Choose Declaration";
 pub(crate) struct NavState {
     /// The window of the editors (list popups take its focus).
     window: Option<AnyWindowHandle>,
-    pub(crate) structure_groups:
-        HashMap<&'static [&'static str], std::rc::Rc<std::cell::Cell<u64>>>,
     /// The request of Go to Declaration or Show Usages.
     pub(crate) request: Option<Task<()>>,
     /// The symbol drawn as a link (editor, range) and the request that

@@ -38,7 +38,10 @@ pub fn rows(
                 *current = Some(rows.len());
             }
             rows.push(ListItem::Row(ListRow {
-                icon: kind_icon(Some(symbol.kind), level > 0),
+                icon: symbol
+                    .icon
+                    .map(ui::IconName)
+                    .or_else(|| kind_icon(Some(symbol.kind), level > 0)),
                 text: symbol.name.clone().into(),
                 detail: symbol.detail.clone().map(Into::into),
                 indent: level,
@@ -100,12 +103,6 @@ impl CodeIntelView {
                             name: "structure",
                             selected: current,
                             filters,
-                            enabled: v
-                                .nav
-                                .structure_groups
-                                .entry(filters)
-                                .or_insert_with(|| std::rc::Rc::new(std::cell::Cell::new(u64::MAX)))
-                                .clone(),
                             ..ListOptions::default()
                         };
                         v.open_list(

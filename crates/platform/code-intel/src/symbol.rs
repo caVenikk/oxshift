@@ -16,6 +16,9 @@ pub struct DocumentSymbol {
     /// More about it, shown after the name (a signature, a statement kind).
     pub detail: Option<String>,
     pub kind: SymbolKind,
+    /// Optional registered icon for a language-specific symbol presentation.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub icon: Option<&'static str>,
     /// The whole symbol, with its body.
     pub range: Range<Point>,
     /// The part that names it (selected when the symbol is chosen).
@@ -32,6 +35,7 @@ impl DocumentSymbol {
         Self {
             name: name.into(),
             detail: None,
+            icon: None,
             group: None,
             kind,
             selection_range: range.clone(),

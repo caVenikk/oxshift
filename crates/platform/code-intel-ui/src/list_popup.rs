@@ -13,6 +13,9 @@
 //! popup closes when it loses the focus; it gives the focus back to the
 //! element that had it, then reports what was chosen.
 
+mod structure;
+
+use self::structure::shortened_statement;
 use std::ops::Range;
 
 use gpui::{
@@ -106,7 +109,6 @@ pub enum ListEvent {
 #[derive(Debug, Clone, Default)]
 pub struct ListOptions {
     pub filters: &'static [&'static str],
-    pub enabled: std::rc::Rc<std::cell::Cell<u64>>,
     pub title: Option<SharedString>,
     /// Grey text after the title (a count).
     pub subtitle: Option<SharedString>,
@@ -125,6 +127,15 @@ pub struct ListPopup {
     origin: Option<FocusHandle>,
     items: Vec<ListItem>,
     options: ListOptions,
+    structure: settings::FileStructureSettings,
+    frame: ui::popup_frame::PopupFrame,
+    order: Vec<usize>,
+    collapsed: std::collections::HashSet<usize>,
+    menu: Option<(
+        gpui::Entity<ui::menu::ContextMenu>,
+        gpui::Point<gpui::Pixels>,
+        Subscription,
+    )>,
     /// The selected row of the list, and of the open sub-actions.
     selected: Option<usize>,
     sub: Option<(usize, usize)>,
@@ -132,6 +143,15 @@ pub struct ListPopup {
     matcher: Option<Matcher>,
     dismissed: bool,
     _subscriptions: Vec<Subscription>,
+}
+
+impl ui::popup_window::Popup for ListPopup {
+    fn dismiss_popup(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.dismiss(window, cx);
+    }
+    fn dismiss_outside(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        ListPopup::dismiss_outside(self, window, cx);
+    }
 }
 
 impl EventEmitter<ListEvent> for ListPopup {}
@@ -155,7 +175,7 @@ impl ListPopup {
         let focus = cx.focus_handle();
         let subscriptions = vec![
             cx.on_blur(&focus, window, |this, window, cx| {
-                if !ui::popup_window::enabled() {
+                if !ui::popup_window::enabled() && this.menu.is_none() {
                     this.dismiss(window, cx);
                 }
             }),
@@ -170,6 +190,15 @@ impl ListPopup {
         let mut popup = Self {
             focus,
             origin,
+            order: (0..items.len()).collect(),
+            collapsed: Default::default(),
+            structure: settings_ui::store::get(cx),
+            frame: ui::popup_frame::PopupFrame::new(
+                gpui::size(px(540.0), px(539.0)),
+                gpui::size(px(442.0), px(200.0)),
+                px(0.0),
+            ),
+            menu: None,
             items,
             options,
             selected: None,
@@ -179,6 +208,16 @@ impl ListPopup {
             dismissed: false,
             _subscriptions: subscriptions,
         };
+        if popup.grouped() {
+            let [x, y, width, height] = popup.structure.placement.unwrap_or([0, 0, 540, 539]);
+            popup.frame.restore(ui::popup_frame::PopupPlace {
+                x: x as f32,
+                y: y as f32,
+                width: width as f32,
+                height: height as f32,
+            });
+        }
+        popup.sort_rows();
         popup.selected = popup
             .options
             .selected
@@ -233,6 +272,19 @@ impl ListPopup {
         if self.dismissed {
             return;
         }
+        if self.grouped()
+            && let Some(place) = self.frame.place()
+        {
+            let mut settings = settings_ui::store::get::<settings::FileStructureSettings>(cx);
+            let geometry = [
+                place.x.round() as i32,
+                place.y.round() as i32,
+                place.width.round() as i32,
+                place.height.round() as i32,
+            ];
+            settings.placement = (geometry != [0, 0, 540, 539]).then_some(geometry);
+            settings_ui::store::set(cx, &settings);
+        }
         self.dismissed = true;
         if let Some(owner) = ui::popup_window::owner(cx.entity_id(), cx) {
             let origin = self.origin.clone();
@@ -285,34 +337,42 @@ impl ListPopup {
     /// The rows shown: all without a filter; with one the matching rows
     /// and no separators.
     fn shown(&self) -> Vec<bool> {
-        self.items
-            .iter()
-            .map(|item| {
-                let enabled = item
-                    .row()
-                    .and_then(|r| r.group)
-                    .is_none_or(|g| self.options.enabled.get() & (1 << g) != 0);
-                enabled && self.matches(item)
-            })
-            .collect()
-    }
-
-    fn toggle_group(&mut self, group: usize, cx: &mut Context<Self>) {
-        if group < self.options.filters.len() {
-            self.options
-                .enabled
-                .set(self.options.enabled.get() ^ (1 << group));
-            self.selected = self.first_shown();
-            cx.notify();
+        if !self.grouped() {
+            return self.items.iter().map(|item| self.matches(item)).collect();
         }
+        let mut shown = vec![false; self.items.len()];
+        let mut ancestors = Vec::new();
+        let narrowing = self.matcher.is_some() && self.structure.narrow_down;
+        let mut hidden_depth = None;
+        for (i, item) in self.items.iter().enumerate() {
+            let Some(row) = item.row() else { continue };
+            if hidden_depth.is_some_and(|level| row.indent > level) {
+                continue;
+            }
+            hidden_depth = None;
+            ancestors.truncate(usize::from(row.indent));
+            if row.group.is_none_or(|group| self.group_enabled(group))
+                && (!narrowing || self.matches(item))
+            {
+                shown[i] = true;
+                for &ancestor in &ancestors {
+                    shown[ancestor] = true;
+                }
+            }
+            if !narrowing && self.collapsed.contains(&i) {
+                hidden_depth = Some(row.indent);
+            }
+            ancestors.push(i);
+        }
+        shown
     }
 
     fn first_shown(&self) -> Option<usize> {
         let shown = self.shown();
-        self.items
+        self.order
             .iter()
-            .enumerate()
-            .position(|(i, item)| shown[i] && item.row().is_some())
+            .copied()
+            .find(|&i| shown[i] && self.items[i].row().is_some() && self.matches(&self.items[i]))
     }
 
     fn set_filter(&mut self, filter: String, cx: &mut Context<Self>) {
@@ -380,14 +440,24 @@ impl ListPopup {
         if n == 0 {
             return;
         }
+        let current = if self.sub.is_none() {
+            current.and_then(|ix| self.order.iter().position(|&i| i == ix))
+        } else {
+            current
+        };
         let start = current.map_or(if delta > 0 { -1 } else { n }, |i| i as isize);
         let mut i = start;
         for _ in 0..n {
             i = (i + delta).rem_euclid(n);
-            if shown[i as usize] && items[i as usize].row().is_some() {
+            let ix = if self.sub.is_none() {
+                self.order[i as usize]
+            } else {
+                i as usize
+            };
+            if shown[ix] && items[ix].row().is_some() {
                 match &mut self.sub {
                     Some((_, child)) => *child = i as usize,
-                    None => self.selected = Some(i as usize),
+                    None => self.selected = Some(ix),
                 }
                 cx.notify();
                 return;
@@ -417,10 +487,32 @@ impl ListPopup {
     }
 
     fn open_submenu(&mut self, _: &OpenSubmenu, _: &mut Window, cx: &mut Context<Self>) {
+        if let Some(index) = self.selected.filter(|&ix| self.is_branch(ix)) {
+            if !self.collapsed.remove(&index) {
+                self.step(1, cx);
+            }
+            cx.notify();
+            return;
+        }
         self.open_sub(cx);
     }
 
     fn close_submenu(&mut self, _: &CloseSubmenu, _: &mut Window, cx: &mut Context<Self>) {
+        if self.grouped()
+            && let Some(ix) = self.selected
+        {
+            if self.is_branch(ix) && !self.collapsed.contains(&ix) {
+                self.toggle_branch(ix, cx);
+            } else if let Some(row) = self.items[ix].row()
+                && row.indent > 0
+            {
+                self.selected = (0..ix)
+                    .rev()
+                    .find(|&i| self.items[i].row().is_some_and(|r| r.indent < row.indent));
+                cx.notify();
+            }
+            return;
+        }
         if self.sub.take().is_some() {
             cx.notify();
         }
@@ -471,8 +563,11 @@ impl ListPopup {
             "title": self.options.title.as_ref().map(|t| t.as_ref()),
             "subtitle": self.options.subtitle.as_ref().map(|t| t.as_ref()),
             "filter": self.filter,
-            "groups": self.options.filters.iter().enumerate().map(|(i, label)| json!({"label": label, "enabled": self.options.enabled.get() & (1 << i) != 0})).collect::<Vec<_>>(),
-            "items": self.items.iter().enumerate().filter(|(i, _)| shown[*i]).map(|(_, item)| match item {
+            "sort_alphabetically": self.structure.sort_alphabetically,
+            "narrow_down": self.structure.narrow_down,
+            "settings_menu": self.menu.is_some(),
+            "groups": self.options.filters.iter().enumerate().map(|(i, label)| json!({"label": label, "enabled": self.group_enabled(i)})).collect::<Vec<_>>(),
+            "items": self.order.iter().copied().filter(|&i| shown[i]).map(|i| match &self.items[i] {
                 ListItem::Row(row) => row_json(row),
                 ListItem::Separator => json!({ "separator": true }),
             }).collect::<Vec<_>>(),
@@ -508,9 +603,15 @@ impl ListPopup {
         let line = theme.color(UiRole::PopupBorder);
         let mono = theme.mono_family();
         let name = self.options.name;
-        items
-            .iter()
-            .enumerate()
+        (0..items.len())
+            .map(|position| {
+                let ix = if level == 0 {
+                    self.order[position]
+                } else {
+                    position
+                };
+                (ix, &items[ix])
+            })
             .filter(|(i, _)| shown[*i])
             .map(|(ix, item)| {
                 let Some(row) = item.row() else {
@@ -528,7 +629,13 @@ impl ListPopup {
                     font_weight: Some(FontWeight::BOLD),
                     ..HighlightStyle::default()
                 };
-                let text = StyledText::new(row.text.clone())
+                let name_text =
+                    if self.grouped() && row.group.is_some_and(|g| g != 0) && row.indent == 0 {
+                        shortened_statement(&row.text)
+                    } else {
+                        row.text.clone()
+                    };
+                let text = StyledText::new(name_text)
                     .with_highlights(row.bold.iter().map(|r| (r.clone(), bold)));
                 let more = (level == 0 && is_selected && self.options.more_button).then(|| {
                     div()
@@ -564,6 +671,29 @@ impl ListPopup {
                             .pr(px(CONTENT_X))
                             .rounded(px(SELECTION_RADIUS))
                             .when(is_selected, |d| d.bg(selection))
+                            .when(self.grouped(), |d| {
+                                d.child(div().w(px(14.0)).flex_none().when(
+                                    self.is_branch(ix),
+                                    |d| {
+                                        d.child(
+                                            div()
+                                                .id(("structure-disclosure", ix))
+                                                .on_click(cx.listener(move |this, _, _, cx| {
+                                                    cx.stop_propagation();
+                                                    this.toggle_branch(ix, cx);
+                                                }))
+                                                .child(
+                                                    Icon::new(if self.collapsed.contains(&ix) {
+                                                        IconName::CHEVRON_RIGHT
+                                                    } else {
+                                                        IconName::CHEVRON_DOWN
+                                                    })
+                                                    .size(px(12.0)),
+                                                ),
+                                        )
+                                    },
+                                ))
+                            })
                             .when(with_icons, |d| {
                                 d.child(
                                     div()
@@ -574,20 +704,25 @@ impl ListPopup {
                             })
                             .child(
                                 div()
-                                    .flex_1()
+                                    .when(!self.grouped(), |d| d.flex_1())
                                     .whitespace_nowrap()
                                     .overflow_hidden()
                                     .when(row.code, |d| d.font_family(mono.clone()))
                                     .child(text),
                             )
-                            .children(row.detail.clone().map(|detail| {
-                                div()
-                                    .flex_none()
-                                    .pl(px(DETAIL_GAP))
-                                    .text_color(muted)
-                                    .whitespace_nowrap()
-                                    .child(detail)
-                            }))
+                            .children(
+                                row.detail
+                                    .clone()
+                                    .filter(|_| !self.grouped() || row.indent > 0)
+                                    .map(|detail| {
+                                        div()
+                                            .flex_none()
+                                            .pl(px(if self.grouped() { 5.0 } else { DETAIL_GAP }))
+                                            .text_color(muted)
+                                            .whitespace_nowrap()
+                                            .child(detail)
+                                    }),
+                            )
                             .children(arrow.map(|a| div().flex_none().pl(px(8.0)).child(a)))
                             .children(more.map(|m| m.ml(px(8.0)))),
                     )
@@ -642,6 +777,11 @@ impl Render for ListPopup {
                 .bg(surface)
                 .shadow(ui::components::popup_shadow())
         };
+        let grouped = self.grouped();
+        let viewport = self.frame.viewport(window);
+        self.frame
+            .set_top((viewport.height - px(539.0)).max(px(0.0)) / 2.0);
+        let bounds = self.frame.bounds(viewport);
         let title = self.options.title.clone().map(|title| {
             div()
                 .flex()
@@ -652,7 +792,16 @@ impl Render for ListPopup {
                 .pb(px(TITLE_BOTTOM))
                 .px(px(10.0))
                 .whitespace_nowrap()
-                .when(self.grouped(), |d| d.bg(theme.color(UiRole::TitleBar)))
+                .when(grouped, |d| {
+                    d.bg(theme.color(UiRole::TitleBar)).on_mouse_down(
+                        MouseButton::Left,
+                        cx.listener(|this, e: &gpui::MouseDownEvent, window, cx| {
+                            let position = this.frame.pointer_position(e.position, window);
+                            this.frame.start_move(position);
+                            cx.notify();
+                        }),
+                    )
+                })
                 .child(div().font_weight(FontWeight::BOLD).child(title))
                 .children(
                     self.options
@@ -677,50 +826,36 @@ impl Render for ListPopup {
                 .child(div().whitespace_nowrap().child(self.filter.clone()))
         });
         let visible = shown.iter().filter(|s| **s).count().min(MAX_ROWS);
-        let grouped = !self.options.filters.is_empty();
-        let filters = grouped.then(|| {
-            let controls = self.options.filters.iter().enumerate().map(|(i, label)| {
-                let shortcut = ["D", "M", "S", "O"].get(i).copied().unwrap_or("");
-                let modifier = if cfg!(target_os = "macos") {
-                    "⌘"
-                } else {
-                    "Ctrl+"
-                };
-                ui::form::check_row(
-                    ("structure-group", i),
-                    ("structure-check", i),
-                    self.options.enabled.get() & (1 << i) != 0,
-                    format!("{label} ({modifier}{shortcut})"),
-                    cx,
-                )
-                .w(px(195.0))
-                .on_click(cx.listener(move |this, _, window, cx| {
-                    this.toggle_group(i, cx);
-                    window.focus(&this.focus);
-                }))
-            });
-            div()
-                .flex()
-                .flex_wrap()
-                .w_full()
-                .pr(px(48.0))
-                .py(px(5.0))
-                .border_b_1()
-                .border_color(line)
-                .px(px(10.0))
-                .gap(px(4.0))
-                .children(controls)
-        });
+        let filters = grouped.then(|| self.filter_controls(cx));
         let main = frame()
             .when(grouped, |d| {
                 d.relative()
                     .overflow_hidden()
-                    .w(px(540.0).min(window.viewport_size().width))
-                    .h(px(538.0).min(window.viewport_size().height))
+                    .size_full()
+                    .border_0()
+                    .shadow(Vec::new())
             })
             .debug_selector(move || format!("{name}-popup"))
             .children(title)
             .children(filters)
+            .when(grouped, |d| {
+                d.child(
+                    div()
+                        .absolute()
+                        .right(px(7.0))
+                        .top(px(51.0))
+                        .id("structure-settings")
+                        .debug_selector(|| "structure-settings".into())
+                        .on_click(cx.listener(|this, _, window, cx| {
+                            this.open_structure_settings(
+                                &crate::commands::StructureSettings,
+                                window,
+                                cx,
+                            )
+                        }))
+                        .child(Icon::new(IconName::SETTINGS_SMALL)),
+                )
+            })
             .children(search)
             .when(grouped && visible == 0, |d| {
                 d.child(
@@ -747,9 +882,7 @@ impl Render for ListPopup {
                             .when(self.options.title.is_none(), |d| d.pt(px(PAD_Y)))
                             .pb(px(PAD_Y))
                             .max_h(if grouped {
-                                px(420.0)
-                                    .min(window.viewport_size().height - px(120.0))
-                                    .max(px(0.0))
+                                (bounds.size.height - px(120.0)).max(px(0.0))
                             } else {
                                 px(height * visible as f32 + 2.0 * PAD_Y)
                             })
@@ -799,7 +932,8 @@ impl Render for ListPopup {
                 div().mt(px(header + height * before as f32)).child(content)
             }
         });
-        div()
+        let content = div()
+            .when(grouped, |d| d.size_full())
             .key_context(if grouped {
                 "ContextMenu FileStructure"
             } else {
@@ -825,6 +959,9 @@ impl Render for ListPopup {
                     this.toggle_group(3, cx)
                 }),
             )
+            .on_action(cx.listener(Self::open_structure_settings))
+            .on_action(cx.listener(Self::sort_structure))
+            .on_action(cx.listener(Self::narrow_structure))
             .track_focus(&self.focus)
             .on_action(cx.listener(Self::select_next))
             .on_action(cx.listener(Self::select_previous))
@@ -841,5 +978,23 @@ impl Render for ListPopup {
             .text_color(text)
             .child(main)
             .children(sub)
+            .children(
+                self.menu
+                    .as_ref()
+                    .map(|(menu, at, _)| ui::menu::overlay(menu, *at, window)),
+            );
+        if grouped {
+            self.frame
+                .render(
+                    "file-structure-frame",
+                    content,
+                    |this: &mut Self| &mut this.frame,
+                    window,
+                    cx,
+                )
+                .into_any_element()
+        } else {
+            content.into_any_element()
+        }
     }
 }

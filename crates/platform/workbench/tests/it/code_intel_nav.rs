@@ -965,6 +965,8 @@ fn structure_filters_keep_the_popup_open_and_navigate_to_the_visible_target(
     });
     h.open("app.py", "x = g");
     h.invoke("code.file-structure", json!(null));
+    assert_eq!(h.list()["items"], json!([]));
+    h.invoke("structure.toggle-third", json!(null));
     assert_eq!(h.list()["items"][0]["text"], "select");
     h.invoke("structure.toggle-third", json!(null));
     assert_eq!(h.list()["items"], json!([]));
@@ -975,6 +977,46 @@ fn structure_filters_keep_the_popup_open_and_navigate_to_the_visible_target(
     h.invoke("structure.toggle-third", json!(null));
     h.press("enter");
     assert_eq!(h.at(), ("app.py".into(), 3, 0));
+}
+
+#[gpui::test]
+fn structure_settings_sort_siblings_and_keep_source_navigation(cx: &mut TestAppContext) {
+    use code_intel::{DocumentSymbol, SymbolKind};
+    let mut h = H::new(cx, &[("app.py", APP)]);
+    h.fake
+        .set_structure_filters(&["DDL", "DML", "Select", "Other"]);
+    h.fake.on_document_symbols(|_| {
+        let make = |name, line| {
+            DocumentSymbol::new(
+                name,
+                SymbolKind::Field,
+                Point::new(line, 0)..Point::new(line, 1),
+            )
+        };
+        let mut z = make("z", 0);
+        z.children.push(make("z-child", 1));
+        let mut a = make("a", 3);
+        a.children.push(make("child", 4));
+        Ok(vec![z, a])
+    });
+    h.open("app.py", "x = g");
+    h.invoke("code.file-structure", json!(null));
+    h.invoke("structure.settings", json!(null));
+    assert_eq!(h.list()["settings_menu"], true);
+    h.press("escape");
+    assert_eq!(h.list()["settings_menu"], false);
+    h.invoke("structure.settings", json!(null));
+    h.press("down");
+    h.press("enter");
+    assert_eq!(h.list()["sort_alphabetically"], true);
+    assert_eq!(h.list()["items"][0]["text"], "a");
+    assert_eq!(h.list()["items"][1]["text"], "child");
+    h.invoke("structure.narrow-down", json!(null));
+    h.type_text("child");
+    assert_eq!(h.list()["items"].as_array().unwrap().len(), 4);
+    assert_eq!(h.list()["selected"], "child");
+    h.press("enter");
+    assert_eq!(h.at(), ("app.py".into(), 4, 0));
 }
 
 #[gpui::test]

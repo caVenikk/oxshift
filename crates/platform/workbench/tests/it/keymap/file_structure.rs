@@ -17,6 +17,13 @@ fn check(h: &mut H, b: &Binding) -> bool {
             h.press(keys);
             assert_eq!(h.invoke("code.state", json!(null))["list"]["groups"][index]["enabled"], !before, "{what}");
         }
+        "menu.confirm" => {
+            h.set_editor("al|pha\nx");
+            h.invoke("code.file-structure", json!(null));
+            h.invoke("menu.down", json!(null));
+            h.press(keys);
+            assert_eq!(h.editor_marked(), "alpha\n|x", "{what}");
+        }
         _ => return false,
     }
     true

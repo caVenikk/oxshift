@@ -76,7 +76,7 @@ fn labels(popup: &Value) -> Vec<String> {
         .as_array()
         .map(|rows| {
             rows.iter()
-                .map(|r| r["label"].as_str().unwrap_or_default().to_owned())
+                .filter_map(|r| r["label"].as_str().map(str::to_owned))
                 .collect()
         })
         .unwrap_or_default()
@@ -190,40 +190,68 @@ fn edits_are_drafts_until_apply_and_each_tab_keeps_its_own(cx: &mut TestAppConte
 }
 
 #[gpui::test]
-fn a_subquery_asks_what_to_execute_and_the_answer_runs(cx: &mut TestAppContext) {
+fn the_statement_picker_previews_scopes_and_runs_the_script(cx: &mut TestAppContext) {
     let (_dir, root) = project();
     let server = server();
     let (mut h, _cache, _consoles) = harness(cx, &root, &server);
     open_console(&mut h);
-    h.invoke(
-        "editor.type",
-        json!({ "text": "select * from (select 1) x;" }),
-    );
+    let script = "-- sample\nselect 2; select * from (select 1) x;";
+    h.invoke("editor.type", json!({ "text": script }));
     for _ in 0..4 {
         h.invoke("editor.move-left", Value::Null);
     }
     h.invoke("db.console.execute", Value::Null);
-    let started = Instant::now();
-    let asked = loop {
-        h.draw();
-        let p = popup(&mut h);
-        if !p.is_null() {
-            break p;
-        }
-        assert!(started.elapsed() < Duration::from_secs(10), "the popup");
-        std::thread::sleep(Duration::from_millis(10));
-    };
+    settle(&mut h);
+    let asked = popup(&mut h);
+    assert_eq!(asked["title"], "Statements");
     assert_eq!(
         labels(&asked),
-        ["select 1", "select * from (select 1) x"],
-        "{asked}"
+        [
+            "select 1",
+            "select * from (select 1) x",
+            "-- sample select 2; select * from (select 1) x;",
+            "Customize"
+        ]
     );
-    assert!(ran(&server).is_empty(), "nothing runs before the answer");
+    assert_eq!(asked["levels"][0]["selected"], 1);
+    assert!(ran(&server).is_empty());
 
-    h.invoke("db.console.execute-choice", json!({ "index": 0 }));
-    wait_ran(&mut h, &server, 1);
-    assert_eq!(ran(&server), ["select 1"]);
-    wait_console(&mut h, "the result", idle);
+    let selection = |h: &mut Harness| {
+        h.workbench(|wb, cx| {
+            let editor = wb.active_editor().unwrap().read(cx);
+            (
+                editor.selections().primary().range(),
+                editor.selection_preview(),
+            )
+        })
+    };
+    let caret = selection(&mut h).0;
+    assert_eq!(
+        selection(&mut h).1,
+        Some(script.find("select *").unwrap()..script.len() - 1)
+    );
+    h.press("down");
+    assert_eq!(popup(&mut h)["levels"][0]["selected"], 2);
+    assert_eq!(selection(&mut h).1, Some(0..script.len()));
+    assert_eq!(selection(&mut h).0, caret);
+    h.press("escape");
+    assert_eq!(selection(&mut h), (caret.clone(), None));
+    h.invoke("db.console.execute", Value::Null);
+    settle(&mut h);
+    h.press("down");
+    h.press("enter");
+    wait_ran(&mut h, &server, 2);
+    assert_eq!(ran(&server), ["select 2", "select * from (select 1) x"]);
+    assert!(popup(&mut h).is_null());
+    assert_eq!(selection(&mut h), (caret, None));
+
+    h.invoke("db.console.execute", Value::Null);
+    settle(&mut h);
+    h.press("down down");
+    assert_eq!(selection(&mut h).1, None);
+    h.press("enter");
+    assert_eq!(h.invoke("settings.state", Value::Null)["page"], PAGE);
+    assert_eq!(ran(&server).len(), 2);
 }
 
 #[gpui::test]
@@ -232,8 +260,7 @@ fn a_plain_statement_runs_at_once_with_ask(cx: &mut TestAppContext) {
     let server = server();
     let (mut h, _cache, _consoles) = harness(cx, &root, &server);
     open_console(&mut h);
-    h.invoke("editor.type", json!({ "text": "select 1;\nselect 2;" }));
-    h.invoke("editor.move-up", Value::Null);
+    h.invoke("editor.type", json!({ "text": "select 1;" }));
     h.invoke("db.console.execute", Value::Null);
     wait_ran(&mut h, &server, 1);
     assert_eq!(ran(&server), ["select 1"]);
@@ -302,7 +329,11 @@ fn between_statements_the_options_say_nothing_closest_or_ask(cx: &mut TestAppCon
         assert!(started.elapsed() < Duration::from_secs(10), "the popup");
         std::thread::sleep(Duration::from_millis(10));
     };
-    assert_eq!(labels(&asked), ["select 1", "All statements"], "{asked}");
+    assert_eq!(
+        labels(&asked),
+        ["select 1", "All statements", "Customize"],
+        "{asked}"
+    );
     h.invoke("db.console.execute-choice", json!({ "index": 1 }));
     wait_ran(&mut h, &server, 3);
     assert_eq!(ran(&server)[1..], ["select 1", "select 2"]);

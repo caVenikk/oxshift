@@ -361,6 +361,7 @@ pub struct Editor {
     /// A char range with the background of a text role
     /// ([`Editor::set_range_background`]).
     pub(crate) range_background: Option<(Range<usize>, themes::TextRole)>,
+    pub(crate) selection_preview: Option<Range<usize>>,
     /// A char range outlined in a colour ([`Editor::set_range_outline`]).
     pub(crate) range_outline: Option<(Range<usize>, themes::UiRole)>,
     /// The other occurrences of the symbol at the caret, as the services
@@ -523,6 +524,7 @@ impl Editor {
             transparent: false,
             search: None,
             range_background: None,
+            selection_preview: None,
             range_outline: None,
             usage_highlights: Vec::new(),
             reveal: None,
@@ -1012,6 +1014,18 @@ impl Editor {
 
     pub fn link_highlight(&self) -> Option<Range<usize>> {
         self.link_highlight.clone()
+    }
+
+    /// Previews a popup's range in the selection color without moving the caret.
+    pub fn set_selection_preview(&mut self, range: Option<Range<usize>>, cx: &mut Context<Self>) {
+        if self.selection_preview != range {
+            self.selection_preview = range;
+            cx.notify();
+        }
+    }
+
+    pub fn selection_preview(&self) -> Option<Range<usize>> {
+        self.selection_preview.clone()
     }
 
     /// Draws a char range with the background of a text role (the

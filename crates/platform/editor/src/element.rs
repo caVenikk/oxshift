@@ -1380,14 +1380,23 @@ impl Element for EditorElement {
                     size(caret_width, lh),
                 ));
             }
-            if s.is_empty() {
-                continue;
-            }
-            let (a, b) = (s.start(), s.end());
-            // A selection's end at a wrap ends the row before it, unless
-            // the caret there starts the next.
-            let a_lean = s.head == a && head_lean;
-            let b_lean = s.head != b || head_lean;
+        }
+
+        let selections = editor.selections.iter().filter(|s| !s.is_empty()).map(|s| {
+            let head_lean = editor.leans_back(s.head);
+            (
+                s.range(),
+                s.head == s.start() && head_lean,
+                s.head != s.end() || head_lean,
+            )
+        });
+        let preview = editor
+            .selection_preview
+            .iter()
+            .filter(|r| r.end <= editor.buffer.len_chars())
+            .map(|r| (r.clone(), false, true));
+        for (range, a_lean, b_lean) in selections.chain(preview) {
+            let (a, b) = (range.start, range.end);
             let ra = editor.caret_row(a, a_lean);
             let rb = editor.caret_row(b, b_lean);
             for l in &lines {

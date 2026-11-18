@@ -1,2 +1,2 @@
 feature,area,priority,original,clone,notes
-"Execute: the statement under the caret, with the picker for nested statements",db-gui,must,yes,yes,Caret and nested statement scopes configurable per Execute action
+"Execute: the statement under the caret, with the picker for nested statements",db-gui,must,yes,yes,Execute actions offer nested statements and the whole script with editor previews

@@ -91,3 +91,16 @@ IntelliJ Community (Apache-2.0) at `pycharm/2026.2.3`: `plugins/git4idea`
 (push, update, fetch), `platform/dvcs-impl` (the Push dialog, Force Push),
 `GitBundle`, `DvcsBundle`. The Push and Update Project dialogs are to
 verify against a reference screenshot.
+
+## macOS owner minimize lifecycle
+
+1. Open VCS Operations with Ctrl+V, type a speed-search query and move the
+   selected row. Minimize its project window with Cmd+M.
+2. Switch to another application: no VCS popup remains above it.
+3. Restore the project window: the same popup returns with its query and
+   selection intact. Arrow keys and Escape work immediately.
+4. Repeat, then click outside the restored popup: it closes normally.
+5. Close the project while its popup is open: no orphan window remains.
+
+The native owner lifecycle preserves the existing popup window and model;
+restoring does not run the VCS Operations command again.

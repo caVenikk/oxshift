@@ -807,6 +807,8 @@ pub struct PopupOptions {
     /// `ActionSelectionAid.NUMBERING`). With a speed search, the digit keys
     /// choose a row only while nothing is typed.
     pub numbered: bool,
+    /// Hide with a minimized owner and restore the same native popup and state.
+    pub retain_on_minimize: bool,
     /// The rows scroll beyond this many rows of the list's row height
     /// (`ListPopupImpl`'s visible row count: a list of rows of their own
     /// heights shows as many times the first row's height).
@@ -849,6 +851,7 @@ pub struct ContextMenu {
     own_window: bool,
     inactive_selection: bool,
     numbered: bool,
+    retain_on_minimize: bool,
     max_rows: Option<usize>,
     /// The scrolled rows of the first level (with `max_rows`).
     scroll: ScrollHandle,
@@ -953,6 +956,7 @@ impl ContextMenu {
                 own_window: options.own_window,
                 inactive_selection: options.inactive_selection,
                 numbered: options.numbered,
+                retain_on_minimize: options.retain_on_minimize,
                 max_rows: options.max_rows,
                 scroll: ScrollHandle::new(),
                 submenu_on_hover: !list,
@@ -2587,6 +2591,7 @@ fn show_native_level(
             size,
             focus,
             persistent: false,
+            retain_on_minimize: menu.read(cx).retain_on_minimize,
             keyboard: true,
         },
         draw,

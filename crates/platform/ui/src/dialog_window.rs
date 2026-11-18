@@ -790,6 +790,8 @@ pub(crate) mod native {
         number: isize,
         window: gpui::AnyWindowHandle,
         dismiss: Option<Dismiss>,
+        retain_on_minimize: bool,
+        minimized: bool,
     }
 
     struct OwnedWindows {
@@ -833,7 +835,30 @@ pub(crate) mod native {
             number,
             window,
             dismiss,
+            retain_on_minimize: false,
+            minimized: false,
         });
+    }
+
+    pub(crate) fn retain_on_minimize(window: gpui::AnyWindowHandle, cx: &mut gpui::App) {
+        if cx.has_global::<OwnedWindows>()
+            && let Some(entry) = cx
+                .global_mut::<OwnedWindows>()
+                .windows
+                .iter_mut()
+                .find(|w| w.window == window)
+        {
+            entry.retain_on_minimize = true;
+        }
+    }
+
+    pub(crate) fn suspended(window: gpui::AnyWindowHandle, cx: &gpui::App) -> bool {
+        cx.try_global::<OwnedWindows>().is_some_and(|owned| {
+            owned
+                .windows
+                .iter()
+                .any(|w| w.window == window && w.retain_on_minimize && w.minimized)
+        })
     }
 
     pub(super) fn set_dismiss(window: gpui::AnyWindowHandle, cx: &mut gpui::App, dismiss: Dismiss) {
@@ -862,7 +887,10 @@ pub(crate) mod native {
             let center: *mut Object = msg_send![objc::class!(NSNotificationCenter), defaultCenter];
             let queue: *mut Object = msg_send![objc::class!(NSOperationQueue), mainQueue];
             for (event, name) in [
-                (OwnerEvent::Minimized, c"NSWindowDidMiniaturizeNotification"),
+                (
+                    OwnerEvent::Minimized,
+                    c"NSWindowWillMiniaturizeNotification",
+                ),
                 (
                     OwnerEvent::Restored,
                     c"NSWindowDidDeminiaturizeNotification",
@@ -922,15 +950,28 @@ pub(crate) mod native {
         // Parents are registered before any of their popups. Take a snapshot
         // because dismissing a menu can synchronously remove its submenu.
         let mut affected = Vec::new();
-        for child in &cx.global::<OwnedWindows>().windows {
+        for child in &mut cx.global_mut::<OwnedWindows>().windows {
             if owner.is_some() && !family.contains(&child.owner) {
                 continue;
             }
             family.insert(child.number);
-            affected.push((child.owner, child.window, child.dismiss.clone()));
+            let restore_focus = child.retain_on_minimize
+                && child.minimized
+                && matches!(event, OwnerEvent::Restored);
+            if matches!(event, OwnerEvent::Minimized | OwnerEvent::Restored) {
+                child.minimized = matches!(event, OwnerEvent::Minimized);
+            }
+            let preserve = child.retain_on_minimize && (child.minimized || restore_focus);
+            affected.push((
+                child.owner,
+                child.window,
+                child.dismiss.clone(),
+                preserve,
+                restore_focus,
+            ));
         }
-        for (parent, handle, dismiss) in affected {
-            if let Some(dismiss) = dismiss {
+        for (parent, handle, dismiss, preserve, restore_focus) in affected {
+            if let Some(dismiss) = dismiss.filter(|_| !preserve) {
                 if !matches!(event, OwnerEvent::Restored) {
                     dismiss(cx);
                 }
@@ -939,7 +980,9 @@ pub(crate) mod native {
             match event {
                 OwnerEvent::Minimized => {
                     let _ = handle.update(cx, |_, window, _| {
-                        if let Some(ns) = ns_window(window) {
+                        if crate::pointer::native()
+                            && let Some(ns) = ns_window(window)
+                        {
                             // SAFETY: a live NSWindow on its main thread.
                             unsafe {
                                 let _: () = msg_send![ns, orderOut: std::ptr::null_mut::<Object>()];
@@ -948,11 +991,119 @@ pub(crate) mod native {
                     });
                 }
                 OwnerEvent::Restored => {
-                    let _ = handle.update(cx, |_, window, _| order_above(window, Some(parent)));
+                    let _ = handle.update(cx, |_, window, _| {
+                        order_above(window, Some(parent));
+                        if restore_focus {
+                            window.activate_window();
+                        }
+                    });
                 }
                 // AppKit already hides and restores these normal-level windows.
                 OwnerEvent::AppHidden | OwnerEvent::AppResigned => {}
             }
+        }
+    }
+
+    #[cfg(test)]
+    mod lifecycle_tests {
+        use super::*;
+        use gpui::{Context, IntoElement, Render, TestAppContext};
+        use std::{cell::Cell, rc::Rc};
+
+        struct PopupState {
+            filter: String,
+            selected: usize,
+        }
+        impl Render for PopupState {
+            fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+                gpui::div()
+            }
+        }
+
+        #[gpui::test]
+        fn minimized_popup_keeps_window_and_state_then_restores_focus(cx: &mut TestAppContext) {
+            let popup = cx.add_window(|_, _| PopupState {
+                filter: "push".into(),
+                selected: 2,
+            });
+            let other = cx.add_window(|_, _| PopupState {
+                filter: String::new(),
+                selected: 0,
+            });
+            let dismissed = Rc::new(Cell::new(0));
+            let count = dismissed.clone();
+            cx.update(|cx| {
+                cx.set_global(OwnedWindows {
+                    windows: vec![
+                        OwnedWindow {
+                            owner: 1,
+                            number: 2,
+                            window: popup.into(),
+                            dismiss: Some(Rc::new(move |_| count.set(count.get() + 1))),
+                            retain_on_minimize: true,
+                            minimized: false,
+                        },
+                        OwnedWindow {
+                            owner: 3,
+                            number: 4,
+                            window: other.into(),
+                            dismiss: None,
+                            retain_on_minimize: true,
+                            minimized: false,
+                        },
+                    ],
+                    _observers: Vec::new(),
+                });
+                owner_event(Some(1), OwnerEvent::Minimized, cx);
+                assert!(suspended(popup.into(), cx));
+                assert!(!suspended(other.into(), cx));
+                owner_event(None, OwnerEvent::AppResigned, cx);
+                owner_event(None, OwnerEvent::AppHidden, cx);
+                assert_eq!(dismissed.get(), 0);
+                assert!(cx.windows().contains(&popup.into()));
+                owner_event(Some(1), OwnerEvent::Restored, cx);
+                assert!(!suspended(popup.into(), cx));
+            });
+            cx.run_until_parked();
+            popup
+                .update(cx, |state, window, _| {
+                    assert_eq!(state.filter, "push");
+                    assert_eq!(state.selected, 2);
+                    assert!(window.is_window_active());
+                })
+                .unwrap();
+            cx.update(|cx| owner_event(None, OwnerEvent::AppResigned, cx));
+            assert_eq!(
+                dismissed.get(),
+                1,
+                "ordinary deactivation still dismisses after restore"
+            );
+        }
+
+        #[gpui::test]
+        fn ordinary_popup_still_dismisses_on_minimize(cx: &mut TestAppContext) {
+            let popup = cx.add_window(|_, _| PopupState {
+                filter: String::new(),
+                selected: 0,
+            });
+            let dismissed = Rc::new(Cell::new(false));
+            let flag = dismissed.clone();
+            cx.update(|cx| {
+                cx.set_global(OwnedWindows {
+                    windows: vec![OwnedWindow {
+                        owner: 1,
+                        number: 2,
+                        window: popup.into(),
+                        dismiss: Some(Rc::new(move |_| flag.set(true))),
+                        retain_on_minimize: false,
+                        minimized: false,
+                    }],
+                    _observers: Vec::new(),
+                });
+                owner_event(Some(1), OwnerEvent::Minimized, cx);
+                assert!(!suspended(popup.into(), cx));
+            });
+            assert!(dismissed.get());
         }
     }
 

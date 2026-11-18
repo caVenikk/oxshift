@@ -79,6 +79,16 @@ pub(crate) fn close_from(id: EntityId, level: usize, cx: &mut App) {
     });
 }
 
+fn suspended(window: AnyWindowHandle, cx: &App) -> bool {
+    #[cfg(target_os = "macos")]
+    return crate::dialog_window::native::suspended(window, cx);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (window, cx);
+        false
+    }
+}
+
 pub fn screen_origin(window: &Window) -> Point<Pixels> {
     let frame = window.bounds();
     let viewport = window.viewport_size();
@@ -170,6 +180,7 @@ pub(crate) struct SurfaceOptions {
     pub size: Size<Pixels>,
     pub focus: FocusHandle,
     pub persistent: bool,
+    pub retain_on_minimize: bool,
     pub keyboard: bool,
 }
 
@@ -187,6 +198,7 @@ pub(crate) fn show<T: 'static>(
         size,
         focus,
         persistent,
+        retain_on_minimize,
         keyboard,
     } = options;
     // A frame queued before its owner was hidden can still request a popup.
@@ -276,6 +288,7 @@ pub(crate) fn show<T: 'static>(
                                     .0
                                     .get(&key)
                                     .is_some_and(|surface| surface.window == surface_window)
+                                    && !suspended(surface_window, cx)
                                     && !family_active(key.0, cx)
                                     && !crate::dialog_window::native::capturing()
                                 {
@@ -312,7 +325,14 @@ pub(crate) fn show<T: 'static>(
         },
     );
     #[cfg(target_os = "macos")]
-    crate::dialog_window::native::track(parent, handle.into(), on_hide, cx);
+    {
+        crate::dialog_window::native::track(parent, handle.into(), on_hide, cx);
+        if retain_on_minimize {
+            crate::dialog_window::native::retain_on_minimize(handle.into(), cx);
+        }
+    }
+    #[cfg(not(target_os = "macos"))]
+    let _ = retain_on_minimize;
     let _ = handle.update(cx, |_, window, _| {
         crate::dialog_window::native::popup_behavior(window, activate && !persistent);
         crate::dialog_window::native::order_above(window, above);
@@ -597,6 +617,7 @@ impl<T: Render + gpui::Focusable> gpui::Element for Portal<T> {
                     size: bounds.size,
                     focus,
                     persistent,
+                    retain_on_minimize: false,
                     keyboard,
                 },
                 draw,
@@ -801,6 +822,7 @@ impl<T: Render + gpui::Focusable> gpui::Element for Attached<T> {
                     at: bounds.origin,
                     size: bounds.size,
                     focus,
+                    retain_on_minimize: false,
                     persistent: true,
                     keyboard: false,
                 },
@@ -895,6 +917,7 @@ mod tests {
                             at: point(px(20.0), px(30.0)),
                             size: size(px(120.0), px(60.0)),
                             focus: model.read(cx).focus_handle(cx),
+                            retain_on_minimize: false,
                             persistent: level == 0,
                             keyboard,
                         },

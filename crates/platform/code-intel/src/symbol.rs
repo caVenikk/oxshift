@@ -20,6 +20,9 @@ pub struct DocumentSymbol {
     pub range: Range<Point>,
     /// The part that names it (selected when the symbol is chosen).
     pub selection_range: Range<Point>,
+    /// Index of the provider-defined structure filter for a top-level symbol.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub group: Option<usize>,
     pub children: Vec<DocumentSymbol>,
 }
 
@@ -29,6 +32,7 @@ impl DocumentSymbol {
         Self {
             name: name.into(),
             detail: None,
+            group: None,
             kind,
             selection_range: range.clone(),
             range,

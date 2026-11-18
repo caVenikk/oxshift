@@ -1,2 +1,2 @@
 feature,area,priority,original,clone,notes
-"File structure of statements, procedures and packages",sql,could,yes,partial,Pro; File Structure shows SQL document symbols in a searchable flat list with nesting indentation and declaration navigation; sorting and inheritance controls remain outstanding (#320)
+"File structure of statements, procedures and packages",sql,could,yes,partial,"Supports SQL statement filters (DDL, DML, Select, Other), a filtered empty state and navigation to statements. Sorting and additional structure controls remain in #320. See #480."

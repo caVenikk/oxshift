@@ -524,6 +524,10 @@ fn the_structure_lists_statements_with_their_kind_and_name() {
             "drop table staging"
         ]
     );
+    assert_eq!(
+        top.iter().filter_map(|s| s.group).collect::<Vec<_>>(),
+        [0, 0, 2, 1, 1, 1, 0]
+    );
     assert_eq!(top[0].kind, SymbolKind::Struct);
     assert_eq!(top[0].detail.as_deref(), Some("table"));
     assert_eq!(names(&top[0].children), ["id", "note"]);

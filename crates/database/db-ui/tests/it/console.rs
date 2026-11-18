@@ -251,6 +251,132 @@ fn an_executed_statement_gets_a_check_a_time_and_a_box_until_it_is_edited(cx: &m
 }
 
 #[gpui::test]
+fn a_script_keeps_each_statement_mark_and_reruns_replace_only_their_scope(cx: &mut TestAppContext) {
+    let (_dir, root) = project();
+    let server = server();
+    server.on("select 10", Reaction::column("first_value", &["10"]));
+    server.on(
+        "select (select 20)",
+        Reaction::column("second_value", &["21"]),
+    );
+    server.on("select 30", Reaction::column("third_value", &["30"]));
+    let (mut h, _cache, _consoles) = harness(cx, &root, &server);
+    open_console(&mut h);
+    h.invoke(
+        "editor.type",
+        json!({"text": "select 10 as first_value;\n\nselect (select 20) + 1 as second_value;\n\nselect 30 as third_value;"}),
+    );
+    h.invoke("editor.move-document-start", Value::Null);
+    h.invoke("editor.move-down", Value::Null);
+    h.invoke("editor.move-down", Value::Null);
+    for _ in 0..10 {
+        h.invoke("editor.move-right", Value::Null);
+    }
+    h.invoke("db.console.execute", Value::Null);
+    h.invoke("db.console.execute-choice", json!({"index": 2}));
+    wait_console(&mut h, "all three statements", idle);
+    let all = marks(&mut h);
+    assert_eq!(all.len(), 3, "{all:?}");
+    for (mark, line) in all.iter().zip([0, 2, 4]) {
+        assert_eq!(mark["lines"], json!([line, line + 1]));
+        assert_eq!(mark["lane_icon"], "db/statementOk");
+        assert!(mark["after_text"].as_str().unwrap().ends_with(" ms"));
+    }
+    // A single-statement rerun replaces its old outcome, keeping the others.
+    h.invoke(
+        "settings.set",
+        json!({"key": "database.query-execution.execute.caret-inside", "value": "largest"}),
+    );
+    h.invoke("editor.move-document-start", Value::Null);
+    h.invoke("db.console.execute", Value::Null);
+    wait_console(&mut h, "rerun", |s| {
+        idle(s) && output(s).matches("retrieved starting").count() == 4
+    });
+    assert_eq!(marks(&mut h).len(), 3);
+    // Editing one statement invalidates it, shifting the untouched statements.
+    h.invoke("editor.type", json!({"text": "-- changed\n"}));
+    let remaining = marks(&mut h);
+    assert_eq!(remaining.len(), 2, "{remaining:?}");
+    assert_eq!(remaining[0]["lines"], json!([3, 4]));
+    assert_eq!(remaining[1]["lines"], json!([5, 6]));
+}
+
+#[gpui::test]
+fn a_script_error_keeps_successes_and_does_not_mark_unexecuted_statements(cx: &mut TestAppContext) {
+    let (_dir, root) = project();
+    let server = server();
+    let (mut h, _cache, _consoles) = harness(cx, &root, &server);
+    open_console(&mut h);
+    h.invoke(
+        "editor.type",
+        json!({"text": "select 1;\nselect * from demo.nope;\nselect 1;"}),
+    );
+    h.invoke("editor.select-all", Value::Null);
+    h.invoke("db.console.execute", Value::Null);
+    wait_console(&mut h, "script error", idle);
+    let all = marks(&mut h);
+    assert_eq!(all.len(), 2, "{all:?}");
+    assert_eq!(all[0]["lane_icon"], "db/statementOk");
+    assert_eq!(all[0]["lines"], json!([0, 1]));
+    assert_eq!(all[1]["lane_icon"], "db/error");
+    assert_eq!(all[1]["lines"], json!([1, 2]));
+}
+
+#[gpui::test]
+fn editing_a_running_script_does_not_mark_queued_text_at_stale_offsets(cx: &mut TestAppContext) {
+    let (_dir, root) = project();
+    let server = server();
+    server.on(
+        "select slow",
+        Reaction::Delay(
+            Duration::from_secs(1),
+            Box::new(Reaction::column("a", &["1"])),
+        ),
+    );
+    let (mut h, _cache, _consoles) = harness(cx, &root, &server);
+    open_console(&mut h);
+    h.invoke("editor.type", json!({"text": "select slow;\nselect 1;"}));
+    h.invoke("editor.select-all", Value::Null);
+    h.invoke("db.console.execute", Value::Null);
+    wait_console(&mut h, "running first statement", |s| {
+        s["running"] == true && output(s).contains("> select slow")
+    });
+    h.invoke("editor.move-document-end", Value::Null);
+    h.invoke("editor.move-left", Value::Null);
+    h.invoke("editor.type", json!({"text": "0"}));
+    wait_console(&mut h, "original script finishes", idle);
+    let all = marks(&mut h);
+    assert_eq!(all.len(), 1, "{all:?}");
+    assert_eq!(all[0]["lines"], json!([0, 1]));
+    assert!(h.state()["editor"]["range_outline"].is_null());
+}
+
+#[gpui::test]
+fn cancelling_a_script_preserves_only_completed_marks(cx: &mut TestAppContext) {
+    let (_dir, root) = project();
+    let server = server();
+    server.on("select slow", Reaction::Hang);
+    let (mut h, _cache, _consoles) = harness(cx, &root, &server);
+    open_console(&mut h);
+    h.invoke(
+        "editor.type",
+        json!({"text": "select 1;\nselect slow;\nselect 1;"}),
+    );
+    h.invoke("editor.select-all", Value::Null);
+    h.invoke("db.console.execute", Value::Null);
+    wait_console(&mut h, "running second statement", |s| {
+        s["running"] == true && output(s).contains("> select slow")
+    });
+    h.invoke("db.console.stop", Value::Null);
+    wait_console(&mut h, "cancel", idle);
+    let all = marks(&mut h);
+    assert_eq!(all.len(), 1, "{all:?}");
+    assert_eq!(all[0]["lane_icon"], "db/statementOk");
+    assert_eq!(all[0]["lines"], json!([0, 1]));
+    assert!(h.state()["editor"]["range_outline"].is_null());
+}
+
+#[gpui::test]
 fn a_failed_statement_gets_the_error_mark(cx: &mut TestAppContext) {
     let (_dir, root) = project();
     let server = server();

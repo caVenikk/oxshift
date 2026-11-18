@@ -180,7 +180,7 @@ pub(crate) struct SurfaceOptions {
     pub size: Size<Pixels>,
     pub focus: FocusHandle,
     pub persistent: bool,
-    pub retain_on_minimize: bool,
+    pub retain_on_deactivate: bool,
     pub keyboard: bool,
 }
 
@@ -198,7 +198,7 @@ pub(crate) fn show<T: 'static>(
         size,
         focus,
         persistent,
-        retain_on_minimize,
+        retain_on_deactivate,
         keyboard,
     } = options;
     // A frame queued before its owner was hidden can still request a popup.
@@ -273,7 +273,7 @@ pub(crate) fn show<T: 'static>(
                     cx.observe(model, |_, _, cx| cx.notify()),
                     cx.observe_release(model, move |_, _, cx| close_from(key.0, 0, cx)),
                     cx.observe_window_activation(window, move |_, window, cx| {
-                        if persistent || window.is_window_active() {
+                        if persistent || retain_on_deactivate || window.is_window_active() {
                             return;
                         }
                         let dismiss = dismiss.clone();
@@ -327,14 +327,17 @@ pub(crate) fn show<T: 'static>(
     #[cfg(target_os = "macos")]
     {
         crate::dialog_window::native::track(parent, handle.into(), on_hide, cx);
-        if retain_on_minimize {
-            crate::dialog_window::native::retain_on_minimize(handle.into(), cx);
+        if retain_on_deactivate {
+            crate::dialog_window::native::retain_on_deactivate(handle.into(), cx);
         }
     }
     #[cfg(not(target_os = "macos"))]
-    let _ = retain_on_minimize;
+    let _ = retain_on_deactivate;
     let _ = handle.update(cx, |_, window, _| {
-        crate::dialog_window::native::popup_behavior(window, activate && !persistent);
+        crate::dialog_window::native::popup_behavior(
+            window,
+            activate && !persistent && !retain_on_deactivate,
+        );
         crate::dialog_window::native::order_above(window, above);
         if !keyboard {
             crate::dialog_window::native::keep_owner_focus(window);
@@ -617,7 +620,7 @@ impl<T: Render + gpui::Focusable> gpui::Element for Portal<T> {
                     size: bounds.size,
                     focus,
                     persistent,
-                    retain_on_minimize: false,
+                    retain_on_deactivate: false,
                     keyboard,
                 },
                 draw,
@@ -822,7 +825,7 @@ impl<T: Render + gpui::Focusable> gpui::Element for Attached<T> {
                     at: bounds.origin,
                     size: bounds.size,
                     focus,
-                    retain_on_minimize: false,
+                    retain_on_deactivate: false,
                     persistent: true,
                     keyboard: false,
                 },
@@ -917,7 +920,7 @@ mod tests {
                             at: point(px(20.0), px(30.0)),
                             size: size(px(120.0), px(60.0)),
                             focus: model.read(cx).focus_handle(cx),
-                            retain_on_minimize: false,
+                            retain_on_deactivate: false,
                             persistent: level == 0,
                             keyboard,
                         },

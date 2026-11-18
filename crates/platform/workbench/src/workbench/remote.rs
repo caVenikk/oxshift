@@ -1058,7 +1058,7 @@ impl Workbench {
         let options = PopupOptions {
             title: Some(vcs_ui::operations::TITLE.into()),
             key_context: Some("VcsOperations".into()),
-            retain_on_minimize: true,
+            retain_on_deactivate: true,
             speed_search: true,
             numbered: true,
             ..PopupOptions::default()

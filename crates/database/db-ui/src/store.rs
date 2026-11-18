@@ -109,14 +109,85 @@ pub struct ImportSummary {
     pub skipped: Vec<(String, String)>,
 }
 
+/// Prompt credentials private to one live data source handle. Disconnect
+/// advances the generation so a late dialog answer cannot revive it.
+#[derive(Clone, Default)]
+pub struct CredentialSession(Arc<std::sync::Mutex<(u64, Option<crate::prompt::Answer>)>>);
+
+impl CredentialSession {
+    pub fn answer(&self) -> Option<crate::prompt::Answer> {
+        self.0.lock().unwrap().1.clone()
+    }
+    pub fn generation(&self) -> u64 {
+        self.0.lock().unwrap().0
+    }
+    pub fn hold(&self, generation: u64, answer: crate::prompt::Answer) -> bool {
+        let mut session = self.0.lock().unwrap();
+        if session.0 != generation {
+            return false;
+        }
+        session.1 = Some(answer);
+        true
+    }
+    pub(crate) fn same(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
+    pub fn clear(&self) {
+        let mut session = self.0.lock().unwrap();
+        session.0 += 1;
+        session.1 = None;
+    }
+}
+
+impl SaveRequest {
+    /// Only the data source that raised this prompt may change. Other
+    /// sources may have been edited while the dialog was open.
+    pub fn prompt_update(
+        mut sources: Vec<DataSource>,
+        before: &DataSource,
+        after: &DataSource,
+        change: PasswordChange,
+    ) -> Result<Self, String> {
+        let source = sources
+            .iter_mut()
+            .find(|s| *s == before)
+            .ok_or("The data source changed while the credentials dialog was open.")?;
+        source.profile.clone_from(&after.profile);
+        Ok(Self {
+            sources,
+            passwords: vec![(before.name.clone(), change)],
+            ..Self::default()
+        })
+    }
+}
+
 /// The product's side of the database module.
 pub trait DataSourceStore: Send + Sync {
+    /// File edited by the IDE password settings action, with its initial
+    /// contents for a new installation. Contains storage options only.
+    fn password_settings_file(&self) -> Option<(PathBuf, String)> {
+        None
+    }
+
     /// The project's data sources, in their order (none when the project
     /// has none yet).
     fn load(&self, project: &Path) -> Result<Vec<DataSource>, String>;
 
     /// Writes the project's data sources and their passwords.
     fn save(&self, project: &Path, request: SaveRequest) -> Result<(), String>;
+
+    fn save_prompt(
+        &self,
+        project: &Path,
+        before: &DataSource,
+        after: &DataSource,
+        change: PasswordChange,
+    ) -> Result<(), String> {
+        let request = SaveRequest::prompt_update(self.load(project)?, before, after, change)?;
+        self.save(project, request)
+    }
+
+    fn clear_rejected(&self, _project: &Path, _name: &str) {}
 
     /// A password is kept for the data source (the dialog shows
     /// `<hidden>`).
@@ -129,6 +200,15 @@ pub trait DataSourceStore: Send + Sync {
     /// thread. What code intelligence asks before it connects on its own.
     fn needs_prompt(&self, project: &Path, source: &DataSource) -> bool {
         source.profile.needs_password() && !self.has_password(project, &source.name)
+    }
+
+    fn needs_session_prompt(
+        &self,
+        project: &Path,
+        source: &DataSource,
+        session: &CredentialSession,
+    ) -> bool {
+        session.answer().is_none() && self.needs_prompt(project, source)
     }
 
     /// Holds a password the person typed for the data source `name` (memory
@@ -191,6 +271,14 @@ pub trait DataSourceStore: Send + Sync {
     /// open their connections with.
     fn connections(&self, project: &Path) -> Arc<dyn ConnectionSource>;
 
+    fn session_connections(
+        &self,
+        project: &Path,
+        _session: CredentialSession,
+    ) -> Arc<dyn ConnectionSource> {
+        self.connections(project)
+    }
+
     /// Where the metadata models of the project's data sources are kept
     /// between runs (ADR 0021: the user cache folder, never the project);
     /// `None` keeps them in memory only.
@@ -219,6 +307,7 @@ pub mod fake {
 
     #[derive(Default)]
     struct State {
+        password_settings: Option<PathBuf>,
         sources: HashMap<PathBuf, Vec<DataSource>>,
         passwords: HashMap<String, Secret>,
         saves: usize,
@@ -293,6 +382,10 @@ pub mod fake {
                 hang: true,
                 cancelled: Arc::default(),
             })
+        }
+
+        pub fn set_password_settings_file(&self, path: PathBuf) {
+            self.state.lock().unwrap().password_settings = Some(path);
         }
 
         /// Keeps the models of the data sources in `dir` (in memory only
@@ -396,6 +489,15 @@ pub mod fake {
     }
 
     impl DataSourceStore for FakeStore {
+        fn password_settings_file(&self) -> Option<(PathBuf, String)> {
+            self.state
+                .lock()
+                .unwrap()
+                .password_settings
+                .clone()
+                .map(|path| (path, "store = \"memory\"\n".into()))
+        }
+
         fn load(&self, project: &Path) -> Result<Vec<DataSource>, String> {
             Ok(self.sources(project))
         }

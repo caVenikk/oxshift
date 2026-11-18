@@ -151,6 +151,12 @@ impl DbService {
     ) -> Result<(ConnectParams, SecretSource)> {
         let s = self.secrets_for(name, profile);
         if s.password_source == SecretSource::Missing {
+            if profile.gui_options().auth == db_core::profile::AuthMethod::Pgpass {
+                return Err(Error::new(
+                    ErrorKind::Auth,
+                    "No matching PostgreSQL password-file entry. Check the connection fields, file location and permissions.",
+                ));
+            }
             let mut msg = format!(
                 "no password for profile {name:?}: set {} or the profile's password_env, or run `{} secret set {name}`",
                 crate::secrets::password_env(),

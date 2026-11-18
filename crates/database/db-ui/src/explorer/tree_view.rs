@@ -217,6 +217,11 @@ impl Explorer {
             if !crate::store::same_connection(&source.profile, &live.profile) {
                 return false;
             }
+            if live.profile.gui_options().password_save
+                != source.profile.gui_options().password_save
+            {
+                live.credentials.clear();
+            }
             live.profile = source.profile.clone();
             true
         });
@@ -273,8 +278,9 @@ impl Explorer {
         };
         let store = crate::store(cx);
         let sink = self.sink(cx);
+        let credentials = crate::store::CredentialSession::default();
         let connections = live::Prompting::new(
-            store.connections(&root),
+            credentials.clone(),
             store.clone(),
             root.clone(),
             source.clone(),
@@ -286,7 +292,7 @@ impl Explorer {
             connections,
             sink,
         );
-        let mut live = Live::new(source.profile.clone(), handle);
+        let mut live = Live::new(source.profile.clone(), handle, credentials);
         match store.model_cache(&root) {
             Some(cache) => {
                 live.cache_loading = true;
@@ -309,9 +315,19 @@ impl Explorer {
     /// background, for the counters.
     fn load_totals(&mut self, source: &DataSource, root: &Path, cx: &mut Context<Self>) {
         let store = crate::store(cx);
-        let schemas = store.schemas(root, source.clone(), None);
+        let mut source = source.clone();
+        let password = self
+            .tree
+            .lives
+            .get(&source.name)
+            .and_then(|live| live.credentials.answer())
+            .and_then(|answer| {
+                answer.apply(&mut source.profile);
+                answer.password_override()
+            });
+        let schemas = store.schemas(root, source.clone(), password.clone());
         let databases = (source.profile.backend == db_core::Backend::Postgres)
-            .then(|| store.databases(root, source.clone(), None));
+            .then(|| store.databases(root, source.clone(), password));
         let run = cx.background_spawn(async move {
             let schemas = schemas.await.ok().map(|s| s.len());
             let databases = match databases {

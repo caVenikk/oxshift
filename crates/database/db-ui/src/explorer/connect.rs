@@ -93,27 +93,18 @@ impl Explorer {
                 reply(true);
                 return;
             }
-            let user = source.profile.user.clone();
             let save = source.profile.gui_options().password_save;
             let name = source.name.clone();
             let asked = cx.update(|cx| {
                 let reply = reply.clone();
                 window.update(cx, |_, window, cx| {
-                    crate::prompt::ask_to_connect(
-                        &name.clone(),
-                        &user,
-                        save,
-                        window,
-                        cx,
-                        move |answer, cx| {
-                            let (Some(answer), Some(this)) = (answer, this.upgrade()) else {
-                                reply(false);
-                                return;
-                            };
-                            this.update(cx, |this, cx| this.password_typed(&name, answer, cx));
-                            reply(true);
-                        },
-                    );
+                    crate::prompt::open(&source, Some(save), window, cx, move |answer, cx| {
+                        let (Some(answer), Some(this)) = (answer, this.upgrade()) else {
+                            reply(false);
+                            return;
+                        };
+                        this.update(cx, |this, cx| this.password_typed(&name, answer, reply, cx));
+                    });
                 })
             });
             if !matches!(asked, Ok(Ok(()))) {
@@ -126,58 +117,89 @@ impl Explorer {
 
     /// The person typed the password of `name`: it is held for the
     /// connection that asks, for as long as chosen.
-    fn password_typed(&mut self, name: &str, answer: Answer, cx: &mut Context<Self>) {
+    fn password_typed(
+        &mut self,
+        name: &str,
+        mut answer: Answer,
+        reply: impl FnOnce(bool) + 'static,
+        cx: &mut Context<Self>,
+    ) {
         let Some(root) = self.root.clone() else {
+            reply(false);
             return;
         };
+        let mut sources = self.sources().to_vec();
+        let Some(source) = sources.iter_mut().find(|s| s.name == name) else {
+            reply(false);
+            return;
+        };
+        let before = source.profile.gui_options().password_save;
         let store = crate::store(cx);
-        store.hold_password(&root, name, answer.password.clone());
+        if answer.auth == db_core::profile::AuthMethod::None {
+            answer.save = PasswordSave::Never;
+        }
         if answer.save == PasswordSave::Never {
             self.connect.never.insert(name.to_owned());
         } else {
             self.connect.never.remove(name);
         }
-        if answer.save == PasswordSave::Forever {
-            self.keep_forever(name, answer.password, cx);
+        if answer.save != PasswordSave::Forever && before != PasswordSave::Forever {
+            store.hold_answer(&root, source, answer);
+            reply(true);
+            return;
         }
-    }
-
-    /// Saves the data source with "Forever" and the password typed.
-    fn keep_forever(&mut self, name: &str, password: db_core::Secret, cx: &mut Context<Self>) {
-        let Some(root) = self.root.clone() else {
-            return;
-        };
-        let mut sources = self.sources().to_vec();
-        let Some(source) = sources.iter_mut().find(|s| s.name == name) else {
-            return;
-        };
+        // Moving away from Forever must remove the old stored credential.
+        // Only Forever persists the identity typed into this prompt.
+        if answer.save == PasswordSave::Forever {
+            answer.apply(&mut source.profile);
+        }
         source
             .profile
             .gui
             .get_or_insert_with(Default::default)
-            .password_save = PasswordSave::Forever;
+            .password_save = answer.save;
+        let source = source.clone();
         let request = SaveRequest {
             sources,
-            passwords: vec![(name.to_owned(), PasswordChange::Set(password))],
+            passwords: vec![(
+                name.to_owned(),
+                if answer.save == PasswordSave::Forever {
+                    PasswordChange::Set(answer.password.clone())
+                } else {
+                    PasswordChange::Clear
+                },
+            )],
             ..SaveRequest::default()
         };
-        let store = crate::store(cx);
-        let run_root = root.clone();
-        let save = cx.background_spawn(async move { store.save(&run_root, request) });
-        let name = name.to_owned();
+        let saved_profile = source.profile.clone();
+        let name = source.name.clone();
+        let save = cx.background_spawn(async move {
+            store.save(&root, request)?;
+            store.hold_answer(&root, &source, answer);
+            Ok::<_, String>(())
+        });
         cx.spawn(async move |this, cx| {
             let result = save.await;
+            let ok = result.is_ok();
             let _ = this.update(cx, |this, cx| match result {
-                Ok(()) => this.load(cx),
+                Ok(()) => {
+                    // This handle is already opening with the new credentials.
+                    // Reloading its saved user must not discard the pending request.
+                    if let Some(live) = this.tree.lives.get_mut(&name) {
+                        live.profile = saved_profile;
+                    }
+                    this.load(cx);
+                }
                 Err(e) => this.notify(
                     Notification::new(
                         NotificationKind::Error,
-                        name,
-                        format!("Cannot keep the password: {e}"),
+                        "Connection credentials",
+                        format!("Cannot update the saved credentials: {e}"),
                     ),
                     cx,
                 ),
             });
+            reply(ok);
         })
         .detach();
     }

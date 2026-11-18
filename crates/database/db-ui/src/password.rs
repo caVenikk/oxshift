@@ -60,7 +60,7 @@ impl PasswordField {
             edited: false,
             all_selected: false,
             placeholder: SharedString::default(),
-            focus: cx.focus_handle(),
+            focus: cx.focus_handle().tab_stop(true),
             id,
         }
     }

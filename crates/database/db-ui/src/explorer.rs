@@ -543,9 +543,11 @@ impl Explorer {
             && source.profile.gui_options().password_save == db_core::PasswordSave::Never;
         if asks {
             let this = cx.entity().downgrade();
-            let (name, user) = (source.name.clone(), source.profile.user.clone());
-            crate::prompt::ask(&name, &user, window, cx, move |secret, cx| {
-                if let (Some(secret), Some(this)) = (secret, this.upgrade()) {
+            crate::prompt::open(&source.clone(), None, window, cx, move |answer, cx| {
+                if let (Some(answer), Some(this)) = (answer, this.upgrade()) {
+                    let mut source = source;
+                    answer.apply(&mut source.profile);
+                    let secret = answer.password;
                     this.update(cx, |this, cx| this.run_test(root, source, Some(secret), cx));
                 }
             });

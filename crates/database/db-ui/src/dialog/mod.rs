@@ -1568,9 +1568,11 @@ impl DataSourcesDialog {
             && item.gui().password_save == PasswordSave::Never;
         if asks {
             let this = cx.entity().downgrade();
-            let (name, user) = (item.source.name.clone(), item.profile().user.clone());
-            crate::prompt::ask(&name, &user, window, cx, move |secret, cx| {
-                if let (Some(secret), Some(this)) = (secret, this.upgrade()) {
+            crate::prompt::open(&item.source.clone(), None, window, cx, move |answer, cx| {
+                if let (Some(answer), Some(this)) = (answer, this.upgrade()) {
+                    let mut item = item;
+                    answer.apply(&mut item.source.profile);
+                    let secret = answer.password;
                     this.update(cx, |this, cx| this.run_test(item, Some(secret), cx));
                 }
             });

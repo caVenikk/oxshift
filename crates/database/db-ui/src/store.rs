@@ -31,6 +31,26 @@ pub struct DataSource {
     pub profile: Profile,
 }
 
+/// Two profiles connect alike: they differ at most in what is shown or
+/// read (colour, comment, introspection level and scope).
+pub fn same_connection(a: &db_core::Profile, b: &db_core::Profile) -> bool {
+    let plain = |p: &db_core::Profile| {
+        let mut p = p.clone();
+        let mut gui = p.gui_options();
+        gui.password_save = db_core::PasswordSave::default();
+        gui.color = None;
+        gui.object_colors.clear();
+        gui.comment = None;
+        gui.level = None;
+        gui.schema_levels.clear();
+        gui.scope = None;
+        gui.refresh_minutes = None;
+        p.gui = (!gui.is_default()).then_some(gui);
+        p
+    };
+    plain(a) == plain(b)
+}
+
 /// What happens to a data source's saved password.
 #[derive(Debug, Clone)]
 pub enum PasswordChange {
@@ -117,6 +137,16 @@ pub trait DataSourceStore: Send + Sync {
     /// the module releases it when the data source is disconnected. Does
     /// not block.
     fn hold_password(&self, _project: &Path, _name: &str, _password: Secret) {}
+
+    /// Holds the identity and authentication selected for subsequent sessions.
+    fn hold_answer(&self, project: &Path, source: &DataSource, answer: crate::prompt::Answer) {
+        self.hold_password(project, &source.name, answer.password);
+    }
+
+    /// A refused credential must be asked for again, including a stored one.
+    fn reject_password(&self, project: &Path, name: &str) {
+        self.release_password(project, name);
+    }
 
     /// Forgets the password [`Self::hold_password`] holds for `name` (the
     /// server refused it, or the data source that saves "Never" was

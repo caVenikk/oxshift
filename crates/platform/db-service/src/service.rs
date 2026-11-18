@@ -174,7 +174,26 @@ impl DbService {
     /// it: PostgreSQL `application_name`, Oracle `MODULE`.
     pub async fn open_for(&self, target: &Target, purpose: Option<Purpose>) -> Result<Opened> {
         let (name, profile) = self.resolve_target(target)?;
-        let (mut params, password_source) = self.params_for(&name, &profile)?;
+        self.open_profile_for(name, profile, None, purpose).await
+    }
+
+    /// Open a named profile with the supplied credential, retaining session naming.
+    pub async fn open_profile_for(
+        &self,
+        name: String,
+        profile: Profile,
+        password: Option<Secret>,
+        purpose: Option<Purpose>,
+    ) -> Result<Opened> {
+        profile.validate()?;
+        let (mut params, password_source) = if let Some(password) = password {
+            let (wallet, _, _) =
+                self.resolver()
+                    .resolve(&name, &profile, SecretKind::WalletPassword);
+            (profile.to_params(password, wallet)?, SecretSource::Prompt)
+        } else {
+            self.params_for(&name, &profile)?
+        };
         let dialect = profile.backend.dialect();
         let session = purpose.map(|purpose| {
             // The product's slug is the name in a session name unless the

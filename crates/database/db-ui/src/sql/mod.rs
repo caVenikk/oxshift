@@ -43,7 +43,7 @@ pub fn file_type(hub: Arc<Hub>) -> FileType {
         })),
         context_menu: Some(Arc::new(move |path, _| context_menu(&hub, path))),
         key_context: Some(KEY_CONTEXT),
-        ..FileType::plain("SQL", &["sql"], IconName("fileTypes/sql")).with_comment("-- ")
+        ..FileType::plain("SQL", &["sql"], IconName("db/sqlScript")).with_comment("-- ")
     }
 }
 

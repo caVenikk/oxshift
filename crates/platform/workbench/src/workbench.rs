@@ -897,10 +897,11 @@ impl Workbench {
                         "modified": editor.read(cx).is_modified(),
                         "deleted": self.is_deleted_on_disk(path),
                     });
-                    // Only a decorated tab (a query file attached to a data
-                    // source) has these keys.
+                    // Dialect-only decorations have an icon without a source hint.
                     if let Some(hint) = decoration.hint {
                         tab["hint"] = json!(hint);
+                    }
+                    if decoration.icon.is_some() {
                         tab["icon"] = json!(self.file_types.icon(path).0);
                     }
                     // Only an autosaved tab has the key.
@@ -2730,7 +2731,14 @@ impl Workbench {
                 );
             } else if let Some(rel) = project.relative(path) {
                 parts.extend(rel.iter().map(|c| c.to_string_lossy().into_owned()));
-                icon = Some(self.file_types.icon(path));
+                // Ordinary breadcrumbs describe the file type; source and
+                // dialect decorations belong to the tab, tree and title.
+                icon = Some(
+                    self.file_types
+                        .for_path(path)
+                        .filter(|_| decoration.icon.is_some())
+                        .map_or_else(|| self.file_types.icon(path), |kind| kind.icon),
+                );
             }
         }
         (parts, icon)

@@ -328,33 +328,30 @@ impl Hub {
         projects[root].source(name).cloned()
     }
 
-    /// The icon and hint of a file in the editor, project tree and
-    /// toolbar title: the icon of the data source the file is attached to
-    /// and its name (nothing for a file that is not attached).
+    /// The resolved dialect's icon and the attached source's hint. Explicit
+    /// file, folder and project dialect mappings also decorate unbound files.
     pub fn decoration(&self, file: &Path) -> FileDecoration {
         let resolved = self.resolve(file);
-        let Some(name) = resolved.data_source else {
-            return FileDecoration::default();
-        };
-        let icon = match self.source_of(file, &name).map(|s| s.dialect) {
-            Some(Dialect::Postgres) => crate::icons::POSTGRES,
-            Some(Dialect::Oracle) => crate::icons::ORACLE,
-            Some(Dialect::Sqlite) => crate::icons::SQLITE,
-            _ => crate::icons::DATA_SOURCE,
+        let name = resolved.data_source;
+        let icon = match resolved.dialect {
+            Dialect::Postgres => crate::icons::POSTGRES,
+            Dialect::Oracle => crate::icons::ORACLE,
+            Dialect::Sqlite => crate::icons::SQLITE,
+            _ => ui::icons::IconName("db/sqlScript"),
         };
         let console = self.console_binding(file).is_some();
         FileDecoration {
             icon: Some(icon),
             name: console.then(|| "console".to_owned()),
             autosave: console,
-            breadcrumb: console.then(|| {
+            breadcrumb: name.as_ref().filter(|_| console).map(|name| {
                 vec![
                     "Database Consoles".to_owned(),
                     name.clone(),
                     format!("console [{name}]"),
                 ]
             }),
-            hint: Some(name),
+            hint: name,
         }
     }
 

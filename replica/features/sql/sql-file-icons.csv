@@ -1,0 +1,2 @@
+feature,area,priority,original,clone,notes
+"SQL script and SQLite file icons follow resolved dialect",sql,should,yes,yes,"#476; source and explicit dialect mappings; original script drawing and Apache-2.0 SQLite provider icon"

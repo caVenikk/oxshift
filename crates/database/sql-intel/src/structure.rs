@@ -20,9 +20,6 @@ pub(crate) struct Symbol {
     pub children: Vec<Symbol>,
 }
 
-/// How much of the tables a query reads its detail shows.
-const MAX_DETAIL: usize = 60;
-
 const NAME_NODES: [K; 5] = [
     K::TableRef,
     K::FunctionRef,
@@ -73,10 +70,60 @@ pub(crate) fn symbols(script: &Script) -> Vec<Symbol> {
                 let label = script.text().get(word.clone())?;
                 Some(symbol(label.into(), None, SymbolKind::Text, stmt, word))
             })?;
+            if group != 0 {
+                symbol.name = statement_label(dialect, stmt);
+                symbol.detail = None;
+            }
             symbol.group = Some(group);
             Some(symbol)
         })
         .collect()
+}
+
+/// Render a statement without its delimiter. A gap in the parsed token
+/// positions becomes a single space; whitespace inside a literal stays intact.
+fn statement_label(dialect: Dialect, stmt: SyntaxNode<'_>) -> String {
+    use sql_syntax::TokenKind;
+    let mut label = String::new();
+    let mut previous_end = None;
+    for token in stmt.tokens() {
+        let range = token.range();
+        if token.kind() == TokenKind::Semicolon && range.end == stmt.range().end {
+            break;
+        }
+        if previous_end.is_some_and(|end| end < range.start) {
+            label.push(' ');
+        }
+        let text = token.text();
+        let name = token.parent().is_some_and(|p| {
+            matches!(
+                p.kind(),
+                K::TableRef
+                    | K::ColumnRef
+                    | K::SchemaRef
+                    | K::CatalogRef
+                    | K::FunctionRef
+                    | K::DefName
+                    | K::ObjectRef
+                    | K::AliasDef
+                    | K::CteDef
+                    | K::WindowDef
+                    | K::WindowRef
+            )
+        });
+        if token.kind() == TokenKind::Word
+            && !name
+            && (dialect.keyword(text).is_some()
+                || text.eq_ignore_ascii_case("commit")
+                || text.eq_ignore_ascii_case("rollback"))
+        {
+            label.push_str(&text.to_ascii_uppercase());
+        } else {
+            label.push_str(text);
+        }
+        previous_end = Some(range.end);
+    }
+    label
 }
 
 fn name_node<'a>(node: SyntaxNode<'a>) -> Option<SyntaxNode<'a>> {
@@ -144,8 +191,7 @@ fn statement(script: &Script, dialect: Dialect, stmt: SyntaxNode<'_>) -> Option<
     match stmt.kind() {
         K::Query | K::Select | K::SetOperation | K::ParenQuery | K::Values | K::TableQuery => {
             let selection = first_word(stmt)?;
-            let mut s = symbol("select".into(), None, SymbolKind::Text, stmt, selection);
-            s.detail = tables_read(script, stmt);
+            let mut s = symbol(String::new(), None, SymbolKind::Text, stmt, selection);
             s.children = ctes(script, dialect, stmt);
             Some(s)
         }
@@ -154,17 +200,16 @@ fn statement(script: &Script, dialect: Dialect, stmt: SyntaxNode<'_>) -> Option<
                 .descendants()
                 .find(|n| n.kind() == K::TableRef)
                 .and_then(|t| written(script, dialect, t));
-            let verb = match stmt.kind() {
-                K::Insert => "insert into",
-                K::Update => "update",
-                K::Delete => "delete from",
-                _ => "merge into",
-            };
-            let (name, selection) = match target {
-                Some((t, r)) => (format!("{verb} {t}"), r),
-                None => (verb.to_string(), first_word(stmt)?),
-            };
-            Some(symbol(name, None, SymbolKind::Event, stmt, selection))
+            let selection = target
+                .map(|(_, range)| range)
+                .or_else(|| first_word(stmt))?;
+            Some(symbol(
+                String::new(),
+                None,
+                SymbolKind::Event,
+                stmt,
+                selection,
+            ))
         }
         K::AlterTable | K::AlterObject | K::DropStatement | K::Truncate | K::CommentStatement => {
             let selection = first_word(stmt)?;
@@ -275,27 +320,4 @@ fn ctes(script: &Script, dialect: Dialect, query: SyntaxNode<'_>) -> Vec<Symbol>
             Some(symbol(name, Some("CTE"), SymbolKind::Struct, c, selection))
         })
         .collect()
-}
-
-/// `customers c, orders`: the tables of the outer select's `FROM`.
-fn tables_read(script: &Script, query: SyntaxNode<'_>) -> Option<String> {
-    let select = query
-        .child_nodes()
-        .find(|n| n.kind() == K::Select)
-        .or_else(|| (query.kind() == K::Select).then_some(query))?;
-    let from = select.child(K::FromClause)?;
-    let names: Vec<String> = from
-        .descendants()
-        .filter(|n| n.kind() == K::TableRef)
-        .filter_map(|t| script.text().get(t.range()))
-        .map(str::to_string)
-        .collect();
-    if names.is_empty() {
-        return None;
-    }
-    let mut text = format!("from {}", names.join(", "));
-    if text.chars().count() > MAX_DETAIL {
-        text = text.chars().take(MAX_DETAIL - 1).collect::<String>() + "\u{2026}";
-    }
-    Some(text)
 }

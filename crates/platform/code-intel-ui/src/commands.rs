@@ -99,6 +99,9 @@ ui::ui_commands! {
 
 ui::ui_commands! {
     STRUCTURE_COMMANDS, scope = "FileStructure";
+    StructureSettings => "structure.settings", "File Structure Settings", "Opens the File Structure presentation options.";
+    SortStructure => "structure.sort-alphabetically", "Sort Alphabetically", "Sorts sibling rows alphabetically or in source order.";
+    NarrowStructure => "structure.narrow-down", "Narrow Down on Typing", "Shows only matching rows during File Structure speed search.";
     ToggleFirstGroup => "structure.toggle-first", "Toggle First Group",
         "Toggles the first group of the file structure.";
     ToggleSecondGroup => "structure.toggle-second", "Toggle Second Group",

@@ -140,37 +140,10 @@ impl PopupHost {
                         .downcast::<crate::list_popup::ListPopup>()
                     && list.read(cx).grouped()
                 {
-                    let outside = list.clone();
-                    let width = viewport.width.min(px(540.0));
-                    let height = viewport.height.min(px(538.0));
-                    let content = if ui::popup_window::enabled() {
-                        ui::popup_window::view_with_dismiss(
-                            &list,
-                            crate::list_popup::ListPopup::dismiss_outside,
-                        )
-                    } else {
-                        list.into_any_element()
-                    };
                     return Some(
-                        deferred(
-                            anchored()
-                                .position(point(
-                                    (viewport.width - width) / 2.0,
-                                    (viewport.height - height) / 2.0,
-                                ))
-                                .child(
-                                    div()
-                                        .occlude()
-                                        .on_mouse_down_out(move |_, window, cx| {
-                                            outside.update(cx, |list, cx| {
-                                                list.dismiss_outside(window, cx)
-                                            });
-                                        })
-                                        .child(content),
-                                ),
-                        )
-                        .with_priority(1)
-                        .into_any_element(),
+                        deferred(div().absolute().size_full().child(list))
+                            .with_priority(1)
+                            .into_any_element(),
                     );
                 }
                 let editor = popup.editor.read(cx);

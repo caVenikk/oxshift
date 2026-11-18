@@ -69,6 +69,7 @@ pub use view::{
 /// Registers the code intelligence commands with the command index.
 pub fn init(cx: &mut gpui::App) {
     settings_ui::store::register::<settings::DocumentationSettings>(cx);
+    settings_ui::store::register::<settings::FileStructureSettings>(cx);
     ui::command::register(cx, commands::COMMANDS);
     ui::command::register(cx, commands::STRUCTURE_COMMANDS);
     ui::command::register(cx, commands::COMPLETION_COMMANDS);

@@ -1,4 +1,4 @@
-//! The commands of the query plan: Explain Plan and Explain Analyze of the
+//! The commands of the query plan: Explain Plan and Explain Analyse of the
 //! statement at the caret, and the selection, expansion and view of the
 //! plan tab that shows.
 
@@ -14,7 +14,7 @@ ui::ui_commands! {
     ExplainPlan => "db.console.explain", "Explain Plan",
         "Asks the server for the plan of the statement at the caret of the active SQL editor, or of the first statement of its selection, without running it, and shows it in the Query Plan tab of the Services tool window: a tree with the operation, its object, estimated rows and cost, and the properties of the selected node; the raw text is in the second view of the tab.";
     /// Run the statement and show its plan with the measured rows and times.
-    ExplainAnalyze => "db.console.explain-analyze", "Explain Analyze",
+    ExplainAnalyze => "db.console.explain-analyze", "Explain Analyse",
         "Like Explain Plan, but the server runs the statement and the plan has the actual rows and times (PostgreSQL). On a read-only data source only a SELECT is run.";
     /// Select a node of the plan.
     SelectPlanNode { path: Vec<usize> } => "db.plan.select", "Select Plan Node",

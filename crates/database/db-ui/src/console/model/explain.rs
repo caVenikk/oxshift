@@ -1,4 +1,4 @@
-//! Explain Plan and Explain Analyze of a console: the statements of
+//! Explain Plan and Explain Analyse of a console: the statements of
 //! `sql_syntax::explain_statements` run as a job like any other, and the
 //! rows they answer with become a Query Plan tab instead of a grid.
 
@@ -62,7 +62,7 @@ impl Console {
             if !sql_syntax::supports_analyze(dialect) {
                 self.print(
                     ContentKind::Error,
-                    "Explain Analyze is not available for this data source",
+                    "Explain Analyse is not available for this data source",
                     cx,
                 );
                 return;
@@ -74,7 +74,7 @@ impl Console {
             if (self.read_only || self.handle.options().read_only) && !query {
                 self.print(
                     ContentKind::Error,
-                    "Explain Analyze runs the statement: on a read-only data source it is allowed for SELECT only",
+                    "Explain Analyse runs the statement: on a read-only data source it is allowed for SELECT only",
                     cx,
                 );
                 return;
@@ -151,7 +151,8 @@ impl Console {
                 table: db_session::TableRef::new(None, PLAN_TITLE),
                 columns: Vec::new(),
             };
-            let grid = cx.new(|cx| TableGrid::result(target, columns, None, window, cx));
+            let grid =
+                cx.new(|cx| TableGrid::result(target, columns, None, window, cx).fit_plan_lines());
             grid.update(cx, |g, cx| g.show_page(rows, 0, false, cx));
             grid
         });

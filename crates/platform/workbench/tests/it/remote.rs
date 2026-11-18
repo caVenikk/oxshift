@@ -716,6 +716,25 @@ fn fetch_pull_and_the_popups(cx: &mut TestAppContext) {
     assert_eq!(enabled("Push\u{2026}"), Some(true));
     assert_eq!(enabled("Branches\u{2026}"), Some(true));
     assert_eq!(enabled("Show History"), Some(false));
+    assert_eq!(enabled("Commit File\u{2026}"), Some(false));
+    assert_eq!(enabled("Annotate with Git Blame"), Some(false));
+    assert_eq!(enabled("Copy Branch Name"), Some(true));
     h.invoke("vcs.operations-popup", Value::Null);
     assert!(h.remote()["operations_popup"].is_null(), "toggled off");
+    h.invoke("vcs.copy-branch-name", Value::Null);
+    assert_eq!(
+        h.cx.read_from_clipboard()
+            .and_then(|item| item.text())
+            .as_deref(),
+        Some("main")
+    );
+    let oid = git(&repos.root, &["rev-parse", "HEAD"]);
+    git(&repos.root, &["checkout", "--detach", "-q", "HEAD"]);
+    h.invoke("vcs.refresh", Value::Null);
+    h.wait("detached HEAD", |v| v["widget"]["text"] != "main");
+    h.invoke("vcs.copy-branch-name", Value::Null);
+    assert_eq!(
+        h.cx.read_from_clipboard().and_then(|item| item.text()),
+        Some(oid)
+    );
 }

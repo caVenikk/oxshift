@@ -9,7 +9,7 @@
 //! Repository…. Commands that are not there yet are shown disabled.
 
 use gpui::{Action, App};
-use ui::menu::MenuItem;
+use ui::{icons::IconName, menu::MenuItem};
 
 /// The popup's title (`vcs.quicklist.popup.title`).
 pub const TITLE: &str = "VCS Operations";
@@ -43,6 +43,7 @@ pub fn items(
     git: bool,
     diff_path: Option<String>,
     unversioned: Vec<String>,
+    has_branch: bool,
     cx: &App,
 ) -> Vec<MenuItem> {
     if !git {
@@ -51,18 +52,18 @@ pub fn items(
     let can_diff = diff_path.is_some();
     let mut items = vec![
         MenuItem::header("Git"),
-        item("Commit\u{2026}", "vcs.commit", cx),
-        // The stage-specific Commit action is disabled without staging support.
-        MenuItem::unavailable("Commit\u{2026}"),
-        item("Rollback\u{2026}", "vcs.rollback", cx),
-        MenuItem::unavailable("Show History"),
-        MenuItem::unavailable("Annotate"),
+        item("Commit\u{2026}", "vcs.commit", cx).icon(IconName::COMMIT),
+        // File-specific commit is not implemented yet.
+        MenuItem::unavailable("Commit File\u{2026}"),
+        item("Rollback\u{2026}", "vcs.rollback", cx).icon(IconName::ROLLBACK),
+        MenuItem::unavailable("Show History").icon(IconName::HISTORY),
+        MenuItem::unavailable("Annotate with Git Blame"),
         MenuItem::action("Show Diff", crate::diff::ShowDiff { path: diff_path })
             .icon(ui::icons::IconName::DIFF)
             .enabled(can_diff),
         MenuItem::separator(),
-        item("Branches\u{2026}", "vcs.branches-popup", cx),
-        item("Push\u{2026}", "vcs.push", cx),
+        item("Branches\u{2026}", "vcs.branches-popup", cx).icon(IconName::VCS),
+        item("Push\u{2026}", "vcs.push", cx).icon(IconName::PUSH),
         MenuItem::unavailable("Stash Changes\u{2026}"),
         MenuItem::unavailable("Unstash Changes\u{2026}"),
         MenuItem::separator(),
@@ -76,6 +77,11 @@ pub fn items(
             },
         ));
     }
+    items.push(
+        item("Copy Branch Name", "vcs.copy-branch-name", cx)
+            .icon(IconName::COPY)
+            .enabled(has_branch),
+    );
     items.extend([
         MenuItem::separator(),
         MenuItem::unavailable("Show Local History\u{2026}"),

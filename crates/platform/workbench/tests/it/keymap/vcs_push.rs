@@ -180,6 +180,28 @@ fn check(h: &mut H, b: &Binding) -> bool {
     let what = format!("`{keys}` -> {}", b.command);
     h.reset();
     match b.command.as_str() {
+        "menu.choose-command" => {
+            super::vcs::ensure_repository(h);
+            let tab = h.state()["tabs"].as_array().unwrap().iter().position(|t| t["path"] == "a.py").unwrap();
+            h.invoke("tabs.select", json!({ "index": tab }));
+            let before = h.editor_marked();
+            h.invoke("vcs.operations-popup", json!(null));
+            h.press(keys);
+            super::vcs::wait_diff(h, &what, |d| d["path"].as_str().is_some_and(|p| p.ends_with("a.py")));
+            assert!(remote_ui(h)["operations_popup"].is_null(), "{what}: closed after choosing diff");
+            super::vcs::close_diffs(h);
+            h.invoke("tabs.select", json!({ "index": tab }));
+            assert_eq!(h.editor_marked(), before, "{what}: no duplicate editor action");
+            h.invoke("project.open-file", json!({ "path": "b.py" }));
+            let before = h.editor_marked();
+            h.invoke("vcs.operations-popup", json!(null));
+            let popup = remote_ui(h)["operations_popup"].clone();
+            assert!(popup["levels"][0]["items"].as_array().unwrap().iter().any(|item| item["label"] == "Show Diff" && item["enabled"] == false));
+            h.press(keys);
+            assert!(!remote_ui(h)["operations_popup"].is_null(), "{what}: disabled diff keeps menu open");
+            h.invoke("menu.cancel", json!(null));
+            assert_eq!(h.editor_marked(), before, "{what}: disabled diff does not duplicate editor text");
+        }
         "vcs.push" | "vcs.update-project" | "vcs.operations-popup" => {
             check_remote(h, &b.command, keys, &what)
         }

@@ -659,7 +659,7 @@ fn operations_show_diff_uses_the_file_focused_before_the_popup(cx: &mut TestAppC
             .position(|i| i["label"] == "Show Diff")
             .expect("Show Diff row");
         assert_eq!(items[row]["number"], "6");
-        assert_eq!(items[row - 1]["label"], "Annotate");
+        assert_eq!(items[row - 1]["label"], "Annotate with Git Blame");
         assert_eq!(items[row + 1]["separator"], true);
         assert_eq!(items[row + 2]["label"], "Branches…");
         let end = items
@@ -678,7 +678,7 @@ fn operations_show_diff_uses_the_file_focused_before_the_popup(cx: &mut TestAppC
         if expect_add {
             expected.push("Add to VCS");
         }
-        expected.extend(["|", "Show Local History…"]);
+        expected.extend(["Copy Branch Name", "|", "Show Local History…"]);
         assert_eq!(end, expected);
         for item in items {
             if matches!(

@@ -247,6 +247,7 @@ pub(crate) fn ui_sources(role: UiRole) -> &'static [Src] {
         IconPurpleStroke => &[Palette("Purple.Stroke")],
         IconTealFill => &[Palette("Teal.Fill")],
         IconTealStroke => &[Palette("Teal.Stroke")],
+        PopupHeader => &[Ui("Popup.Header.activeBackground")],
         PopupBorder => &[Ui("Popup.borderColor"), Ui("Menu.borderColor")],
 
         EditorBackground => &[Bg("TEXT"), Ui("Editor.background")],

@@ -1,7 +1,7 @@
 //! The Query Plan tab of the Services tool window: the plan as a table with
 //! a tree in its first column and, at its right, the properties of the
-//! selected node (DB72, DB73); a toolbar at the left switches to the raw
-//! text.
+//! selected node (DB72, DB73); the tabs below switch between the tree and
+//! the raw plan.
 
 use std::collections::HashSet;
 
@@ -253,17 +253,10 @@ impl PlanView {
 
     fn render_toolbar(&self, cx: &mut Context<Self>) -> gpui::AnyElement {
         let button = |id: &'static str, label: &'static str, mode: Mode| {
-            div()
-                .id(id)
+            ui::components::header_tab(id, self.mode == mode, true, cx)
                 .debug_selector(move || id.to_owned())
+                .h(px(21.))
                 .px(px(8.))
-                .rounded_md()
-                .border_1()
-                .border_color(if self.mode == mode {
-                    cx.theme().color(UiRole::Selection)
-                } else {
-                    gpui::transparent_black()
-                })
                 .pointing_hand()
                 .child(label)
                 .on_click(cx.listener(move |this, _: &ClickEvent, window, cx| {

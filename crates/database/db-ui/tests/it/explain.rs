@@ -1,4 +1,4 @@
-//! Explain Plan and Explain Analyze of a console over a scripted
+//! Explain Plan and Explain Analyse of a console over a scripted
 //! PostgreSQL server: the statement at the caret goes to the server wrapped
 //! in `EXPLAIN (FORMAT TEXT)`, the answer shows as a Query Plan tab with a
 //! tree and the raw text; the analyzed statement runs only where that is
@@ -37,6 +37,54 @@ fn server() -> FakeSource {
     source.on("from demo.customers", Reaction::column("id", &["1"]));
     source.on("delete from", Reaction::Affected(1));
     source
+}
+
+#[gpui::test]
+fn toolbar_explain_split_opens_its_menu_or_runs_the_plain_plan(cx: &mut TestAppContext) {
+    use gpui::{Modifiers, MouseButton, VisualTestContext};
+
+    let (_dir, root) = project();
+    let source = server();
+    let (mut h, _cache, _consoles) = harness(cx, &root, &source);
+    open_console(&mut h);
+    h.invoke(
+        "editor.type",
+        json!({"text": "select * from demo.customers;"}),
+    );
+    for selector in ["sql-explain-menu", "sql-explain"] {
+        let mut view = VisualTestContext::from_window(h.window.into(), h.cx);
+        let center = view
+            .debug_bounds(selector)
+            .expect("split button part")
+            .center();
+        view.simulate_mouse_down(center, MouseButton::Left, Modifiers::none());
+        view.simulate_mouse_up(center, MouseButton::Left, Modifiers::none());
+        h.draw();
+        if selector == "sql-explain-menu" {
+            let state = h.invoke("sql.state", Value::Null);
+            assert_eq!(state["popup"]["levels"][0]["selected"], 0);
+            let items = &state["popup"]["levels"][0]["items"];
+            assert_eq!(items[0]["label"], "Explain Plan");
+            assert_eq!(items[1]["label"], "Explain Analyse");
+            assert!(
+                source
+                    .statements(Purpose::Console)
+                    .iter()
+                    .all(|q| !q.starts_with("EXPLAIN"))
+            );
+            h.press("escape");
+            assert!(h.invoke("sql.state", Value::Null)["popup"].is_null());
+        }
+    }
+    assert_eq!(plan(&mut h)["analyze"], false);
+    assert_eq!(
+        source
+            .statements(Purpose::Console)
+            .iter()
+            .filter(|q| q.starts_with("EXPLAIN"))
+            .count(),
+        1
+    );
 }
 
 /// The plan of the first tab, once the console is idle with one.
@@ -167,6 +215,9 @@ fn the_properties_of_the_selected_node_and_the_raw_text_are_in_the_tab(cx: &mut 
     let plan = &s["tabs"][0]["plan"];
     assert_eq!(plan["raw_grid"]["rows"], PLAN.len());
     assert_eq!(plan["raw_grid"]["columns"][0]["name"], "QUERY PLAN");
+    let longest = PLAN.iter().map(|line| line.chars().count()).max().unwrap();
+    assert!(longest > 50);
+    assert_eq!(plan["raw_grid"]["columns"][0]["auto_width_chars"], longest);
     assert_eq!(plan["raw_grid"]["cells"][1][0], PLAN[1]);
     h.press("down");
     h.press("down");
@@ -395,6 +446,10 @@ fn the_explain_row_of_the_editor_menu_explains_the_statement_at_the_caret(cx: &m
         h.invoke("menu.down", Value::Null);
     }
     h.invoke("menu.open-submenu", Value::Null);
+    let state = h.state();
+    let submenu = &state["editor_menu"]["menu"]["levels"][1]["items"];
+    assert_eq!(submenu[0]["label"], "Explain Plan");
+    assert_eq!(submenu[1]["label"], "Explain Analyse");
     h.invoke("menu.confirm", Value::Null);
     let plan = plan(&mut h);
     assert!(!rows(&plan).is_empty(), "{plan}");

@@ -980,6 +980,50 @@ fn structure_filters_keep_the_popup_open_and_navigate_to_the_visible_target(
 }
 
 #[gpui::test]
+fn structure_frame_moves_resizes_and_restores_its_bounds(cx: &mut TestAppContext) {
+    use gpui::{Bounds, MouseButton, Pixels};
+    let mut h = H::new(cx, &[("app.py", APP)]);
+    h.fake
+        .set_structure_filters(&["DDL", "DML", "Select", "Other"]);
+    h.fake.on_document_symbols(|_| Ok(Vec::new()));
+    h.open("app.py", "x = g");
+    h.invoke("code.file-structure", json!(null));
+    let bounds = |h: &mut H<'_>| {
+        VisualTestContext::from_window(h.window.into(), h.cx)
+            .debug_bounds("file-structure-frame")
+            .unwrap()
+    };
+    let drag = |h: &mut H<'_>, from, to| {
+        let mut vcx = VisualTestContext::from_window(h.window.into(), h.cx);
+        vcx.simulate_mouse_down(from, MouseButton::Left, Modifiers::none());
+        vcx.run_until_parked();
+        vcx.update(|window, cx| window.draw(cx).clear());
+        vcx.simulate_mouse_move(to, MouseButton::Left, Modifiers::none());
+        vcx.simulate_mouse_up(to, MouseButton::Left, Modifiers::none());
+        h.draw();
+    };
+    let initial: Bounds<Pixels> = bounds(&mut h);
+    let header = initial.origin + point(initial.size.width / 2.0, px(14.0));
+    let offset = point(px(20.0), px(16.0));
+    drag(&mut h, header, header + offset);
+    let moved = bounds(&mut h);
+    assert_eq!(moved.origin, initial.origin + offset);
+    let grip = moved.bottom_right() - point(px(2.0), px(2.0));
+    drag(&mut h, grip, grip - point(px(18.0), px(22.0)));
+    let resized = bounds(&mut h);
+    assert_eq!(
+        resized.size,
+        gpui::size(
+            initial.size.width - px(18.0),
+            initial.size.height - px(22.0)
+        )
+    );
+    h.press("escape");
+    h.invoke("code.file-structure", json!(null));
+    assert_eq!(bounds(&mut h), resized);
+}
+
+#[gpui::test]
 fn structure_settings_sort_siblings_and_keep_source_navigation(cx: &mut TestAppContext) {
     use code_intel::{DocumentSymbol, SymbolKind};
     let mut h = H::new(cx, &[("app.py", APP)]);

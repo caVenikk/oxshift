@@ -588,6 +588,11 @@ impl Workbench {
                 }
             }
             CodeIntelEvent::ShowDocumentation => self.show_documentation_window(window, cx),
+            CodeIntelEvent::RenameInline {
+                name,
+                active,
+                occurrences,
+            } => self.open_inline_rename(name, active.clone(), occurrences.clone(), window, cx),
             CodeIntelEvent::RenameDialog { name } => {
                 self.open_rename_dialog(name.clone(), window, cx)
             }
@@ -3110,7 +3115,7 @@ impl Render for Workbench {
             .children(self.render_run_menu(window))
             .children(self.render_tab_menu(window))
             .children(self.render_editor_menu(window))
-            .children(self.render_code_rename())
+            .children(self.render_code_rename(cx))
             .children(self.render_branch_overlays(window, cx))
             .children(self.render_project_widget_popup(window))
             .children(self.render_commit_overlays())

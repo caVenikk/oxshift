@@ -12,6 +12,7 @@ use crate::names::parts;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Symbol {
     pub name: String,
+    pub group: Option<usize>,
     pub detail: Option<String>,
     pub kind: SymbolKind,
     pub range: Range<usize>,
@@ -35,7 +36,46 @@ pub(crate) fn symbols(script: &Script) -> Vec<Symbol> {
     script
         .statements()
         .filter_map(|root| root.child_nodes().next())
-        .filter_map(|stmt| statement(script, dialect, stmt))
+        .filter_map(|stmt| {
+            let group = match stmt.kind() {
+                K::Query
+                | K::Select
+                | K::SetOperation
+                | K::ParenQuery
+                | K::Values
+                | K::TableQuery => 2,
+                K::Insert | K::Update | K::Delete | K::Merge => 1,
+                K::CreateTable
+                | K::CreateView
+                | K::CreateMaterializedView
+                | K::CreateFunction
+                | K::CreateProcedure
+                | K::CreateTrigger
+                | K::CreatePackage
+                | K::CreatePackageBody
+                | K::CreateType
+                | K::CreateTypeBody
+                | K::CreateSequence
+                | K::CreateSchema
+                | K::CreateIndex
+                | K::AlterTable
+                | K::AlterObject
+                | K::DropStatement
+                | K::Truncate
+                | K::CommentStatement => 0,
+                _ => 3,
+            };
+            let mut symbol = statement(script, dialect, stmt).or_else(|| {
+                if group != 3 && stmt.kind() != K::CreateTypeBody {
+                    return None;
+                }
+                let word = first_word(stmt)?;
+                let label = script.text().get(word.clone())?;
+                Some(symbol(label.into(), None, SymbolKind::Text, stmt, word))
+            })?;
+            symbol.group = Some(group);
+            Some(symbol)
+        })
         .collect()
 }
 
@@ -64,6 +104,7 @@ fn symbol(
 ) -> Symbol {
     Symbol {
         name,
+        group: None,
         detail: detail.map(str::to_string),
         kind,
         range: node.range(),

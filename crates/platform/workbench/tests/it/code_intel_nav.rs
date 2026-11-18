@@ -910,6 +910,74 @@ fn rename_edits(
 }
 
 #[gpui::test]
+fn inline_rename_previews_and_confirms_or_cancels(cx: &mut TestAppContext) {
+    let mut h = H::new(cx, &[("app.py", APP)]);
+    h.fake.set_inline_rename(true);
+    h.fake.on_rename(rename_edits(h.path("app.py")));
+    h.open("app.py", "x = g");
+    h.invoke("code.rename", json!(null));
+    assert_eq!(
+        h.invoke("workbench.state", json!(null))["code_rename"]["kind"],
+        "inline"
+    );
+    h.type_text("customer_имя");
+    assert_eq!(h.text(), APP);
+    h.press("escape");
+    assert_eq!(h.text(), APP);
+    assert!(h.invoke("workbench.state", json!(null))["code_rename"].is_null());
+    h.invoke("code.rename", json!(null));
+    h.type_text("orders");
+    h.press("enter");
+    assert!(
+        h.invoke("workbench.state", json!(null))["code_rename"]["error"]
+            .as_str()
+            .unwrap()
+            .contains("database object")
+    );
+    h.invoke("editor.select-all", json!(null));
+    h.type_text("customer_имя");
+    h.press("enter");
+    assert_eq!(h.text(), APP.replace("g(", "customer_имя("));
+    h.invoke("editor.undo", json!(null));
+    assert_eq!(h.text(), APP);
+}
+
+#[gpui::test]
+fn structure_filters_keep_the_popup_open_and_navigate_to_the_visible_target(
+    cx: &mut TestAppContext,
+) {
+    use code_intel::{DocumentSymbol, SymbolKind};
+    let mut h = H::new(cx, &[("app.py", APP)]);
+    h.fake.set_structure_filters(&[
+        "DDL statements",
+        "DML statements",
+        "Select statements",
+        "Other",
+    ]);
+    h.fake.on_document_symbols(|_| {
+        let mut select = DocumentSymbol::new(
+            "select",
+            SymbolKind::Text,
+            Point::new(3, 0)..Point::new(3, 5),
+        );
+        select.group = Some(2);
+        Ok(vec![select])
+    });
+    h.open("app.py", "x = g");
+    h.invoke("code.file-structure", json!(null));
+    assert_eq!(h.list()["items"][0]["text"], "select");
+    h.invoke("structure.toggle-third", json!(null));
+    assert_eq!(h.list()["items"], json!([]));
+    assert_eq!(h.list()["selected"], Value::Null);
+    h.press("escape");
+    h.invoke("code.file-structure", json!(null));
+    assert_eq!(h.list()["items"], json!([]));
+    h.invoke("structure.toggle-third", json!(null));
+    h.press("enter");
+    assert_eq!(h.at(), ("app.py".into(), 3, 0));
+}
+
+#[gpui::test]
 fn rename_opens_a_dialog_and_applies_the_edits(cx: &mut TestAppContext) {
     let mut h = H::new(cx, &[("app.py", APP)]);
     let path = h.path("app.py");

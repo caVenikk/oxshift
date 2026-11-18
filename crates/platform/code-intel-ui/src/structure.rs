@@ -27,6 +27,7 @@ pub fn rows(
     fn walk(
         symbols: &[DocumentSymbol],
         level: u8,
+        group: Option<usize>,
         caret: Point,
         rows: &mut Vec<ListItem>,
         targets: &mut Vec<Point>,
@@ -41,14 +42,31 @@ pub fn rows(
                 text: symbol.name.clone().into(),
                 detail: symbol.detail.clone().map(Into::into),
                 indent: level,
+                group: symbol.group.or(group),
                 ..ListRow::default()
             }));
             targets.push(symbol.selection_range.start);
-            walk(&symbol.children, level + 1, caret, rows, targets, current);
+            walk(
+                &symbol.children,
+                level + 1,
+                symbol.group.or(group),
+                caret,
+                rows,
+                targets,
+                current,
+            );
         }
     }
     let (mut items, mut targets, mut current) = (Vec::new(), Vec::new(), None);
-    walk(symbols, 0, caret, &mut items, &mut targets, &mut current);
+    walk(
+        symbols,
+        0,
+        None,
+        caret,
+        &mut items,
+        &mut targets,
+        &mut current,
+    );
     (items, targets, current)
 }
 
@@ -67,6 +85,7 @@ impl CodeIntelView {
             .path()
             .file_name()
             .map(|n| n.to_string_lossy().into_owned());
+        let filters = services.structure_filters(&doc);
         let request = services.document_symbols(&doc);
         let (editor, offset, caret) = (editor.clone(), query.offset, query.at);
         self.nav.request = Some(cx.spawn(async move |this, cx| {
@@ -74,12 +93,19 @@ impl CodeIntelView {
             let _ = this.update(cx, |v, cx| {
                 v.nav.request = None;
                 match answer {
-                    Ok(symbols) if !symbols.is_empty() => {
+                    Ok(symbols) if !symbols.is_empty() || !filters.is_empty() => {
                         let (items, targets, current) = rows(&symbols, caret);
                         let options = ListOptions {
                             title: title.map(Into::into),
                             name: "structure",
                             selected: current,
+                            filters,
+                            enabled: v
+                                .nav
+                                .structure_groups
+                                .entry(filters)
+                                .or_insert_with(|| std::rc::Rc::new(std::cell::Cell::new(u64::MAX)))
+                                .clone(),
                             ..ListOptions::default()
                         };
                         v.open_list(

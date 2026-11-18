@@ -138,6 +138,9 @@ ui::ui_commands! {
     Pull { from: String, method: String } => "git.pull", "Pull",
         "Pulls a remote branch into the current branch using merge or rebase (Pull into '…' Using Merge of a remote branch).",
         r#"{"from": "origin/main", "method": "rebase"}"#;
+    /// Copy the current branch name.
+    CopyBranchName => "vcs.copy-branch-name", "Copy Branch Name",
+        "Copies the current branch name, or the revision for detached HEAD, to the clipboard.";
     /// VCS Operations.
     ShowOperations => "vcs.operations-popup", "VCS Operations Popup\u{2026}",
         "Opens the VCS Operations popup: commit, rollback, branches, push and the other version control actions.";

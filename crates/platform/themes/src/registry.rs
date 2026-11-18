@@ -230,7 +230,14 @@ fn merge_chain(chain: &[&ThemeFile], fallback: Option<&Theme>) -> Result<Theme, 
 
     let mut colors = UiColors::filled(Rgba::BLACK);
     for &role in UiRole::ALL {
-        match (ui.get(&role), fallback) {
+        // Older theme files have no popup title role. Use their own toolbar
+        // colour before falling back to the built-in theme's palette.
+        let color = ui.get(&role).or_else(|| {
+            (role == UiRole::PopupHeader)
+                .then(|| ui.get(&UiRole::Toolbar))
+                .flatten()
+        });
+        match (color, fallback) {
             (Some(color), _) => colors[role] = resolve(role.name(), color)?,
             (None, Some(base)) => colors[role] = base.ui[role],
             (None, None) => missing.push(format!("ui.{role}")),
@@ -282,6 +289,28 @@ mod tests {
         file.theme.name = "Leaf".into();
         file.theme.extends = Some(extends.into());
         file
+    }
+
+    #[test]
+    fn popup_header_uses_the_existing_themes_toolbar_until_explicitly_set() {
+        let mut registry = Registry::with_builtin();
+        let mut file = crate::builtin::files().into_iter().next().unwrap();
+        file.theme.id = "popup-header-compat".into();
+        file.ui.remove(&UiRole::PopupHeader);
+        file.ui
+            .insert(UiRole::Toolbar, ColorRef::Rgba(Rgba::rgb(58, 61, 76)));
+        registry.insert(file.clone()).unwrap();
+        assert_eq!(
+            registry.resolve("popup-header-compat").unwrap().ui[UiRole::PopupHeader],
+            Rgba::rgb(58, 61, 76)
+        );
+        file.ui
+            .insert(UiRole::PopupHeader, ColorRef::Rgba(Rgba::rgb(56, 59, 74)));
+        registry.insert(file).unwrap();
+        assert_eq!(
+            registry.resolve("popup-header-compat").unwrap().ui[UiRole::PopupHeader],
+            Rgba::rgb(56, 59, 74)
+        );
     }
 
     #[test]

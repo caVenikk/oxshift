@@ -26,7 +26,7 @@ use gpui::{
 use serde_json::{Value as Json, json};
 use ui::deferred;
 use ui::icons::IconName;
-use ui::menu::{ContextMenu, PopupOptions};
+use ui::menu::{ContextMenu, MenuItem, PopupOptions};
 use ui::notification::{Notification, NotificationKind};
 use vcs::{
     Cancel, CommitFile, ForceMode, OutgoingCommit, PushOutcome, PushResult, PushSpec, PushTarget,
@@ -285,6 +285,7 @@ impl Workbench {
             .on_action(cx.listener(Self::git_update_branch))
             .on_action(cx.listener(Self::git_pull))
             .on_action(cx.listener(Self::vcs_show_operations))
+            .on_action(cx.listener(Self::vcs_copy_branch_name))
     }
 
     /// The open dialogs and popup for `vcs.state`.
@@ -968,6 +969,28 @@ impl Workbench {
 
     // ---- VCS Operations -----------------------------------------------------------
 
+    fn copy_branch_text(&self) -> Option<String> {
+        self.version_control
+            .snapshot
+            .as_ref()
+            .filter(|_| self.version_control.problem.is_none())
+            .map(|snapshot| match &snapshot.info.head {
+                vcs::Head::Branch { name, .. } => name.clone(),
+                vcs::Head::Detached { oid } => oid.clone(),
+            })
+    }
+
+    fn vcs_copy_branch_name(
+        &mut self,
+        _: &vcs_ui::CopyBranchName,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if let Some(branch) = self.copy_branch_text() {
+            cx.write_to_clipboard(gpui::ClipboardItem::new_string(branch));
+        }
+    }
+
     fn vcs_show_operations(
         &mut self,
         _: &ShowOperations,
@@ -980,10 +1003,64 @@ impl Workbench {
             return;
         }
         let git = self.version_control.service.is_some();
-        let items = vcs_ui::operations::items(git, cx);
+        let files = self.diff_context_files(window, cx);
+        let snapshot = self
+            .version_control
+            .snapshot
+            .as_deref()
+            .filter(|_| self.version_control.problem.is_none());
+        let project = self.project(cx);
+        let diff_path = match (files.as_slice(), snapshot) {
+            ([file], Some(s))
+                if project.is_some_and(|p| file.starts_with(p.root()))
+                    && super::version_control::base_of(s, file).is_some() =>
+            {
+                file.to_str().map(str::to_owned)
+            }
+            _ => None,
+        };
+        let unversioned = files
+            .iter()
+            .filter(|path| {
+                snapshot.is_some_and(|s| s.status.status(path) == vcs::FileStatus::Unversioned)
+            })
+            .filter_map(|path| path.to_str().map(str::to_owned))
+            .collect();
+        let mut items = vcs_ui::operations::items(
+            git,
+            diff_path,
+            unversioned,
+            self.copy_branch_text().is_some(),
+            cx,
+        );
+        let shortcut_action = ui::menu::ChooseCommand {
+            command: "vcs.show-diff".into(),
+        };
+        let shortcut = cx
+            .key_bindings()
+            .borrow()
+            .bindings_for_action(&shortcut_action)
+            .next()
+            .map(ui::keys::binding_text);
+        if let Some(shortcut) = shortcut {
+            for item in &mut items {
+                if let MenuItem::Action {
+                    action: Some(action),
+                    extra,
+                    ..
+                } = item
+                    && action.name() == "vcs.show-diff"
+                {
+                    extra.shortcut = Some(shortcut.clone().into());
+                }
+            }
+        }
         let options = PopupOptions {
             title: Some(vcs_ui::operations::TITLE.into()),
+            key_context: Some("VcsOperations".into()),
+            retain_on_deactivate: true,
             speed_search: true,
+            numbered: true,
             ..PopupOptions::default()
         };
         let menu = ContextMenu::popup(items, options, window, cx);
@@ -1042,7 +1119,7 @@ impl Workbench {
                             .on_mouse_down(MouseButton::Left, move |_, window, cx| {
                                 backdrop.update(cx, |m, cx| m.dismiss(window, cx))
                             })
-                            .child(menu.clone()),
+                            .child(ui::menu::surface(menu)),
                     ),
                 )
                 .with_priority(1)

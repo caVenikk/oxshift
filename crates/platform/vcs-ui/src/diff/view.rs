@@ -40,8 +40,9 @@ use super::model::{
     self, ChangeKind, DiffChange, DiffSettings, HighlightPolicy, IgnorePolicy, Side,
 };
 use super::{
-    ApplyLeftSide, CONTEXT, FocusOpposite, IncludeChange, JumpToSource, NextDifference, NextFile,
-    PreviousDifference, PreviousFile, SetHighlightPolicy, SetIgnorePolicy, ShowSettings,
+    ApplyLeftSide, ApplyRightSide, CONTEXT, FocusOpposite, IncludeChange, JumpToSource,
+    NextDifference, NextFile, PreviousDifference, PreviousFile, SetHighlightPolicy,
+    SetIgnorePolicy, ShowSettings,
 };
 
 /// The decorations' group in both editors.
@@ -190,8 +191,8 @@ pub struct DiffView {
     rollback_included: Option<bool>,
     settings: DiffSettings,
     changes: Rc<Vec<DiffChange>>,
-    /// The right text's version the changes are for.
-    computed_for: Option<u64>,
+    /// The left and right buffer versions these differences describe.
+    computed_for: Option<(u64, u64)>,
     compute: Option<Task<()>>,
     /// The side that had the focus last (`getCurrentSide`).
     current: Side,
@@ -294,9 +295,11 @@ impl DiffView {
         }
         self.left.update(cx, |e, cx| {
             let mut buffer = Buffer::new(base.as_deref().unwrap_or(""));
-            buffer.set_read_only(true);
+            let read_only = request.left.read_only || one_side.is_some();
+            buffer.set_read_only(read_only);
+            e.set_viewer(read_only);
             *e.buffer_mut() = buffer;
-            e.set_path(Some(request.path.clone()));
+            e.set_path((!request.path.as_os_str().is_empty()).then(|| request.path.clone()));
             e.set_config(config);
             e.buffer_reloaded(cx);
             e.set_highlighter(highlighter, cx);
@@ -385,7 +388,14 @@ impl DiffView {
 
     /// The differences are known for the current text.
     pub fn is_computed(&self, cx: &App) -> bool {
-        self.computed_for == Some(self.right.read(cx).buffer().version())
+        self.computed_for == Some(self.versions(cx))
+    }
+
+    fn versions(&self, cx: &App) -> (u64, u64) {
+        (
+            self.left.read(cx).buffer().version(),
+            self.right.read(cx).buffer().version(),
+        )
     }
 
     pub fn settings(&self) -> DiffSettings {
@@ -405,7 +415,7 @@ impl DiffView {
 
     fn editor_event(&mut self, side: Side, event: &EditorEvent, cx: &mut Context<Self>) {
         match event {
-            EditorEvent::Edited(_) | EditorEvent::Reloaded if side == Side::Right => {
+            EditorEvent::Edited(_) | EditorEvent::Reloaded => {
                 self.file_jump = None;
                 self.rediff(REDIFF_DELAY, cx);
             }
@@ -426,7 +436,7 @@ impl DiffView {
         let left = self.left.read(cx).buffer().rope().clone();
         let right_buffer = self.right.read(cx).buffer();
         let right = right_buffer.rope().clone();
-        let version = right_buffer.version();
+        let versions = self.versions(cx);
         let settings = self.settings;
         let executor = cx.background_executor().clone();
         self.compute = Some(cx.spawn(async move |this, cx| {
@@ -439,20 +449,20 @@ impl DiffView {
                 })
                 .await;
             let _ = this.update(cx, |this, cx| {
-                if this.right.read(cx).buffer().version() != version {
+                if this.versions(cx) != versions {
                     return;
                 }
                 this.compute = None;
-                this.apply(changes, version, cx);
+                this.apply(changes, versions, cx);
             });
         }));
     }
 
     /// Shows computed differences in both editors.
-    fn apply(&mut self, changes: Vec<DiffChange>, version: u64, cx: &mut Context<Self>) {
+    fn apply(&mut self, changes: Vec<DiffChange>, versions: (u64, u64), cx: &mut Context<Self>) {
         self.changes = Rc::new(changes);
         self.decorate(cx);
-        self.computed_for = Some(version);
+        self.computed_for = Some(versions);
         if let Some(scroll) = self.pending_scroll {
             self.apply_scroll(scroll, cx);
         }
@@ -468,11 +478,13 @@ impl DiffView {
         let excluded = self.excluded_changes();
         // `>>` while the right side can be edited, the check boxes while the
         // file is in the commit's list.
-        let revert = self.can_revert(cx);
+        let revert = self.can_replace(Side::Right, cx);
+        let accept_right = self.can_replace(Side::Left, cx);
         let checkboxes = self.request.as_ref().is_some_and(|r| r.included.is_some());
         for side in [Side::Left, Side::Right] {
             let action = |i: usize| match side {
                 Side::Left => revert.then_some((IconName::DIFF_ARROW_RIGHT, REVERT)),
+                Side::Right if accept_right => Some((IconName::DIFF_ARROW_LEFT, "Replace change")),
                 Side::Right => checkboxes.then(|| {
                     let icon = if excluded.get(i).copied().unwrap_or(false) {
                         IconName::DIFF_CHECKBOX
@@ -497,11 +509,13 @@ impl DiffView {
         cx.notify();
     }
 
-    /// The right side can be edited: a change can be reverted.
-    fn can_revert(&self, cx: &App) -> bool {
-        self.one_side().is_none()
-            && self.request.as_ref().is_some_and(|r| !r.right.read_only)
-            && !self.right.read(cx).buffer().is_read_only()
+    fn can_replace(&self, side: Side, cx: &App) -> bool {
+        let editor = self.editor(side).read(cx);
+        self.request
+            .as_ref()
+            .is_some_and(|r| r.one_side.is_none() && !side.select(&r.left, &r.right).read_only)
+            && !editor.is_viewer()
+            && !editor.buffer().is_read_only()
     }
 
     /// A change's action in a gutter was clicked: `>>` on the left, the
@@ -515,27 +529,37 @@ impl DiffView {
         };
         match side {
             Side::Left => self.revert_change(index, cx),
+            Side::Right if self.can_replace(Side::Left, cx) => {
+                self.replace_change(index, Side::Left, cx)
+            }
             Side::Right => self.set_change_included(index, None, cx),
         }
     }
 
-    /// Replaces the right lines of change `index` with its left lines as
-    /// one undoable edit (`SimpleDiffViewer.replaceChange`, "Replace
-    /// change"); the caret goes to where the change was.
+    /// Revert a change to the left side's text.
     pub fn revert_change(&mut self, index: usize, cx: &mut Context<Self>) {
-        if !self.can_revert(cx) || !self.is_computed(cx) {
+        self.replace_change(index, Side::Right, cx);
+    }
+
+    /// Copies a hunk into the destination as one undoable edit. A delayed
+    /// comparison cannot supply offsets after either buffer has changed.
+    fn replace_change(&mut self, index: usize, destination: Side, cx: &mut Context<Self>) {
+        if !self.can_replace(destination, cx) || !self.is_computed(cx) {
             return;
         }
-        let Some(c) = self.changes.get(index).cloned() else {
+        let Some(change) = self.changes.get(index) else {
             return;
         };
-        let base = self.left.read(cx).buffer().rope().to_string();
-        let base_lines: Vec<&str> = vcs::split_lines(&base).collect();
-        let range = vcs::Range::new(c.right.start, c.right.end, c.left.start, c.left.end);
-        self.right.update(cx, |e, cx| {
+        let source = destination.other();
+        let source_text = self.editor(source).read(cx).text();
+        let source_lines: Vec<_> = vcs::split_lines(&source_text).collect();
+        let from = change.lines(source);
+        let to = change.lines(destination);
+        let range = vcs::Range::new(to.start, to.end, from.start, from.end);
+        self.editor(destination).update(cx, |e, cx| {
             let buffer = e.buffer();
-            let edit = crate::markers::rollback_edit(buffer, &base_lines, &range);
-            let line = (c.right.start as usize).min(buffer.len_lines() - 1);
+            let edit = crate::markers::rollback_edit(buffer, &source_lines, &range);
+            let line = (to.start as usize).min(buffer.len_lines() - 1);
             let at = buffer.line_start(line);
             let place = CaretPlacement::Explicit(SelectionSet::caret(at));
             e.edit(vec![edit], EditKind::Other, place, cx);
@@ -581,6 +605,12 @@ impl DiffView {
     fn apply_left_side(&mut self, a: &ApplyLeftSide, _: &mut Window, cx: &mut Context<Self>) {
         if let Some(i) = a.index.or_else(|| self.change_at_caret(cx)) {
             self.revert_change(i, cx);
+        }
+    }
+
+    fn apply_right_side(&mut self, a: &ApplyRightSide, _: &mut Window, cx: &mut Context<Self>) {
+        if let Some(i) = a.index.or_else(|| self.change_at_caret(cx)) {
+            self.replace_change(i, Side::Left, cx);
         }
     }
 
@@ -1033,7 +1063,7 @@ impl DiffView {
                 "words": c.words.as_ref().map(|w| w.len()),
                 "excluded": excluded,
             })).collect::<Vec<_>>(),
-            "revert": self.can_revert(cx),
+            "revert": self.can_replace(Side::Right, cx),
             "current_side": self.current.name(),
             "left": side(Side::Left),
             "right": side(Side::Right),
@@ -1136,7 +1166,9 @@ impl DiffView {
             .child(button(
                 "jump-to-source",
                 IconName::EDIT,
-                true,
+                self.request
+                    .as_ref()
+                    .is_some_and(|r| !r.path.as_os_str().is_empty()),
                 "Jump to Source",
                 shortcut(&JumpToSource),
                 cx,
@@ -1520,6 +1552,7 @@ diff_actions! {
     SetHighlightPolicy => set_highlight_policy,
     ShowSettings => show_settings,
     ApplyLeftSide => apply_left_side,
+    ApplyRightSide => apply_right_side,
     IncludeChange => include_change,
 }
 

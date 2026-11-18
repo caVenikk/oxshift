@@ -629,6 +629,145 @@ fn the_marker_popup_and_the_project_tree_open_the_diff(cx: &mut TestAppContext) 
 }
 
 #[gpui::test]
+fn operations_show_diff_uses_the_file_focused_before_the_popup(cx: &mut TestAppContext) {
+    let (mut h, _dir) = open(cx, |root| {
+        repository(root);
+        write(root, "clean.py", "# clean\n");
+        git(root, &["add", "clean.py"]);
+        git(root, &["commit", "-q", "-m", "clean file"]);
+        change(root);
+        write(root, "sub/new.py", "# untracked\n");
+        write(root, "added.py", "# staged\n");
+        git(root, &["add", "added.py"]);
+        write(root, ".git/info/exclude", "ignored.py\n");
+        write(root, "ignored.py", "# ignored\n");
+    });
+    let keys = if cfg!(target_os = "macos") {
+        "ctrl-v"
+    } else {
+        "alt-`"
+    };
+    let open_popup = |h: &mut H, expect_add: bool| {
+        h.cx.simulate_keystrokes(h.window.into(), keys);
+        h.draw();
+        let popup = &h.invoke("vcs.state", Value::Null)["remote"]["operations_popup"];
+        let items = popup["levels"][0]["items"]
+            .as_array()
+            .expect("open VCS Operations");
+        let row = items
+            .iter()
+            .position(|i| i["label"] == "Show Diff")
+            .expect("Show Diff row");
+        assert_eq!(items[row]["number"], "6");
+        assert_eq!(items[row - 1]["label"], "Annotate with Git Blame");
+        assert_eq!(items[row + 1]["separator"], true);
+        assert_eq!(items[row + 2]["label"], "Branches…");
+        let end = items
+            .iter()
+            .skip_while(|i| i["label"] != "Unstash Changes…")
+            .skip(1)
+            .map(|item| {
+                if item["separator"] == true {
+                    "|"
+                } else {
+                    item["label"].as_str().unwrap()
+                }
+            })
+            .collect::<Vec<_>>();
+        let mut expected = vec!["|", "Worktrees…"];
+        if expect_add {
+            expected.push("Add to VCS");
+        }
+        expected.extend(["Copy Branch Name", "|", "Show Local History…"]);
+        assert_eq!(end, expected);
+        for item in items {
+            if matches!(
+                item["label"].as_str(),
+                Some("Worktrees…" | "Show Local History…")
+            ) {
+                assert_eq!(item["enabled"], false);
+            }
+        }
+        items[row]["enabled"] == true
+    };
+    h.invoke("project.open-file", json!({ "path": "main.py" }));
+    h.wait("the editor", |h| {
+        h.window
+            .read_with(h.cx, |w, _| w.active_editor().map(|_| ()))
+            .unwrap()
+    });
+    h.focus(|w, cx| w.active_editor().unwrap().focus_handle(cx));
+    assert!(open_popup(&mut h, false));
+    h.cx.simulate_keystrokes(h.window.into(), "6");
+    h.wait_diff("main.py");
+    h.invoke("project.open-file", json!({ "path": "main.py" }));
+    for path in [
+        "",
+        "clean.py",
+        "sub",
+        "added.py",
+        "ignored.py",
+        "b.py",
+        "sub/new.py",
+    ] {
+        h.invoke("project.tree.reveal", json!({ "path": path }));
+        let selected = h.root.join(path);
+        h.wait("the project tree selection", |h| {
+            h.window
+                .read_with(h.cx, |w, cx| {
+                    w.panel()
+                        .read(cx)
+                        .selected_path()
+                        .filter(|(p, _)| *p == selected)
+                        .map(|_| ())
+                })
+                .unwrap()
+        });
+        h.focus(|w, cx| w.panel().focus_handle(cx));
+        assert_eq!(
+            open_popup(&mut h, path == "sub/new.py"),
+            matches!(path, "clean.py" | "b.py"),
+            "{path}"
+        );
+        if path == "b.py" || path == "clean.py" {
+            h.cx.simulate_keystrokes(h.window.into(), "d i f f enter");
+            let diff = h.wait_diff(path);
+            if path == "clean.py" {
+                assert_eq!(diff["status"], "No differences");
+                assert!(diff["one_side"].is_null());
+                assert_eq!(h.right_text(), "# clean\n");
+            }
+        } else if path == "sub/new.py" {
+            h.cx.simulate_keystrokes(h.window.into(), "a d d enter");
+            h.wait("the selected file was added", |h| {
+                git(&h.root, &["diff", "--cached", "--name-only"])
+                    .lines()
+                    .any(|path| path == "sub/new.py")
+                    .then_some(())
+            });
+        } else {
+            h.cx.simulate_keystrokes(h.window.into(), "escape");
+            h.draw();
+        }
+    }
+    // Selecting the Changes group provides several files to the popup.
+    h.focus_commit_tree();
+    h.invoke("commit-tree.select", json!({ "path": "added.py" }));
+    h.invoke("commit-tree.up", Value::Null);
+    assert!(
+        h.window
+            .read_with(h.cx, |w, cx| w
+                .commit_view()
+                .read(cx)
+                .selected_files()
+                .len())
+            .unwrap()
+            > 1
+    );
+    assert!(!open_popup(&mut h, false));
+}
+
+#[gpui::test]
 fn whitespace_is_ignored_on_request(cx: &mut TestAppContext) {
     let (mut h, _dir) = open(cx, |root| {
         repository(root);

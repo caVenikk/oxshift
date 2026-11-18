@@ -70,6 +70,8 @@ crate::ui_commands! {
         "Closes the innermost open submenu.";
     Confirm => "menu.confirm", "Choose Item",
         "Runs the selected item, or opens its submenu.";
+    ChooseCommand { command: String } => "menu.choose-command", "Choose Command",
+        "Activates an enabled row by command id, preserving the row arguments and original focus.";
     Cancel => "menu.cancel", "Close",
         "Clears the speed search, else closes the innermost open submenu, or the menu.";
 }
@@ -193,10 +195,11 @@ const ICON_GAP: f32 = 4.0;
 const TRAILING: f32 = 18.0 + 4.0 * ICON_GAP;
 /// The title of a list popup in the New UI (`TitlePanel.setPopupTitle`):
 /// bold and centred (`TitlePanel`: a centred label), `Popup.Header.insets`
-/// (12, 10, 10, 10).
-const TITLE_TOP: f32 = 12.0;
+/// (12, 10, 10, 10). GPUI's taller text line needs less vertical padding
+/// to keep the observed title baseline and band height.
+const TITLE_TOP: f32 = 8.0;
 const TITLE_X: f32 = 10.0;
-const TITLE_BOTTOM: f32 = 10.0;
+const TITLE_BOTTOM: f32 = 9.0;
 /// The speed search field under the title (`AbstractPopup.
 /// customizeSearchFieldLook`): `Popup.SearchField.borderInsets` (4, 12)
 /// around it, a line below it, `Popup.SearchField.inputInsets`
@@ -770,6 +773,8 @@ pub fn fill_shortcuts(items: &mut [MenuItem], focus: &FocusHandle, window: &Wind
 pub struct PopupOptions {
     /// The title above the rows.
     pub title: Option<SharedString>,
+    /// Additional key context for shortcuts belonging only to this popup.
+    pub key_context: Option<SharedString>,
     /// Typing filters the rows (the reference's speed search).
     pub speed_search: bool,
     /// The row selected when the popup opens (the reference's preselect
@@ -802,6 +807,8 @@ pub struct PopupOptions {
     /// `ActionSelectionAid.NUMBERING`). With a speed search, the digit keys
     /// choose a row only while nothing is typed.
     pub numbered: bool,
+    /// Keep the native popup and its state when its owner loses focus or minimizes.
+    pub retain_on_deactivate: bool,
     /// The rows scroll beyond this many rows of the list's row height
     /// (`ListPopupImpl`'s visible row count: a list of rows of their own
     /// heights shows as many times the first row's height).
@@ -832,6 +839,7 @@ pub struct ContextMenu {
     dismissed: bool,
     metrics: Metrics,
     title: Option<SharedString>,
+    key_context: Option<SharedString>,
     speed_search: bool,
     /// The speed search's text and its matcher (`*` and the text, case
     /// ignored, as the reference builds it).
@@ -843,6 +851,7 @@ pub struct ContextMenu {
     own_window: bool,
     inactive_selection: bool,
     numbered: bool,
+    retain_on_deactivate: bool,
     max_rows: Option<usize>,
     /// The scrolled rows of the first level (with `max_rows`).
     scroll: ScrollHandle,
@@ -937,6 +946,7 @@ impl ContextMenu {
                 dismissed: false,
                 metrics,
                 title: options.title,
+                key_context: options.key_context,
                 speed_search: options.speed_search,
                 filter: String::new(),
                 matcher: None,
@@ -946,6 +956,7 @@ impl ContextMenu {
                 own_window: options.own_window,
                 inactive_selection: options.inactive_selection,
                 numbered: options.numbered,
+                retain_on_deactivate: options.retain_on_deactivate,
                 max_rows: options.max_rows,
                 scroll: ScrollHandle::new(),
                 submenu_on_hover: !list,
@@ -1132,6 +1143,23 @@ impl ContextMenu {
         self.scroll_to_selected();
         self.highlight_changed(cx);
         cx.notify();
+    }
+
+    fn choose_command(
+        &mut self,
+        action: &ChooseCommand,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let level = self.innermost();
+        if let Some(ix) = self.level_items(level).iter().position(|item| {
+            item.selectable()
+                && item
+                    .run_action()
+                    .is_some_and(|a| a.name() == action.command)
+        }) {
+            self.activate(level, ix, window, cx);
+        }
     }
 
     /// A typed char goes to the speed search, Backspace deletes the last
@@ -1819,7 +1847,8 @@ impl ContextMenu {
                 let secondary = extra.and_then(|e| e.secondary.clone());
                 let secondary_small = extra.is_some_and(|e| e.secondary_small);
                 let shortcut = extra.and_then(|e| e.shortcut.clone());
-                let icon_alpha = extra.and_then(|e| e.icon_alpha).unwrap_or(1.0);
+                let icon_alpha = extra.and_then(|e| e.icon_alpha).unwrap_or(1.0)
+                    * if enabled { 1.0 } else { 0.4 };
                 let comment = extra.and_then(|e| e.comment.clone());
                 let flexible = extra.is_some_and(RowExtra::flexible);
                 let avatar = extra.and_then(|e| e.avatar.clone());
@@ -2020,18 +2049,6 @@ impl ContextMenu {
                             .rounded(px(m.radius))
                             .when(is_selected, |d| d.bg(selection))
                             .text_color(if enabled { text } else { disabled })
-                            .when(numbered, |d| {
-                                d.child(
-                                    div()
-                                        .flex_none()
-                                        .w(px(NUMBER_COLUMN))
-                                        .pl(px(NUMBER_LEFT))
-                                        .text_color(muted)
-                                        .children(
-                                            numbers.get(ix).copied().flatten().map(String::from),
-                                        ),
-                                )
-                            })
                             .when(with_icons && !wrap, |d| {
                                 d.child(
                                     div()
@@ -2045,6 +2062,18 @@ impl ContextMenu {
                                         .children(avatar.as_ref().map(|a| {
                                             div().mt(px(AVATAR_LINE_GAP)).child(a.render(icon_size))
                                         })),
+                                )
+                            })
+                            .when(numbered, |d| {
+                                d.child(
+                                    div()
+                                        .flex_none()
+                                        .w(px(NUMBER_COLUMN))
+                                        .pl(px(NUMBER_LEFT))
+                                        .text_color(muted)
+                                        .children(
+                                            numbers.get(ix).copied().flatten().map(String::from),
+                                        ),
                                 )
                             })
                             .child(text_column)
@@ -2116,6 +2145,8 @@ impl ContextMenu {
             .children(title.map(|title| {
                 div()
                     .debug_selector(|| "menu-title".into())
+                    .bg(theme.color(UiRole::PopupHeader))
+                    .rounded_t(px(RADIUS - 1.0))
                     .flex_none()
                     .flex()
                     .justify_center()
@@ -2503,13 +2534,19 @@ impl ContextMenu {
         let size = cx.theme().ui_size();
         // The menu; each open submenu is drawn beside its row.
         div()
-            .key_context(KEY_CONTEXT)
+            .key_context(
+                self.key_context
+                    .as_ref()
+                    .map_or_else(|| KEY_CONTEXT.to_owned(), |c| format!("{KEY_CONTEXT} {c}"))
+                    .as_str(),
+            )
             .track_focus(&self.focus)
             .on_action(cx.listener(Self::select_next))
             .on_action(cx.listener(Self::select_previous))
             .on_action(cx.listener(Self::open_submenu))
             .on_action(cx.listener(Self::close_submenu))
             .on_action(cx.listener(Self::confirm))
+            .on_action(cx.listener(Self::choose_command))
             .on_action(cx.listener(Self::cancel))
             .on_key_down(cx.listener(Self::key_down))
             .flex()
@@ -2554,6 +2591,7 @@ fn show_native_level(
             size,
             focus,
             persistent: false,
+            retain_on_deactivate: menu.read(cx).retain_on_deactivate,
             keyboard: true,
         },
         draw,
@@ -2643,16 +2681,21 @@ pub fn overlay_at(
                         .when(!crate::popup_window::enabled(), |a| {
                             a.snap_to_window_with_margin(px(4.0))
                         })
-                        .child(if crate::popup_window::enabled() {
-                            NativeMenu { menu: menu.clone() }.into_any_element()
-                        } else {
-                            menu.clone().into_any_element()
-                        }),
+                        .child(surface(menu)),
                 ),
         ),
     )
     .with_priority(1)
     .into_any_element()
+}
+
+/// Places the menu in the owner layout, using its own window on native macOS.
+pub fn surface(menu: &Entity<ContextMenu>) -> AnyElement {
+    if crate::popup_window::enabled() {
+        NativeMenu { menu: menu.clone() }.into_any_element()
+    } else {
+        menu.clone().into_any_element()
+    }
 }
 
 struct NativeMenu {

@@ -26,16 +26,29 @@ impl Workbench {
             return view;
         }
         let view = create(window, cx);
-        let observed = cx.observe(&view, |_, _, cx| cx.notify());
-        self.tabs.push(Tab {
-            content: TabContent::View(Box::new(view.clone())),
-            pinned: false,
-            group: self.splits.focused,
-            mirror: false,
-            _subscriptions: vec![observed],
-        });
-        self.activate(self.tabs.len() - 1, window, cx);
+        self.insert_tab_view(self.tabs.len(), view.clone(), window, cx);
         view
+    }
+
+    pub(super) fn insert_tab_view<T: TabView + 'static>(
+        &mut self,
+        index: usize,
+        view: Entity<T>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let observed = cx.observe(&view, |_, _, cx| cx.notify());
+        self.tabs.insert(
+            index,
+            Tab {
+                content: TabContent::View(Box::new(view)),
+                pinned: false,
+                group: self.splits.focused,
+                mirror: false,
+                _subscriptions: vec![observed],
+            },
+        );
+        self.activate(index, window, cx);
     }
 
     /// The views of type `T` in the editor tabs, the selected one first.

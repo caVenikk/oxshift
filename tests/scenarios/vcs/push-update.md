@@ -60,10 +60,13 @@
   offers Pull into 'main' Using Rebase and Using Merge; Update of another
   branch fast-forwards it: "Fetched 1 targets".
 - Step 11: the popup "VCS Operations" in the middle of the window: Git,
-  Commit…, Rollback…, Show History, Annotate with Git Blame, Compare with
-  the Same Repository Version, Branches…, Push…, Stash Changes…, Unstash
-  Changes…, Add to VCS, Copy Branch Name, Resolve Conflicts…; those not
-  there yet are disabled.
+  Commit…, the disabled staging Commit…, Rollback…, Show History, Annotate,
+  Show Diff, Branches…, Push…, Stash Changes…, Unstash Changes…, Worktrees…,
+  Add to VCS for selected unversioned files, Show Local History…; those not
+  there yet are disabled. From the editor or Project tree, Show Diff opens
+  a single tracked file against HEAD, including a clean file (No differences).
+  With an added, unversioned or ignored file, a directory or several files
+  selected, the row is disabled.
 
 ## Limitations
 - git never asks for credentials: remotes need a credential helper or an
@@ -88,3 +91,21 @@ IntelliJ Community (Apache-2.0) at `pycharm/2026.2.3`: `plugins/git4idea`
 (push, update, fetch), `platform/dvcs-impl` (the Push dialog, Force Push),
 `GitBundle`, `DvcsBundle`. The Push and Update Project dialogs are to
 verify against a reference screenshot.
+
+## macOS owner activation lifecycle
+
+1. Open VCS Operations with Ctrl+V, type a speed-search query and move the
+   selected row. Switch to another application with Cmd+Tab, then return:
+   the same popup, query and selection remain; arrow keys work immediately.
+2. Repeat with a click on another application and with Cmd+H. The popup
+   never floats above another application. Activate another project window:
+   the first project's popup must not take keyboard focus.
+3. Minimize its project window with Cmd+M or the yellow titlebar button.
+   Switch to another application: no VCS popup remains above it.
+4. Restore the project window: the same popup returns with its query and
+   selection intact. Arrow keys and Escape work immediately.
+5. Repeat, then click outside the restored popup: it closes normally.
+6. Close the project while its popup is open: no orphan window remains.
+
+The native owner lifecycle preserves the existing popup window and model;
+restoring does not run the VCS Operations command again.

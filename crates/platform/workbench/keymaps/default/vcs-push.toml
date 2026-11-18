@@ -35,3 +35,9 @@ name = "UpdateDialog"
 [context.bindings]
 "enter" = "update-dialog.ok"
 "escape" = "update-dialog.cancel"
+
+# Compare only while VCS Operations owns the focus.
+[[context]]
+name = "VcsOperations"
+[context.bindings]
+"ctrl-d" = { command = "menu.choose-command", args = { command = "vcs.show-diff" } }

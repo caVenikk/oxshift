@@ -2,14 +2,14 @@
 //! Alt+` elsewhere): "VCS Operations" in the middle of the window with
 //! speed search. Under Git it lists the `Vcs.Operations.Popup` group as
 //! the Git quick list provider rearranges it: the "Git" separator,
-//! Commit…, Rollback…, then Show History, Annotate with Git Blame and
-//! Compare with the Same Repository Version, then Branches…, Push…, Stash
-//! Changes… and Unstash Changes…, then Add to VCS, Copy Branch Name and
-//! Resolve Conflicts…. Without a repository it offers Create Git
+//! Commit…, Rollback…, then Show History, Annotate and
+//! Show Diff, then Branches…, Push…, Stash
+//! Changes… and Unstash Changes…, then Worktrees…, Add to VCS for selected unversioned
+//! files, and Show Local History…. Without a repository it offers Create Git
 //! Repository…. Commands that are not there yet are shown disabled.
 
 use gpui::{Action, App};
-use ui::menu::MenuItem;
+use ui::{icons::IconName, menu::MenuItem};
 
 /// The popup's title (`vcs.quicklist.popup.title`).
 pub const TITLE: &str = "VCS Operations";
@@ -39,26 +39,52 @@ fn item(label: &'static str, id: &str, cx: &App) -> MenuItem {
 
 /// The rows of the popup: for a project under Git (`git`), else the
 /// actions that put it under version control.
-pub fn items(git: bool, cx: &App) -> Vec<MenuItem> {
+pub fn items(
+    git: bool,
+    diff_path: Option<String>,
+    unversioned: Vec<String>,
+    has_branch: bool,
+    cx: &App,
+) -> Vec<MenuItem> {
     if !git {
         return vec![item("Create Git Repository\u{2026}", "git.init", cx)];
     }
-    vec![
+    let can_diff = diff_path.is_some();
+    let mut items = vec![
         MenuItem::header("Git"),
-        item("Commit\u{2026}", "vcs.commit", cx),
-        item("Rollback\u{2026}", "vcs.rollback", cx),
-        MenuItem::separator(),
-        MenuItem::unavailable("Show History"),
+        item("Commit\u{2026}", "vcs.commit", cx).icon(IconName::COMMIT),
+        // File-specific commit is not implemented yet.
+        MenuItem::unavailable("Commit File\u{2026}"),
+        item("Rollback\u{2026}", "vcs.rollback", cx).icon(IconName::ROLLBACK),
+        MenuItem::unavailable("Show History").icon(IconName::HISTORY),
         MenuItem::unavailable("Annotate with Git Blame"),
-        MenuItem::unavailable("Compare with the Same Repository Version"),
+        MenuItem::action("Show Diff", crate::diff::ShowDiff { path: diff_path })
+            .icon(ui::icons::IconName::DIFF)
+            .enabled(can_diff),
         MenuItem::separator(),
-        item("Branches\u{2026}", "vcs.branches-popup", cx),
-        item("Push\u{2026}", "vcs.push", cx),
+        item("Branches\u{2026}", "vcs.branches-popup", cx).icon(IconName::VCS),
+        item("Push\u{2026}", "vcs.push", cx).icon(IconName::PUSH),
         MenuItem::unavailable("Stash Changes\u{2026}"),
         MenuItem::unavailable("Unstash Changes\u{2026}"),
         MenuItem::separator(),
-        item("Add to VCS", "vcs.add", cx),
-        MenuItem::unavailable("Copy Branch Name"),
-        MenuItem::unavailable("Resolve Conflicts\u{2026}"),
-    ]
+        MenuItem::unavailable("Worktrees\u{2026}"),
+    ];
+    if !unversioned.is_empty() {
+        items.push(MenuItem::action(
+            "Add to VCS",
+            crate::commit::AddToVcs {
+                paths: Some(unversioned),
+            },
+        ));
+    }
+    items.push(
+        item("Copy Branch Name", "vcs.copy-branch-name", cx)
+            .icon(IconName::COPY)
+            .enabled(has_branch),
+    );
+    items.extend([
+        MenuItem::separator(),
+        MenuItem::unavailable("Show Local History\u{2026}"),
+    ]);
+    items
 }

@@ -19,7 +19,7 @@
 pub mod divider;
 pub mod model;
 mod snapshot;
-pub use snapshot::{SnapshotWindow, snapshot_view};
+pub use snapshot::{SnapshotWindow, editable_text_snapshot_view, snapshot_view};
 pub mod view;
 
 pub use model::{
@@ -66,6 +66,10 @@ ui::ui_commands! {
     /// The gutter's `>>` (`Diff.ApplyLeftSide`).
     ApplyLeftSide { index: Option<usize> } => "diff.apply-left-side", "Accept Left Side",
         "Replaces the right side's lines of a change with the left side's, as one undoable edit: in a diff of local changes it reverts the change (the gutter's >>). The change at index, else the change at the caret of the current side.",
+        r#"{"index": 0}"#;
+    /// Copy a change from the right to the editable left text.
+    ApplyRightSide { index: Option<usize> } => "diff.apply-right-side", "Accept Right Side",
+        "Replaces a change in the editable left side with the corresponding lines of the right side.",
         r#"{"index": 0}"#;
     /// The gutter's check box of a change (`Vcs.Diff.IncludeChangedLinesIntoCommit`).
     IncludeChange { index: Option<usize>, included: Option<bool> } => "diff.include-change", "Include into Commit",

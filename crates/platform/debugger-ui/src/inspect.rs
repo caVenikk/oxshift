@@ -1,4 +1,4 @@
-//! The actions of a value that open a window of their own (the reference's
+//! The inspection actions of a value (the reference's
 //! `XDebugger.ValueGroup`):
 //!
 //! - Inspect… (`XInspectAction`, `XInspectDialog`): a non-modal dialog with
@@ -6,7 +6,7 @@
 //!   `DebuggerTreeWithHistoryPanel`); it shows the value again when the
 //!   program stops next;
 //! - Compare Value with Clipboard (`XCompareWithClipboardAction`): a diff of
-//!   the clipboard's text and the value's text in a window;
+//!   the clipboard's text and the value's text in an editor tab;
 //! - Show Referring Objects… (`XShowReferringObjectsAction`): the dialog of
 //!   Inspect with the objects that refer to the value as its children
 //!   (title "Referring Objects For"), where the product's runtime can tell.
@@ -15,7 +15,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use debugger::{DebugAdapterProvider, EvaluateContext, Phase, Session};
-use editor::{Editor, EditorConfig};
 use gpui::prelude::FluentBuilder as _;
 use gpui::{
     AnyElement, App, AppContext as _, Context, Entity, FocusHandle, Focusable, InteractiveElement,
@@ -23,12 +22,10 @@ use gpui::{
     Subscription, Task, Window, WindowHandle, div, px, size,
 };
 use serde_json::{Value as Json, json};
-use text::Buffer;
 use themes::UiRole;
 use ui::components::{DISABLED_ALPHA, Tooltip, icon_button};
 use ui::icons::IconName;
 use ui::theme::ThemeExt as _;
-use vcs_ui::diff::{DiffRequest, DiffView, ScrollTo, SideTitle};
 
 use crate::session::commands::{
     AddToWatches, CancelEdit, CommitEdit, CopyName, CopyValue, JumpToTypeSource, JumpToValueSource,
@@ -45,7 +42,7 @@ ui::ui_commands! {
         "Opens the selected value of the Variables view (or of a value's popup) with its tree in a dialog of its own, which shows it again when the program stops next.";
     /// Compare Value with Clipboard.
     CompareWithClipboard => "debug.variables.compare-with-clipboard", "Compare Value with Clipboard",
-        "Shows the differences between the clipboard's text and the selected value's text in a window.";
+        "Shows the differences between the clipboard's text and the selected value's text in an editor tab.";
     /// Show Referring Objects….
     ShowReferringObjects => "debug.variables.show-referring-objects", "Show Referring Objects\u{2026}",
         "Opens a dialog with the objects that refer to the selected value as the children of the value (the Python runtime's garbage collector tells).";
@@ -232,7 +229,6 @@ impl DebuggerView {
     pub(crate) fn compare_with_clipboard(
         &mut self,
         tree: Option<&Entity<VariablesView>>,
-        window: &mut Window,
         cx: &mut Context<Self>,
     ) {
         let mut fetch = None;
@@ -240,14 +236,16 @@ impl DebuggerView {
         let Some(fetch) = fetch else {
             return;
         };
-        cx.spawn_in(window, async move |this, cx| {
+        let clipboard = cx
+            .read_from_clipboard()
+            .and_then(|c| c.text())
+            .unwrap_or_default();
+        cx.spawn(async move |this, cx| {
             let value = fetch.await;
-            let _ = this.update_in(cx, |this, window, cx| {
-                let clipboard = cx
-                    .read_from_clipboard()
-                    .and_then(|c| c.text())
-                    .unwrap_or_default();
-                CompareDialog::open(clipboard, value, this.activate, window, cx);
+            let _ = this.update(cx, |_, cx| {
+                cx.emit(crate::DebuggerViewEvent::CompareWithClipboard(
+                    ClipboardComparison { clipboard, value },
+                ));
             });
         })
         .detach();
@@ -272,8 +270,8 @@ pub(crate) fn forward_actions<E: InteractiveElement>(el: E, view: Entity<Debugge
         v.update(cx, |v, cx| v.inspect(None, window, cx))
     });
     let v = view.clone();
-    let el = el.on_action(move |_: &CompareWithClipboard, window, cx| {
-        v.update(cx, |v, cx| v.compare_with_clipboard(None, window, cx))
+    let el = el.on_action(move |_: &CompareWithClipboard, _, cx| {
+        v.update(cx, |v, cx| v.compare_with_clipboard(None, cx))
     });
     let v = view;
     el.on_action(move |_: &ShowReferringObjects, window, cx| {
@@ -666,10 +664,8 @@ impl Render for InspectDialog {
             })
             .on_action({
                 let (host, tree) = (host.clone(), tree.clone());
-                move |_: &CompareWithClipboard, window, cx| {
-                    host.update(cx, |h, cx| {
-                        h.compare_with_clipboard(Some(&tree), window, cx)
-                    })
+                move |_: &CompareWithClipboard, _, cx| {
+                    host.update(cx, |h, cx| h.compare_with_clipboard(Some(&tree), cx))
                 }
             })
             .on_action({
@@ -716,103 +712,23 @@ impl Render for InspectDialog {
     }
 }
 
-/// The window of Compare Value with Clipboard: a diff of the clipboard's
-/// text (left) and the value's text (right, read-only), as the reference
-/// shows it (`DiffRequestFactory.createClipboardVsValue`).
-pub(crate) struct CompareDialog {
-    diff: Entity<DiffView>,
+/// Text captured by Compare Value with Clipboard in the selected variables tree.
+#[derive(Clone)]
+pub struct ClipboardComparison {
+    clipboard: String,
+    value: String,
 }
 
-/// The reference's strings (`DiffBundle`).
-const COMPARE_TITLE: &str = "Clipboard vs Selected Value";
-const CLIPBOARD_TITLE: &str = "From clipboard";
-const VALUE_TITLE: &str = "Selected Value";
-const COMPARE_WIDTH: f32 = 900.0;
-const COMPARE_HEIGHT: f32 = 560.0;
-
-impl CompareDialog {
-    pub(crate) fn open(
-        clipboard: String,
-        value: String,
-        activate: bool,
-        window: &mut Window,
-        cx: &mut Context<DebuggerView>,
-    ) -> Option<WindowHandle<Self>> {
-        let title_height = ui::dialog_window::title_height(true);
-        let options = ui::dialog_window::DialogOptions {
-            title: COMPARE_TITLE.into(),
-            size: size(px(COMPARE_WIDTH), px(COMPARE_HEIGHT + title_height)),
-            min_size: Some(size(px(400.0), px(240.0))),
-            activate,
-            themed_title: true,
-            modal: false,
-            key: None,
-        };
-        ui::dialog_window::open(window, options, cx, move |window, cx| {
-            cx.new(|cx| Self::new(clipboard, value, window, cx))
-        })
-    }
-
-    fn new(clipboard: String, value: String, window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let right = cx.new(|cx| {
-            let mut e = Editor::new(Buffer::new(&value), window, cx);
-            e.buffer_mut().set_read_only(true);
-            e
-        });
-        let diff = cx.new(|cx| DiffView::new(right, window, cx));
-        let side = |label: &str| SideTitle {
-            label: label.to_owned().into(),
-            path: None,
-            tooltip: None,
-            read_only: true,
-        };
-        let request = DiffRequest {
-            path: PathBuf::from("value.txt"),
-            title: COMPARE_TITLE.into(),
-            left: side(CLIPBOARD_TITLE),
-            right: side(VALUE_TITLE),
-            included: None,
-            excluded: Vec::new(),
-            one_side: None,
-            files: (1, 1),
-            steps: (false, false),
-            preview: false,
-        };
-        diff.update(cx, |d, cx| {
-            d.set_request(
-                request,
-                Some(Arc::from(clipboard.as_str())),
-                None,
-                EditorConfig::default(),
-                ScrollTo::FirstChange,
-                cx,
-            )
-        });
-        window.focus(&diff.focus_handle(cx));
-        Self { diff }
-    }
-}
-
-impl Focusable for CompareDialog {
-    fn focus_handle(&self, cx: &App) -> FocusHandle {
-        self.diff.focus_handle(cx)
-    }
-}
-
-impl Render for CompareDialog {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let theme = cx.theme();
-        div()
-            .id("compare-dialog")
-            .size_full()
-            .flex()
-            .flex_col()
-            .bg(theme.color(UiRole::Surface))
-            .text_color(theme.color(UiRole::Text))
-            .font_family(theme.ui_family())
-            .text_size(theme.ui_size())
-            .children(ui::dialog_window::title_bar(COMPARE_TITLE, true, cx))
-            .child(div().flex_1().min_h(px(0.0)).child(self.diff.clone()))
-            .child(ui::pointer::frame())
+impl ClipboardComparison {
+    /// Creates the comparison in the window that owns the debug session.
+    pub fn view(&self, window: &mut Window, cx: &mut App) -> Entity<vcs_ui::diff::DiffView> {
+        vcs_ui::diff::editable_text_snapshot_view(
+            "Clipboard vs Selected Value".into(),
+            &self.clipboard,
+            &self.value,
+            ("From clipboard", "Selected Value"),
+            window,
+            cx,
+        )
     }
 }

@@ -4,8 +4,8 @@
 //! the Git quick list provider rearranges it: the "Git" separator,
 //! Commit…, Rollback…, then Show History, Annotate and
 //! Show Diff, then Branches…, Push…, Stash
-//! Changes… and Unstash Changes…, then Add to VCS, Copy Branch Name and
-//! Resolve Conflicts…. Without a repository it offers Create Git
+//! Changes… and Unstash Changes…, then Worktrees…, Add to VCS for selected unversioned
+//! files, and Show Local History…. Without a repository it offers Create Git
 //! Repository…. Commands that are not there yet are shown disabled.
 
 use gpui::{Action, App};
@@ -39,12 +39,17 @@ fn item(label: &'static str, id: &str, cx: &App) -> MenuItem {
 
 /// The rows of the popup: for a project under Git (`git`), else the
 /// actions that put it under version control.
-pub fn items(git: bool, diff_path: Option<String>, cx: &App) -> Vec<MenuItem> {
+pub fn items(
+    git: bool,
+    diff_path: Option<String>,
+    unversioned: Vec<String>,
+    cx: &App,
+) -> Vec<MenuItem> {
     if !git {
         return vec![item("Create Git Repository\u{2026}", "git.init", cx)];
     }
     let can_diff = diff_path.is_some();
-    vec![
+    let mut items = vec![
         MenuItem::header("Git"),
         item("Commit\u{2026}", "vcs.commit", cx),
         // The stage-specific Commit action is disabled without staging support.
@@ -61,8 +66,19 @@ pub fn items(git: bool, diff_path: Option<String>, cx: &App) -> Vec<MenuItem> {
         MenuItem::unavailable("Stash Changes\u{2026}"),
         MenuItem::unavailable("Unstash Changes\u{2026}"),
         MenuItem::separator(),
-        item("Add to VCS", "vcs.add", cx),
-        MenuItem::unavailable("Copy Branch Name"),
-        MenuItem::unavailable("Resolve Conflicts\u{2026}"),
-    ]
+        MenuItem::unavailable("Worktrees\u{2026}"),
+    ];
+    if !unversioned.is_empty() {
+        items.push(MenuItem::action(
+            "Add to VCS",
+            crate::commit::AddToVcs {
+                paths: Some(unversioned),
+            },
+        ));
+    }
+    items.extend([
+        MenuItem::separator(),
+        MenuItem::unavailable("Show Local History\u{2026}"),
+    ]);
+    items
 }

@@ -177,6 +177,7 @@ pub const ICONS: &[IconSvg] = &[
     icon!("oracle", "oracle"),
     icon!("oracleClient", "oracleClient"),
     icon!("sqlite", "sqlite"),
+    icon!("sqlScript", "sqlScript"),
     icon!("properties", "properties"),
     icon!("console", "console"),
     icon!("table", "table"),
@@ -256,7 +257,14 @@ pub fn module(config: DbUiConfig) -> Module {
     Module {
         name: "database",
         icons: ICONS,
-        file_types: vec![sql::file_type(hub.clone())],
+        file_types: vec![
+            sql::file_type(hub.clone()),
+            workbench::file_types::FileType::plain(
+                "SQLite",
+                &["sqlite", "sqlite3"],
+                icons::DATA_SOURCE,
+            ),
+        ],
         code_intel: vec![workbench::CodeIntelHook::new(sql::SqlIntelProvider::new(
             hub,
         ))],

@@ -76,6 +76,20 @@ fn project_with_files() -> (tempfile::TempDir, PathBuf) {
     (dir, root)
 }
 
+#[test]
+fn sqlite_database_files_are_distinct_from_sql_scripts() {
+    let module = db_ui::module(db_ui::DbUiConfig {
+        store: FakeStore::new("secret"),
+    });
+    let types = workbench::file_types::FileTypes::new(&module.file_types);
+    for name in ["check.sqlite", "check.sqlite3"] {
+        assert_eq!(types.for_name(name).unwrap().name, "SQLite");
+        assert_eq!(types.icon(Path::new(name)), db_ui::icons::DATA_SOURCE);
+    }
+    assert_eq!(types.for_name("query.sql").unwrap().name, "SQL");
+    assert_eq!(types.icon(Path::new("query.sql")).0, "db/sqlScript");
+}
+
 #[gpui::test]
 fn a_sql_file_is_coloured_and_the_toolbar_shows_generic_sql(cx: &mut TestAppContext) {
     let (_dir, root) = project_with_files();
@@ -266,7 +280,7 @@ fn an_attached_file_takes_the_data_source_icon_and_name(cx: &mut TestAppContext)
             .unwrap_or_else(|| panic!("scratch.sql in {s}"))
     };
     let plain = h.state();
-    assert_eq!(row(&plain)["icon"], "fileTypes/sql");
+    assert_eq!(row(&plain)["icon"], "db/sqlScript");
     assert!(row(&plain)["roots"]["hint"].is_null());
     assert!(plain["tabs"][0]["hint"].is_null());
     assert_eq!(
@@ -293,7 +307,18 @@ fn an_attached_file_takes_the_data_source_icon_and_name(cx: &mut TestAppContext)
     h.invoke("sql.attach-data-source", json!({}));
     wait_for(&mut h, "the detach", |s| s["data-source"].is_null());
     h.draw();
-    assert_eq!(row(&h.state())["icon"], "fileTypes/sql");
+    assert_eq!(row(&h.state())["icon"], "db/sqlScript");
+    h.invoke("sql.set-dialect", json!({ "dialect": "sqlite" }));
+    wait_for(&mut h, "the SQLite dialect", |s| s["dialect"] == "sqlite");
+    h.draw();
+    let dialect = h.state();
+    assert_eq!(row(&dialect)["icon"], "db/sqlite");
+    assert_eq!(dialect["tabs"][0]["icon"], "db/sqlite");
+    assert!(dialect["tabs"][0]["hint"].is_null());
+    h.invoke("sql.set-dialect", json!({ "dialect": "default" }));
+    wait_for(&mut h, "the generic dialect", |s| s["dialect"] == "generic");
+    h.draw();
+    assert_eq!(row(&h.state())["icon"], "db/sqlScript");
 }
 
 #[gpui::test]

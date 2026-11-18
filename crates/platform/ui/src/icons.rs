@@ -265,6 +265,7 @@ impl IconName {
     pub const DIFF_CHECKBOX_SELECTED: Self = Self("diff/gutterCheckBoxSelected@14x14");
     pub const DIFF_CHECKBOX_INDETERMINATE: Self = Self("diff/gutterCheckBoxIndeterminate@14x14");
     /// Revert a diff change (`AllIcons.Diff.ArrowRight`, `>>`).
+    pub const DIFF_ARROW_LEFT: Self = Self("diff/arrowLeft@14x14");
     pub const DIFF_ARROW_RIGHT: Self = Self("diff/arrowRight@14x14");
 }
 
@@ -298,7 +299,7 @@ platform_icons! {
         "actions/checked", "actions/inSelection", "actions/moveToRightBottom", "actions/newFolder", "actions/shortcutFilter",
         "actions/stopAndRestart",
         "codeInsight/intentionBulb", "codeInsight/quickfixBulb",
-        "diff/arrowRight@14x14", "diff/gutterCheckBox@14x14",
+        "diff/arrowLeft@14x14", "diff/arrowRight@14x14", "diff/gutterCheckBox@14x14",
         "diff/gutterCheckBoxIndeterminate@14x14", "diff/gutterCheckBoxSelected@14x14",
         "diff/sideBySide", "diff/unified",
         "fileTypes/archive", "fileTypes/binaryData", "fileTypes/css", "fileTypes/csv",

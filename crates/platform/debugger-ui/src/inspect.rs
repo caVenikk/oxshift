@@ -720,9 +720,9 @@ pub struct ClipboardComparison {
 }
 
 impl ClipboardComparison {
-    /// Creates the read-only diff in the window that owns the debug session.
+    /// Creates the comparison in the window that owns the debug session.
     pub fn view(&self, window: &mut Window, cx: &mut App) -> Entity<vcs_ui::diff::DiffView> {
-        vcs_ui::diff::text_snapshot_view(
+        vcs_ui::diff::editable_text_snapshot_view(
             "Clipboard vs Selected Value".into(),
             &self.clipboard,
             &self.value,

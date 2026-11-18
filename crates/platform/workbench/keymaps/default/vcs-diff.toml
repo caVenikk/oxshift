@@ -16,6 +16,7 @@ name = "Diff"
 "ctrl-shift-tab" = "diff.focus-opposite"
 "f4" = "diff.jump-to-source"
 "ctrl-alt-r" = "diff.apply-left-side"
+"ctrl-alt-a" = "diff.apply-right-side"
 
 [[context]]
 name = "SnapshotDiffWindow"

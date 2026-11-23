@@ -11,6 +11,7 @@
 //! tooltips of the cells and the "All actions on save…" link.
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
@@ -186,20 +187,37 @@ fn spawn_read<V: 'static>(
     })
 }
 
-/// Writes in the background, then prepares the project's servers again;
-/// `done` hears of an error. The write outlives the page (OK closes the
-/// window at once).
+/// The last queued page write for each project.
+#[derive(Default)]
+struct SettingsWrites {
+    next_id: u64,
+    tasks: HashMap<PathBuf, (u64, Task<()>)>,
+}
+
+impl gpui::Global for SettingsWrites {}
+
+/// Writes in Apply order in the background, then prepares the project's
+/// servers again; `done` hears of an error. The write outlives the page.
 fn spawn_write<V: 'static>(
     root: PathBuf,
     write: impl FnOnce(&Path) -> Result<(), String> + Send + 'static,
     cx: &mut Context<V>,
     done: impl FnOnce(&mut V, Option<String>, &mut Context<V>) + 'static,
 ) {
-    let work = cx.background_spawn({
-        let root = root.clone();
-        async move { write(&root) }
-    });
-    cx.spawn(async move |this, cx| {
+    let writes = cx.default_global::<SettingsWrites>();
+    writes.next_id += 1;
+    let id = writes.next_id;
+    let previous = writes.tasks.remove(&root).map(|(_, task)| task);
+    let executor = cx.background_executor().clone();
+    let queue_root = root.clone();
+    let task = cx.spawn(async move |this, cx| {
+        // Preserve Apply order, including the read before each write. The
+        // project store still owns the lock for replacing the file itself.
+        if let Some(previous) = previous {
+            previous.await;
+        }
+        let write_root = root.clone();
+        let work = executor.spawn(async move { write(&write_root) });
         let error = work.await.err();
         if let Some(e) = &error {
             eprintln!("python settings: {e}");
@@ -209,8 +227,21 @@ fn spawn_write<V: 'static>(
             done(this, error, cx);
             cx.notify();
         });
-    })
-    .detach();
+        let _ = cx.update(|cx| {
+            let writes = cx.default_global::<SettingsWrites>();
+            if writes
+                .tasks
+                .get(&root)
+                .is_some_and(|(latest, _)| *latest == id)
+                && let Some((_, task)) = writes.tasks.remove(&root)
+            {
+                task.detach();
+            }
+        });
+    });
+    cx.default_global::<SettingsWrites>()
+        .tasks
+        .insert(queue_root, (id, task));
 }
 
 /// A page's note in place of its options (no project, a settings file that
@@ -252,6 +283,7 @@ pub struct TypeEnginePage {
     /// The engine chosen on the page, not applied yet.
     draft: Option<TypeEngine>,
     error: Option<String>,
+    write_revision: u64,
     focus: FocusHandle,
     _work: Task<()>,
 }
@@ -263,6 +295,7 @@ impl TypeEnginePage {
             loaded: Loaded::Reading,
             draft: None,
             error: None,
+            write_revision: 0,
             focus: cx.focus_handle(),
             _work: Task::ready(()),
         };
@@ -307,6 +340,9 @@ impl SettingsPage for TypeEnginePage {
             self.draft = None;
             return Ok(());
         }
+        let before = self.loaded.clone();
+        self.write_revision += 1;
+        let revision = self.write_revision;
         if let Loaded::Read(stored) = &mut self.loaded {
             stored.settings.select_type_engine(engine);
         }
@@ -319,13 +355,22 @@ impl SettingsPage for TypeEnginePage {
                     .map_err(|e| e.to_string())
             },
             cx,
-            |this, error, _| this.error = error,
+            move |this, error, _| {
+                if this.write_revision == revision {
+                    if error.is_some() {
+                        this.loaded = before;
+                        this.draft.get_or_insert(engine);
+                    }
+                    this.error = error;
+                }
+            },
         );
         cx.notify();
         Ok(())
     }
 
     fn reset(&mut self, _: &mut Window, cx: &mut Context<Self>) {
+        self.write_revision += 1;
         self.draft = None;
         self.error = None;
         self.read(cx);
@@ -472,6 +517,13 @@ struct Row {
     enabled: bool,
     lookup: Lookup,
     custom_path: Option<PathBuf>,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ToolField {
+    Enabled,
+    Lookup,
+    Path,
 }
 
 fn rows_of(stored: &Stored) -> Vec<Row> {
@@ -629,6 +681,8 @@ pub struct ExternalToolsPage {
     /// Where the Lookup cells are drawn, by row.
     anchors: Rc<RefCell<Vec<Bounds<Pixels>>>>,
     error: Option<String>,
+    write_revision: u64,
+    pending_fields: Vec<(Tool, ToolField)>,
     focus: FocusHandle,
     _read: Task<()>,
     _probe: Task<()>,
@@ -644,6 +698,8 @@ impl ExternalToolsPage {
             list: None,
             anchors: Rc::default(),
             error: None,
+            write_revision: 0,
+            pending_fields: Vec::new(),
             focus: cx.focus_handle(),
             _read: Task::ready(()),
             _probe: Task::ready(()),
@@ -829,6 +885,52 @@ impl ExternalToolsPage {
             tool.lookup = row.lookup;
         }
         settings
+    }
+
+    fn changed_fields(
+        stored: &Stored,
+        rows: &[Row],
+        pending: &[(Tool, ToolField)],
+    ) -> Vec<(Tool, ToolField)> {
+        let mut fields = pending.to_vec();
+        for row in rows {
+            let before = stored.settings.tool(row.tool);
+            for (field, changed) in [
+                (ToolField::Enabled, row.enabled != before.enabled),
+                (ToolField::Lookup, row.lookup != before.lookup),
+                (
+                    ToolField::Path,
+                    row.custom_path != stored.custom_path(row.tool),
+                ),
+            ] {
+                if changed && !fields.contains(&(row.tool, field)) {
+                    fields.push((row.tool, field));
+                }
+            }
+        }
+        fields
+    }
+
+    fn save_changes(root: &Path, rows: &[Row], fields: &[(Tool, ToolField)]) -> Result<(), String> {
+        let mut current = settings::load(root).map_err(|e| e.to_string())?;
+        for row in rows {
+            let tool = current.tool_mut(row.tool);
+            if fields.contains(&(row.tool, ToolField::Enabled)) {
+                tool.enabled = row.enabled;
+                tool.explicit = true;
+            }
+            if fields.contains(&(row.tool, ToolField::Lookup)) {
+                tool.lookup = row.lookup;
+            }
+        }
+        settings::save(root, &current).map_err(|e| e.to_string())?;
+        for row in rows {
+            if fields.contains(&(row.tool, ToolField::Path)) {
+                settings::set_custom_path(root, row.tool, row.custom_path.as_deref())
+                    .map_err(|e| e.to_string())?;
+            }
+        }
+        Ok(())
     }
 
     // ---- drawing ----
@@ -1089,19 +1191,26 @@ impl ExternalToolsPage {
 
 impl SettingsPage for ExternalToolsPage {
     fn is_modified(&self, _: &App) -> bool {
-        self.loaded
-            .stored()
-            .is_some_and(|stored| rows_of(stored) != self.rows)
+        (self.error.is_some() && !self.pending_fields.is_empty())
+            || self
+                .loaded
+                .stored()
+                .is_some_and(|stored| rows_of(stored) != self.rows)
     }
 
     fn apply(&mut self, _: &mut Window, cx: &mut Context<Self>) -> Result<(), String> {
         let (Some(root), Loaded::Read(stored)) = (self.root.clone(), &self.loaded) else {
             return Ok(());
         };
-        if rows_of(stored) == self.rows {
+        if rows_of(stored) == self.rows && self.pending_fields.is_empty() {
             return Ok(());
         }
         let settings = Self::settings_for(stored, &self.rows);
+        self.pending_fields = Self::changed_fields(stored, &self.rows, &self.pending_fields);
+        let pending = self.pending_fields.clone();
+        self.write_revision += 1;
+        let revision = self.write_revision;
+        let rows = self.rows.clone();
         let paths: Vec<(Tool, Option<PathBuf>)> = self
             .rows
             .iter()
@@ -1109,7 +1218,7 @@ impl SettingsPage for ExternalToolsPage {
             .map(|r| (r.tool, r.custom_path.clone()))
             .collect();
         let mut written = stored.clone();
-        written.settings = settings.clone();
+        written.settings = settings;
         for (tool, path) in &paths {
             if let Some(entry) = written.paths.iter_mut().find(|(t, _)| t == tool) {
                 entry.1 = path.clone();
@@ -1118,22 +1227,24 @@ impl SettingsPage for ExternalToolsPage {
         self.loaded = Loaded::Read(written);
         spawn_write(
             root,
-            move |root| {
-                settings::save(root, &settings).map_err(|e| e.to_string())?;
-                for (tool, path) in &paths {
-                    settings::set_custom_path(root, *tool, path.as_deref())
-                        .map_err(|e| e.to_string())?;
-                }
-                Ok(())
-            },
+            move |root| Self::save_changes(root, &rows, &pending),
             cx,
-            |this, error, _| this.error = error,
+            move |this, error, _| {
+                if this.write_revision == revision {
+                    if error.is_none() {
+                        this.pending_fields.clear();
+                    }
+                    this.error = error;
+                }
+            },
         );
         cx.notify();
         Ok(())
     }
 
     fn reset(&mut self, _: &mut Window, cx: &mut Context<Self>) {
+        self.write_revision += 1;
+        self.pending_fields.clear();
         self.error = None;
         self.close_list(cx);
         if let Some(stored) = self.loaded.stored() {
@@ -1335,6 +1446,164 @@ mod tests {
     }
 
     #[test]
+    fn applying_tools_preserves_a_type_engine_changed_since_the_page_opened() {
+        brand::install();
+        for engine_first in [true, false] {
+            let dir = tempfile::tempdir().unwrap();
+            let root = dir.path();
+            std::fs::create_dir_all(root.join(".oxide")).unwrap();
+            std::fs::write(
+                root.join(".oxide/project.toml"),
+                "version = 1\n[python.extra]\nkeep = 'unknown'\n\
+                 [python.tools.ty]\nenabled = false\n\
+                 [python.tools.ruff]\ninspections = false\n",
+            )
+            .unwrap();
+            let original = read_stored(root).unwrap();
+            let mut rows = rows_of(&original);
+            let ruff = rows.iter_mut().find(|row| row.tool == Tool::Ruff).unwrap();
+            ruff.enabled = false;
+            ruff.lookup = Lookup::Path;
+            if engine_first {
+                settings::select_type_engine(root, TypeEngine::Basedpyright).unwrap();
+            }
+            ExternalToolsPage::save_changes(
+                root,
+                &rows,
+                &ExternalToolsPage::changed_fields(&original, &rows, &[]),
+            )
+            .unwrap();
+            if !engine_first {
+                settings::select_type_engine(root, TypeEngine::Basedpyright).unwrap();
+            }
+            let reloaded = read_stored(root).unwrap().settings;
+            assert_eq!(reloaded.type_engine, TypeEngine::Basedpyright);
+            assert!(reloaded.basedpyright.enabled);
+            assert!(!reloaded.ty.enabled);
+            assert!(reloaded.ty.explicit);
+            assert!(!reloaded.ruff.enabled);
+            assert!(!reloaded.ruff.inspections);
+            assert!(reloaded.ruff.explicit);
+            assert_eq!(reloaded.ruff.lookup, Lookup::Path);
+            let text = std::fs::read_to_string(root.join(".oxide/project.toml")).unwrap();
+            assert!(text.contains("keep = 'unknown'"), "{text}");
+        }
+    }
+
+    #[test]
+    fn tool_changes_can_be_retried_after_a_write_error() {
+        brand::install();
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        let original = read_stored(root).unwrap();
+        let mut rows = rows_of(&original);
+        rows.iter_mut()
+            .find(|r| r.tool == Tool::Ruff)
+            .unwrap()
+            .lookup = Lookup::Path;
+        std::fs::write(root.join(".oxide"), "not a directory").unwrap();
+        assert!(
+            ExternalToolsPage::save_changes(
+                root,
+                &rows,
+                &ExternalToolsPage::changed_fields(&original, &rows, &[])
+            )
+            .is_err()
+        );
+        std::fs::remove_file(root.join(".oxide")).unwrap();
+        settings::select_type_engine(root, TypeEngine::Basedpyright).unwrap();
+        ExternalToolsPage::save_changes(
+            root,
+            &rows,
+            &ExternalToolsPage::changed_fields(&original, &rows, &[]),
+        )
+        .unwrap();
+        ExternalToolsPage::save_changes(
+            root,
+            &rows,
+            &ExternalToolsPage::changed_fields(&original, &rows, &[]),
+        )
+        .unwrap();
+        let saved = read_stored(root).unwrap().settings;
+        assert_eq!(saved.type_engine, TypeEngine::Basedpyright);
+        assert_eq!(saved.ruff.lookup, Lookup::Path);
+    }
+
+    #[gpui::test]
+    fn queued_tool_edits_keep_unconfirmed_fields_and_reversions(cx: &mut gpui::TestAppContext) {
+        brand::install();
+        cx.update(|cx| ui::theme::init(cx, themes::ThemeKind::Dark));
+        for fail_first in [true, false] {
+            let dir = tempfile::tempdir().unwrap();
+            let root = dir.path().to_path_buf();
+            let stored = read_stored(&root).unwrap();
+            let owner = cx.add_window(|_, cx| ExternalToolsPage {
+                root: Some(root.clone()),
+                rows: rows_of(&stored),
+                loaded: Loaded::Read(stored),
+                probes: Vec::new(),
+                list: None,
+                anchors: Rc::default(),
+                error: None,
+                write_revision: 0,
+                pending_fields: Vec::new(),
+                focus: cx.focus_handle(),
+                _read: Task::ready(()),
+                _probe: Task::ready(()),
+            });
+            if fail_first {
+                std::fs::write(root.join(".oxide"), "not a directory").unwrap();
+            }
+            let custom = root.join("custom-ruff");
+            owner
+                .update(cx, |page, window, cx| {
+                    page.row_mut(Tool::Ruff).unwrap().lookup = Lookup::Path;
+                    page.apply(window, cx).unwrap();
+                    // Repair the filesystem between the queued writes, without
+                    // delivering the first write's callback before Apply 2.
+                    spawn_write(
+                        root.clone(),
+                        move |root| {
+                            if fail_first {
+                                std::fs::remove_file(root.join(".oxide"))
+                                    .map_err(|e| e.to_string())?;
+                            }
+                            Ok(())
+                        },
+                        cx,
+                        |_, _, _| {},
+                    );
+                    let row = page.row_mut(Tool::Ruff).unwrap();
+                    row.custom_path = Some(custom.clone());
+                    if !fail_first {
+                        row.lookup = Lookup::Sdk;
+                    }
+                    page.apply(window, cx).unwrap();
+                })
+                .unwrap();
+            cx.run_until_parked();
+            let saved = read_stored(&root).unwrap();
+            assert_eq!(
+                saved.settings.ruff.lookup,
+                if fail_first {
+                    Lookup::Path
+                } else {
+                    Lookup::Sdk
+                }
+            );
+            assert_eq!(saved.custom_path(Tool::Ruff), Some(custom));
+            owner
+                .read_with(cx, |page, cx| {
+                    assert!(!page.is_modified(cx));
+                    assert!(page.error.is_none());
+                    assert!(page.pending_fields.is_empty());
+                    assert!(cx.global::<SettingsWrites>().tasks.is_empty());
+                })
+                .unwrap();
+        }
+    }
+
+    #[test]
     fn probes_look_in_the_interpreter_path_and_for_uvx() {
         let dir = tempfile::tempdir().unwrap();
         let bin = dir.path().join("bin");
@@ -1525,5 +1794,92 @@ mod tests {
             "{:?}",
             recorder.last()
         );
+
+        // Both pages may hold drafts when Apply is pressed. Check both
+        // navigation orders and read the saved settings afresh afterwards.
+        for engine_first in [true, false] {
+            let engine = if engine_first { "ty" } else { "basedpyright" };
+            let pages = if engine_first {
+                [TYPE_ENGINE, EXTERNAL_TOOLS]
+            } else {
+                [EXTERNAL_TOOLS, TYPE_ENGINE]
+            };
+            invoke(cx, "settings.open", json!({"page": pages[0]}));
+            for page in pages {
+                invoke(cx, "settings.select", json!({"page": page}));
+                if page == TYPE_ENGINE {
+                    edit(cx, "engine", json!(engine));
+                } else {
+                    edit(cx, "enabled:ruff", json!(engine_first));
+                    edit(
+                        cx,
+                        "lookup:ruff",
+                        json!(if engine_first { "uvx" } else { "path" }),
+                    );
+                }
+            }
+            invoke(cx, "settings.apply", Json::Null);
+            let saved = read_stored(&root).unwrap().settings;
+            assert_eq!(saved.type_engine.id(), engine);
+            assert_eq!(saved.ruff.enabled, engine_first);
+            assert_eq!(
+                saved.ruff.lookup,
+                if engine_first {
+                    Lookup::Uvx
+                } else {
+                    Lookup::Path
+                }
+            );
+            assert_eq!(fields(cx)["modified"], json!([]));
+            invoke(cx, "settings.cancel", Json::Null);
+        }
+
+        // A failed ordinary Apply keeps each page's draft available for a
+        // retry. Use a filesystem error that works without permission tricks.
+        for (page, field, value) in [
+            (TYPE_ENGINE, "engine", json!("ty")),
+            (EXTERNAL_TOOLS, "enabled:ruff", json!(true)),
+        ] {
+            invoke(cx, "settings.open", json!({"page": page}));
+            edit(cx, field, value);
+            let file = root.join(".oxide/project.toml");
+            let backup = root.join(".oxide/project.backup");
+            std::fs::rename(&file, &backup).unwrap();
+            std::fs::create_dir(&file).unwrap();
+            invoke(cx, "settings.apply", Json::Null);
+            let state = fields(cx);
+            assert_eq!(state["modified"], json!([page]), "{state}");
+            assert!(state["fields"]["error"].is_string(), "{state}");
+            std::fs::remove_dir(&file).unwrap();
+            std::fs::rename(&backup, &file).unwrap();
+            invoke(cx, "settings.apply", Json::Null);
+            assert_eq!(fields(cx)["modified"], json!([]));
+            assert_eq!(fields(cx)["fields"]["error"], Json::Null);
+            invoke(cx, "settings.cancel", Json::Null);
+        }
+        let saved = read_stored(&root).unwrap().settings;
+        assert_eq!(saved.type_engine, TypeEngine::Ty);
+        assert!(saved.ruff.enabled);
+
+        // Two Apply clicks before either background write finishes must
+        // preserve the user's order, not the executor's scheduling order.
+        invoke(cx, "settings.open", json!({"page": TYPE_ENGINE}));
+        for engine in ["basedpyright", "ty"] {
+            for (id, args) in [
+                ("settings.edit", json!({"field": "engine", "value": engine})),
+                ("settings.apply", Json::Null),
+            ] {
+                cx.update_window(window.into(), |_, window, cx| {
+                    ui::command::invoke(id, args, window, cx).unwrap();
+                })
+                .unwrap();
+            }
+        }
+        cx.run_until_parked();
+        assert_eq!(
+            read_stored(&root).unwrap().settings.type_engine,
+            TypeEngine::Ty
+        );
+        assert_eq!(fields(cx)["modified"], json!([]));
     }
 }

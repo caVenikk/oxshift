@@ -7,6 +7,9 @@
 4. Open Ruff's Lookup list and choose `Path · uvx`; turn Ruff off; browse
    for an executable of ty; press OK.
 5. Click "Type Engine Settings…" in the status bar's Type Engine popup.
+6. Choose the other type engine, then change Ruff's switch and Lookup on
+   External Tools without applying between pages; press Apply once.
+   Repeat with External Tools edited before Type Engine; reopen the project.
 
 ## Expected
 - Step 2: "Type engine:" with a segmented button (ty, Basedpyright) and
@@ -24,6 +27,9 @@
   explicit, ADR 0010), the lookup `lookup`; the custom executable goes to
   `.oxide/workspace.toml`; the servers are prepared again and ruff stops.
 - Step 5: Settings opens on Python > Type Engine.
+- Step 6: both choices survive Apply and reopening the project. Applying
+  External Tools does not restore the type engine from when its page opened;
+  unchanged tool fields and unknown project settings remain intact.
 
 ## Commands
 `settings.open {"page": "python.type-engine"}`, `settings.edit`

@@ -140,7 +140,14 @@ pub fn inspect_python(python: &Path) -> Option<EnvDir> {
         return inspect(bin).filter(|e| e.python == python);
     }
     let env = inspect(bin.parent()?)?;
-    (env.python == python).then_some(env)
+    let alias = env.layout == EnvLayout::Venv
+        && env.python.parent() == Some(bin)
+        && python.file_name().is_some_and(crate::paths::is_python_name)
+        && crate::paths::is_executable(python);
+    // A venv commonly also exposes python3 and python3.N. Keep its
+    // lexical location: resolving the executable's symlink would lose the
+    // environment and identify the shared base interpreter instead.
+    (env.python == python || alias).then_some(env)
 }
 
 /// What is at the location chosen for a new environment
@@ -327,6 +334,50 @@ mod tests {
 
         assert_eq!(inspect_python(&uv).map(|e| e.dir), Some(root.join(".venv")));
         assert_eq!(inspect_python(&root.join("main.py")), None);
+    }
+
+    #[test]
+    fn recognizes_python_aliases_only_in_the_venv_scripts_directory() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join(".venv");
+        let python = venv(&root, "version = 3.13.1\n");
+        let scripts = python.parent().unwrap();
+        let executable = |name: &str| {
+            let name = if cfg!(windows) {
+                format!("{name}.exe")
+            } else {
+                name.to_owned()
+            };
+            let path = scripts.join(name);
+            std::fs::write(&path, "").unwrap();
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt as _;
+                std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+            }
+            path
+        };
+        for name in ["python3", "python3.13"] {
+            let alias = executable(name);
+            assert_eq!(inspect_python(&alias), inspect(&root));
+        }
+        for name in ["pip", "tool", "pythonw", "python3x", "python3.13-config"] {
+            assert_eq!(inspect_python(&executable(name)), None, "{name}");
+        }
+        assert_eq!(inspect_python(&scripts.join("python3.99")), None);
+        let outside = root.join("lib").join("python3");
+        std::fs::create_dir_all(outside.parent().unwrap()).unwrap();
+        std::fs::copy(&python, &outside).unwrap();
+        assert_eq!(inspect_python(&outside), None);
+        #[cfg(unix)]
+        {
+            let non_executable = scripts.join("python3.12");
+            std::fs::write(&non_executable, "").unwrap();
+            assert_eq!(inspect_python(&non_executable), None);
+        }
+        // The same names outside a virtual environment are not aliases.
+        std::fs::remove_file(root.join("pyvenv.cfg")).unwrap();
+        assert_eq!(inspect_python(&executable("python3")), None);
     }
 
     #[test]

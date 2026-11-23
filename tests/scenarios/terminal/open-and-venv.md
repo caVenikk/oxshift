@@ -10,6 +10,11 @@
    a new tab.
 5. Open a project whose interpreter is a system Python and open the
    terminal.
+6. In a project A with its own `.venv`, select a registered virtual
+   environment from project B as A's interpreter and open a new tab.
+   Repeat with B first registered through its `bin/python3` executable.
+7. Select A's own interpreter and open another tab, then open a terminal
+   in B. Turn off "Activate virtualenv" in A and open another tab there.
 
 ## Expected
 - Step 1: the Terminal tool window opens at the bottom with one tab
@@ -23,6 +28,15 @@
   same tab with its output.
 - Step 4: the new tab has no environment prefix and no `VIRTUAL_ENV`.
 - Step 5: no environment is activated.
+- Step 6: `VIRTUAL_ENV`, `which python` and Python's `sys.executable` point
+  into B's environment; `pwd` remains A. This also applies to shells
+  without integration scripts, which receive activation variables.
+- Step 7: A's new tab uses A's environment; B still uses B's. Existing
+  tabs keep their running shells. With activation off, a new tab does
+  not activate the selected environment.
+
+The ignored `terminal_venv` integration tests use real uv environments,
+zsh and tcsh through the product's SDK-selection and terminal commands.
 
 ## Commands
 `workbench.toggle-terminal`, `terminal.new-tab`,

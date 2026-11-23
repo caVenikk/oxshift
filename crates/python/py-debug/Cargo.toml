@@ -21,5 +21,6 @@ tree-sitter = "0.25"
 tree-sitter-python = "0.25"
 
 [dev-dependencies]
+brand.workspace = true
 futures.workspace = true
 tempfile = "3"

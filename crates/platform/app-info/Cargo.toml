@@ -8,6 +8,3 @@ rust-version.workspace = true
 
 [dependencies]
 dirs = "7"
-
-[dev-dependencies]
-tempfile = "3"

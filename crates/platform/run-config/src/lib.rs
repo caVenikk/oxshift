@@ -8,7 +8,7 @@
 //! - [`RunConfigurations`]: a project's configurations with the selection,
 //!   the custom order, the temporary ones and their limit, pinned ones,
 //!   the history and the last executors; the reference's list order.
-//! - [`store`]: shared configurations in `.oxide/run/` (one file each,
+//! - [`store`]: shared configurations in `.oxshift/run/` (one file each,
 //!   meant to be committed) and everything personal in the personal
 //!   project state; environment values of personal variables never reach
 //!   a committed file.

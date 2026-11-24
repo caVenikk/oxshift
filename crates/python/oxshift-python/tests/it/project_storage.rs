@@ -42,79 +42,116 @@ fn write_state(root: &Path) {
 }
 
 #[test]
-fn project_storage_upgrade_selects_one_complete_directory() {
+fn project_storage_ignores_old_files_and_directories() {
     brand::install();
     let new = tempfile::tempdir().unwrap();
     read_only(new.path());
     assert!(!new.path().join(".oxshift").exists());
-    assert!(!new.path().join(".oxide").exists());
     write_state(new.path());
     assert!(new.path().join(".oxshift/project.toml").is_file());
     assert!(new.path().join(".oxshift/.gitignore").is_file());
     assert!(!new.path().join(".oxide").exists());
 
-    let old = tempfile::tempdir().unwrap();
-    std::fs::create_dir(old.path().join(".oxide")).unwrap();
-    read_only(old.path());
-    assert_eq!(
-        std::fs::read_dir(old.path().join(".oxide"))
-            .unwrap()
-            .count(),
-        0
-    );
-    write_state(old.path());
-    assert!(old.path().join(".oxide/project.toml").is_file());
-    assert!(old.path().join(".oxide/.gitignore").is_file());
-    assert!(!old.path().join(".oxshift").exists());
-    let original = std::fs::read(old.path().join(".oxide/workspace.toml")).unwrap();
-    let old_runs = std::fs::read(old.path().join(".oxide/run/shared.toml")).unwrap();
-
-    // A canonical folder selects the entire store, even with no settings yet.
-    std::fs::create_dir(old.path().join(".oxshift")).unwrap();
-    read_only(old.path());
-    write_state(old.path());
-    assert_eq!(
-        std::fs::read(old.path().join(".oxide/workspace.toml")).unwrap(),
-        original
-    );
-    assert_eq!(
-        std::fs::read(old.path().join(".oxide/run/shared.toml")).unwrap(),
-        old_runs
-    );
-    let filter = project::Filter::for_root(old.path());
-    for name in [".oxshift", ".oxide"] {
-        assert!(filter.is_hidden(name));
-        assert!(project::is_hidden_path(
-            &old.path().join(name).join("project.toml"),
-            &filter
-        ));
-    }
-    assert!(
-        project::disk_changes(
-            [
-                (old.path().join(".oxide/project.toml"), false),
-                (old.path().join(".oxshift/workspace.toml"), false),
-            ],
-            &filter
-        )
-        .is_empty()
-    );
-
-    for blocked in [".oxshift", ".oxide"] {
+    for old_is_file in [false, true] {
         let root = tempfile::tempdir().unwrap();
-        std::fs::write(root.path().join(blocked), "not a directory").unwrap();
-        assert!(store::load(root.path()).is_err());
-        assert!(workspace::load_value(root.path(), "test", "value").is_err());
-        assert!(workspace::save_value(root.path(), "test", "value", Some("x")).is_err());
-        let other = if blocked == ".oxshift" {
-            ".oxide"
+        let old = root.path().join(".oxide");
+        let original = "version = 1\n[exclusions]\npaths = [\"old-only\"]\n";
+        let sentinel = if old_is_file {
+            old.clone()
         } else {
-            ".oxshift"
+            std::fs::create_dir(&old).unwrap();
+            old.join("project.toml")
         };
-        assert!(!root.path().join(other).exists());
+        std::fs::write(&sentinel, original).unwrap();
+        read_only(root.path());
+        assert!(!root.path().join(".oxshift").exists());
+        write_state(root.path());
+        assert_eq!(std::fs::read_to_string(&sentinel).unwrap(), original);
+        assert!(root.path().join(".oxshift/project.toml").is_file());
+        if !old_is_file {
+            assert_eq!(std::fs::read_dir(&old).unwrap().count(), 1);
+        }
+        let filter = project::Filter::for_root(root.path());
+        assert!(filter.is_hidden(".oxshift"));
+        assert!(!filter.is_hidden(".oxide"));
+        assert!(!project::is_hidden_path(&sentinel, &filter));
+        let changes = project::disk_changes(
+            [
+                (sentinel.clone(), false),
+                (root.path().join(".oxshift/workspace.toml"), false),
+            ],
+            &filter,
+        );
+        assert_eq!(changes.len(), 1);
+        assert_eq!(changes[0].path(), sentinel);
+    }
+}
+
+#[test]
+fn occupied_project_directory_reports_error_without_alternate_writes() {
+    brand::install();
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join(".oxshift"), "not a directory").unwrap();
+    assert!(store::load(root.path()).is_err());
+    assert!(workspace::load_value(root.path(), "test", "value").is_err());
+    assert!(workspace::save_value(root.path(), "test", "value", Some("x")).is_err());
+    assert!(!root.path().join(".oxide").exists());
+    assert_eq!(
+        std::fs::read_to_string(root.path().join(".oxshift")).unwrap(),
+        "not a directory"
+    );
+}
+
+#[test]
+fn idea_importers_write_current_store_despite_conflicting_old_data() {
+    brand::install();
+    for old_is_file in [false, true] {
+        let root = tempfile::tempdir().unwrap();
+        let old = root.path().join(".oxide");
+        let sentinel = if old_is_file {
+            old.clone()
+        } else {
+            std::fs::create_dir(&old).unwrap();
+            old.join("project.toml")
+        };
+        // Even a broken old settings file must not block the real importers.
+        std::fs::write(&sentinel, "not valid TOML [").unwrap();
+        let idea = root.path().join(".idea");
+        std::fs::create_dir_all(idea.join("runConfigurations")).unwrap();
+        let iml = r#"<module type="PYTHON_MODULE" version="4"><component name="NewModuleRootManager"><content url="file://$MODULE_DIR$"><excludeFolder url="file://$MODULE_DIR$/generated" /></content></component></module>"#;
+        let modules = r#"<project version="4"><component name="ProjectModuleManager"><modules><module fileurl="file://$PROJECT_DIR$/.idea/demo.iml" filepath="$PROJECT_DIR$/.idea/demo.iml" /></modules></component></project>"#;
+        let run = r#"<component name="ProjectRunConfigurationManager"><configuration name="from-idea" type="ShConfigurationType"><option name="SCRIPT_PATH" value="$PROJECT_DIR$/build.sh" /><method v="2" /></configuration></component>"#;
+        std::fs::write(idea.join("modules.xml"), modules).unwrap();
+        std::fs::write(idea.join("demo.iml"), iml).unwrap();
+        std::fs::write(idea.join("runConfigurations/build.xml"), run).unwrap();
+        let exclusions = store::import_idea(root.path()).unwrap().unwrap();
+        assert!(exclusions.paths.contains("generated"));
+        let imported = run_config::import::open(
+            root.path(),
+            &[&run_config::shell::ShellScriptImporter],
+            &run_config::Types::default(),
+        )
+        .unwrap();
+        assert!(imported.errors.is_empty());
+        assert_eq!(imported.report.unwrap().imported, 1);
+        assert_eq!(imported.list.all()[0].name, "from-idea");
+        assert!(root.path().join(".oxshift/run/from-idea.toml").is_file());
+        assert!(root.path().join(".oxshift/project.toml").is_file());
         assert_eq!(
-            std::fs::read_to_string(root.path().join(blocked)).unwrap(),
-            "not a directory"
+            std::fs::read_to_string(&sentinel).unwrap(),
+            "not valid TOML ["
+        );
+        if !old_is_file {
+            assert_eq!(std::fs::read_dir(&old).unwrap().count(), 1);
+        }
+        assert_eq!(
+            std::fs::read_to_string(idea.join("modules.xml")).unwrap(),
+            modules
+        );
+        assert_eq!(std::fs::read_to_string(idea.join("demo.iml")).unwrap(), iml);
+        assert_eq!(
+            std::fs::read_to_string(idea.join("runConfigurations/build.xml")).unwrap(),
+            run
         );
     }
 }

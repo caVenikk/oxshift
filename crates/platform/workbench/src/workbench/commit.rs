@@ -894,9 +894,9 @@ impl Workbench {
                         }));
                     }
                     this.vcs_refresh();
-                    // The personal state is in `.oxide`, whose changes the
+                    // The personal state is in `.oxshift`, whose changes the
                     // file watcher does not report: the status looks again
-                    // once it is written (a new `.oxide/.gitignore` is an
+                    // once it is written (a new `.oxshift/.gitignore` is an
                     // unversioned file).
                     cx.spawn(async move |this, cx| {
                         futures::future::join_all(stored).await;

@@ -3,9 +3,9 @@
 //! where their executables are, how they are configured, and the one-time
 //! import of the reference's tool settings from `.idea`.
 //!
-//! - [`settings`]: the shared settings in `.oxide/project.toml`
+//! - [`settings`]: the shared settings in `.oxshift/project.toml`
 //!   (`[python.tools.<tool>]`, `[python.type-engine]`) and the personal
-//!   executable paths and `uvx` answers in `.oxide/workspace.toml`.
+//!   executable paths and `uvx` answers in `.oxshift/workspace.toml`.
 //! - [`lookup`]: finding a tool by its lookup mode (Sdk, Path, uvx) and
 //!   asking it for its version.
 //! - [`servers`]: the server specs for `lsp-client`: features,

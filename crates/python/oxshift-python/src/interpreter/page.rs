@@ -3,7 +3,7 @@
 //! project's interpreters and the "Add Interpreter" link, above the
 //! packages panel (its toolbar and table header; the packages themselves
 //! come with the packages tool). A project page: the choice is the
-//! person's own for the project (`.oxide/workspace.toml`, ADR 0009).
+//! person's own for the project (`.oxshift/workspace.toml`, ADR 0009).
 //!
 //! The combo lists "<No interpreter>", the interpreters offered for the
 //! project by group (virtual environments first, a separator before the

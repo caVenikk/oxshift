@@ -62,9 +62,6 @@ pub const PROFILE_DIR: &str = "oxshift-python";
 /// The product's folder in a project root.
 pub const PROJECT_DIR: &str = ".oxshift";
 
-/// Existing project stores remain in place until explicitly migrated.
-pub const LEGACY_PROJECT_DIR: &str = ".oxide";
-
 /// Identifier of the application bundle.
 pub const BUNDLE_ID: &str = "dev.pyoxide.ide";
 
@@ -84,12 +81,10 @@ pub const INFO: AppInfo = AppInfo {
     identity_name: IDENTITY_NAME,
     slug: SLUG,
     profile_dir: PROFILE_DIR,
-    legacy_profile_dir: Some(SLUG),
     env_prefix: ENV_PREFIX,
     legacy_env_prefix: Some(LEGACY_ENV_PREFIX),
     measurement_prefix: MEASUREMENT_PREFIX,
     project_dir: PROJECT_DIR,
-    legacy_project_dir: Some(LEGACY_PROJECT_DIR),
     bundle_id: BUNDLE_ID,
     cli_name: CLI_NAME,
     db_cli_name: DB_CLI_NAME,
@@ -131,12 +126,10 @@ mod tests {
         assert_eq!(CLI_NAME, "oxshift");
         assert_eq!(SLUG, "pyoxide");
         assert_eq!(INFO.profile_dir, "oxshift-python");
-        assert_eq!(INFO.legacy_profile_dir, Some("pyoxide"));
         assert_eq!(ENV_PREFIX, "OXSHIFT");
         assert_eq!(LEGACY_ENV_PREFIX, "PYOXIDE");
         assert_eq!(MEASUREMENT_PREFIX, "PYOXIDE");
         assert_eq!(PROJECT_DIR, ".oxshift");
-        assert_eq!(LEGACY_PROJECT_DIR, ".oxide");
         assert_eq!(DB_CLI_NAME, "oxshift-db");
         assert_eq!(IDE_NAME, "oxshift-python");
         assert_eq!(INFO.binaries[0], ["oxshift-python", "pyoxide-ide"]);

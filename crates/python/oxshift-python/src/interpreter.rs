@@ -13,7 +13,7 @@
 //! its name in the list. The project's environment (`UV_PROJECT_ENVIRONMENT`,
 //! `.venv`, `venv`) is the default, as the reference picks it when a folder
 //! opens; a choice (or "No interpreter") is kept in the personal project
-//! state (`.oxide/workspace.toml`, ADR 0009) with the path relative to the
+//! state (`.oxshift/workspace.toml`, ADR 0009) with the path relative to the
 //! project when it is inside it, and an environment of the project that is
 //! chosen joins the list. The reference's own interpreter of the project
 //! (`.idea` and its SDK table) is imported there once, with its SDK name

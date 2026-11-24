@@ -41,7 +41,7 @@
 //!   through `uvx` without asking). A tool off in the reference (its
 //!   default) keeps Pyoxide's default: Pyoxide has no engine of its own.
 //! - Lookup modes and features are taken as they are; custom executables
-//!   become personal paths in `.oxide/workspace.toml`.
+//!   become personal paths in `.oxshift/workspace.toml`.
 //! - Pyright enabled (without basedpyright) becomes basedpyright, its fork
 //!   with the closest semantics, with Pyright's lookup mode.
 //! - The type engine: ty when the reference's type engine is ty or
@@ -106,8 +106,8 @@ pub fn read_tool_settings(root: &Path) -> Option<Imported> {
     convert(&tools, engine.as_deref(), root)
 }
 
-/// Imports the reference's tool settings into `.oxide/project.toml` (and
-/// custom executables into `.oxide/workspace.toml`), once: only while the
+/// Imports the reference's tool settings into `.oxshift/project.toml` (and
+/// custom executables into `.oxshift/workspace.toml`), once: only while the
 /// project has no tool settings of its own. Returns them when they were
 /// written.
 ///

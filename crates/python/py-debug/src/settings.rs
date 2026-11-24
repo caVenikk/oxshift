@@ -1,6 +1,6 @@
 //! The Python debugger options of a project (the reference's
 //! `PyDebuggerOptionsProvider`, the page Settings > Python > Debugger):
-//! the table `[python.debugger]` of `.oxide/workspace.toml` (ADR 0009).
+//! the table `[python.debugger]` of `.oxshift/workspace.toml` (ADR 0009).
 //! The reference keeps them per project in `.idea/workspace.xml`, so a
 //! project's options are imported from there once, and `.idea` is never
 //! written.

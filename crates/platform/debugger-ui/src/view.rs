@@ -190,7 +190,7 @@ impl DebuggerView {
     }
 
     /// Whether the Breakpoints dialog and the popups of lists take the
-    /// focus when they open (`PYOXIDE_BACKGROUND` turns it off).
+    /// focus when they open (`OXSHIFT_BACKGROUND` turns it off).
     pub fn set_activate(&mut self, activate: bool) {
         self.activate = activate;
     }

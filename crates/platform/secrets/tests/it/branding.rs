@@ -28,14 +28,13 @@ fn display_name_change_reuses_existing_keepass_group() {
     assert!(app_info::install(app_info::AppInfo {
         name: "Renamed App",
         full_name: "Renamed App IDE",
-        legacy_env_prefix: Some("OLD"),
         ..app_info::AppInfo::NEUTRAL
     }));
     assert_eq!(app_info::config_dir(), config_dir);
     assert_eq!(app_info::cache_dir(), cache_dir);
     assert_eq!(app_info::slug(), "app");
     assert_eq!(app_info::db_cli_name(), "app-db");
-    environment_aliases();
+    environment_values();
     let renamed = KeePassStore::open(&path, key(), KeePassOptions::default()).unwrap();
     assert_eq!(
         renamed.get("app-db", "local").unwrap().unwrap().expose(),
@@ -75,7 +74,7 @@ fn display_name_change_reuses_existing_keepass_group() {
     assert_eq!(service.entries().count(), 2);
 }
 
-fn environment_aliases() {
+fn environment_values() {
     use secrets::config::{
         KeePassConfig, MasterPasswordSource, config_path, keepass_master_password,
     };
@@ -83,27 +82,25 @@ fn environment_aliases() {
     let store = secrets::MemoryStore::default();
     let mut config = KeePassConfig::new("unused.kdbx");
     config.master_password = MasterPasswordSource::Env;
-    for (canonical, legacy, expected) in [
-        (None, Some("old"), "old"),
-        (Some("new"), Some("old"), "new"),
-        (Some(""), Some("old"), ""),
-    ] {
+    for value in [None, Some("configured"), Some("")] {
         let env: secrets::EnvLookup = Arc::new(move |name| match name {
-            "APP_KEEPASS_PASSWORD" | "APP_SECRETS_CONFIG" => canonical.map(str::to_owned),
-            "OLD_KEEPASS_PASSWORD" | "OLD_SECRETS_CONFIG" => legacy.map(str::to_owned),
+            "APP_KEEPASS_PASSWORD" | "APP_SECRETS_CONFIG" => value.map(str::to_owned),
             _ => None,
         });
-        if expected.is_empty() {
-            assert!(config_path(&env).ends_with("secrets.toml"));
-            assert!(keepass_master_password(&config, None, &env, &store).is_err());
-            continue;
+        match value.filter(|value| !value.is_empty()) {
+            Some(expected) => {
+                assert_eq!(config_path(&env), std::path::PathBuf::from(expected));
+                assert_eq!(
+                    keepass_master_password(&config, None, &env, &store)
+                        .unwrap()
+                        .expose(),
+                    expected
+                );
+            }
+            None => {
+                assert!(config_path(&env).ends_with("secrets.toml"));
+                assert!(keepass_master_password(&config, None, &env, &store).is_err());
+            }
         }
-        assert_eq!(config_path(&env), std::path::PathBuf::from(expected));
-        assert_eq!(
-            keepass_master_password(&config, None, &env, &store)
-                .unwrap()
-                .expose(),
-            expected
-        );
     }
 }

@@ -651,7 +651,7 @@ impl DataSourceStore for ProjectStore {
             .iter()
             .map(String::as_str)
             .chain([password_env().as_str()])
-            .any(|var| secrets::env_setting(&brand::INFO, var, &self.env).is_some());
+            .any(|var| secrets::env_setting(var, &self.env).is_some());
         !in_env && !self.has_password(project, &source.name)
     }
 
@@ -840,7 +840,7 @@ mod tests {
         std::fs::create_dir(root.path().join(".oxide")).unwrap();
         assert_eq!(
             profiles_path(root.path()),
-            root.path().join(".oxide/db-profiles.toml")
+            root.path().join(".oxshift/db-profiles.toml")
         );
         std::fs::create_dir(root.path().join(".oxshift")).unwrap();
         assert_eq!(

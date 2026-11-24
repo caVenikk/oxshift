@@ -167,7 +167,7 @@ mod tests {
     fn the_bundle_comes_before_the_cache() {
         let dir = tempfile::tempdir().unwrap();
         let app = dir.path().join("Pyoxide.app").join("Contents");
-        let exe = app.join("MacOS").join("pyoxide-ide");
+        let exe = app.join("MacOS").join("oxshift-python");
         let cache = dir.path().join("cache");
         let found = candidates(Some(&exe), Some(&cache));
         let mut expected = Vec::new();
@@ -191,7 +191,7 @@ mod tests {
     #[test]
     fn a_missing_helper_says_where_it_looked_and_what_to_run() {
         let dir = tempfile::tempdir().unwrap();
-        let searched = candidates(Some(&dir.path().join("pyoxide-ide")), Some(dir.path()));
+        let searched = candidates(Some(&dir.path().join("oxshift-python")), Some(dir.path()));
         let missing = Helper::locate_in(&searched).unwrap_err();
         let message = missing.to_string();
         assert!(message.starts_with(

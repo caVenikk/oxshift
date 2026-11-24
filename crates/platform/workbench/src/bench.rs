@@ -1,9 +1,9 @@
-//! Measurements run inside the application (`PYOXIDE_BENCH`, see
+//! Measurements run inside the application (`OXSHIFT_BENCH`, see
 //! replica/perf.md). Keystrokes are injected through the window's own key
 //! dispatch (the path a key event from the platform takes) at fixed
 //! intervals; frame timings come from the workbench's draw: the root view's
 //! render marks the start of a frame, a canvas painted last marks the end
-//! of its paint. Results are printed as `PYOXIDE <name> <json>` lines.
+//! of its paint. Results are printed as `OXSHIFT <name> <json>` lines.
 
 use std::cell::RefCell;
 use std::path::PathBuf;
@@ -184,7 +184,7 @@ async fn settle(window: WindowHandle<Workbench>, cx: &mut AsyncApp, limit: Durat
     false
 }
 
-/// Starts the measurement requested with `PYOXIDE_BENCH` (other than
+/// Starts the measurement requested with `OXSHIFT_BENCH` (other than
 /// start-up, which the first frame reports itself); quits when done.
 pub fn start(window: WindowHandle<Workbench>, cx: &mut App) {
     let Some(kind) = env::bench().cloned() else {
@@ -1045,7 +1045,7 @@ async fn completion(window: WindowHandle<Workbench>, latency: u64, cx: &mut Asyn
         });
         sleep(cx, Duration::from_millis(300)).await;
     }
-    // With `PYOXIDE_SHOT`: a picture of the popup.
+    // With `OXSHIFT_SHOT`: a picture of the popup.
     if let Some(path) = env::shot_path() {
         let _ = cx.update_window(window.into(), |_, window, cx| {
             window.dispatch_keystroke(dot.clone(), cx);

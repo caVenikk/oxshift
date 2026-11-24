@@ -7,7 +7,7 @@
 # after each rebuild. A fixed identity and a fixed identifier give every build
 # the same designated requirement; "Always Allow" once and the prompts stop.
 #
-#   scripts/sign-local.sh                     sign target/release/{oxshift-python,oxshift-db,oxshift} and installed aliases
+#   scripts/sign-local.sh                     sign target/release/{oxshift-python,oxshift-db,oxshift}
 #   scripts/sign-local.sh PATH...             sign these binaries (or .app bundles)
 #   scripts/sign-local.sh --setup             print the one-time commands that create the identity
 #   scripts/sign-local.sh --check PATH...     print the designated requirement of binaries
@@ -22,8 +22,8 @@
 # Release builds are signed with a Developer ID instead: docs/code-signing.md.
 set -euo pipefail
 
-IDENTITY="${OXSHIFT_SIGN_IDENTITY-${PYOXIDE_SIGN_IDENTITY:-Pyoxide Local Dev}}"
-KEYCHAIN="${OXSHIFT_SIGN_KEYCHAIN-${PYOXIDE_SIGN_KEYCHAIN:-$HOME/Library/Keychains/pyoxide-signing.keychain-db}}"
+IDENTITY="${OXSHIFT_SIGN_IDENTITY:-Pyoxide Local Dev}"
+KEYCHAIN="${OXSHIFT_SIGN_KEYCHAIN:-$HOME/Library/Keychains/pyoxide-signing.keychain-db}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 if [ "$(uname -s)" != "Darwin" ]; then
@@ -124,7 +124,7 @@ if ! identity_present; then
 fi
 
 if [ "$#" -eq 0 ]; then
-    set -- "$ROOT"/target/release/{oxshift-python,oxshift-db,oxshift,pyoxide-ide,pyoxide-db,pyoxide}
+    set -- "$ROOT"/target/release/{oxshift-python,oxshift-db,oxshift}
 fi
 for path in "$@"; do
     sign_one "$path"

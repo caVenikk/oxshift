@@ -6,7 +6,7 @@
 //! decimal) on the server, so no test table is needed, and reports the
 //! median of `runs` (default 5): connect, first page of 500, full fetch and
 //! rows per second, plus metadata calls. Profiles and passwords are resolved
-//! as in `pyoxide-db`.
+//! as in `oxshift-db`.
 
 use std::sync::Arc;
 use std::time::Instant;

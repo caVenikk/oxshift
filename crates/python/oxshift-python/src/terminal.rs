@@ -19,7 +19,7 @@
 //!   reference); conda environments are not activated yet.
 //!
 //! "Activate virtualenv" is a shared project setting,
-//! `[python.terminal] activate-virtualenv` in `.oxide/project.toml`, on by
+//! `[python.terminal] activate-virtualenv` in `.oxshift/project.toml`, on by
 //! default. While the table does not exist the reference's setting is
 //! imported once from `.idea/python-terminal.xml` (component
 //! `PyVirtualEnvTerminalCustomizer`, option `virtualEnvActivate`); `.idea`
@@ -36,7 +36,7 @@ use workbench::{LinkFilter, LinkFilters, TerminalHook, TerminalProvider};
 
 use crate::interpreter;
 
-/// The table of the Python terminal settings in `.oxide/project.toml`.
+/// The table of the Python terminal settings in `.oxshift/project.toml`.
 pub const SETTINGS_TABLE: &str = "python.terminal";
 /// "Activate virtualenv".
 pub const ACTIVATE_KEY: &str = "activate-virtualenv";

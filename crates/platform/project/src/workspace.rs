@@ -17,7 +17,7 @@
 //! no language: tables and keys are the callers' (a product uses its own
 //! table, `[python]` for the Python product).
 //!
-//! When Pyoxide creates the file it also writes `.oxide/.gitignore`
+//! When Pyoxide creates the file it also writes `.oxshift/.gitignore`
 //! ignoring it, as the reference IDE writes `.idea/.gitignore` for
 //! `workspace.xml`, but only when that `.gitignore` does not exist: a file
 //! that is there is never rewritten.
@@ -47,7 +47,7 @@ fn header() -> String {
     )
 }
 
-/// What `.oxide/.gitignore` holds when Pyoxide creates it: the reference
+/// What `.oxshift/.gitignore` holds when Pyoxide creates it: the reference
 /// IDE's group comment and the entry relative to the folder.
 pub const GITIGNORE_TEXT: &str = "# Default ignored files\n/workspace.toml\n";
 
@@ -72,7 +72,7 @@ pub fn load_value(root: &Path, table: &str, key: &str) -> Result<Option<String>,
 
 /// Sets `key` in `[table]` (a dotted path) to `value`, or removes it with `None`, keeping
 /// everything else in the file. Creates the file only when there is a value
-/// to store, together with `.oxide/.gitignore` unless that exists. A file
+/// to store, together with `.oxshift/.gitignore` unless that exists. A file
 /// of a newer version is not rewritten. Returns whether the file was
 /// written.
 pub fn save_value(
@@ -252,7 +252,7 @@ pub fn load_table(root: &Path, table: &str) -> Result<Option<toml::Table>, Store
 
 /// Replaces the table under the top-level key `table` with `value`, or
 /// removes it with `None`, keeping everything else in the file, under the
-/// rules of [`save_value`]: the file (and `.oxide/.gitignore`) is created
+/// rules of [`save_value`]: the file (and `.oxshift/.gitignore`) is created
 /// only when there is something to store, and a file of a newer version is
 /// not rewritten. Returns whether the file was written.
 pub fn save_table(
@@ -306,7 +306,7 @@ pub fn save_table(
     Ok(true)
 }
 
-/// Writes `.oxide/.gitignore` unless it exists (any file there, even an
+/// Writes `.oxshift/.gitignore` unless it exists (any file there, even an
 /// empty one, is the person's and stays as it is).
 fn write_gitignore(root: &Path) -> Result<(), StoreError> {
     let path = crate::store::directory(root).join(GITIGNORE_FILE);

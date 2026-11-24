@@ -42,7 +42,7 @@ def running():
 
 def make_files(work: Path):
     # The generated test projects: a 200-line file, a 100,000-line file and a
-    # 10 MB file (also used by pycharm_typing.py and pyoxide_bench.py).
+    # 10 MB file (also used by pycharm_typing.py and oxshift_bench.py).
     small = work / "projects/small"
     small.mkdir(parents=True, exist_ok=True)
     (small / "main.py").write_text("".join(

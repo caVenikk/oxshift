@@ -10,9 +10,9 @@
 #     python3 scripts/fetch-debugpy.py --print-dest     # where the app cache folder is
 #
 # The helper lives under helpers/debugpy-1.8.21 in the IDE cache.
-# OXSHIFT_CACHE_DIR overrides its location (legacy name: PYOXIDE_CACHE_DIR).
-# In the system cache the IDE uses oxshift-python, or an existing pyoxide
-# directory. The IDE checks its own bundle before looking in the cache.
+# OXSHIFT_CACHE_DIR overrides its location.
+# In the system cache the IDE uses oxshift-python. The IDE checks its own
+# bundle before looking in the cache.
 #
 # The folder is never committed. Licences: debugpy is MIT; its vendored
 # pydevd is EPL-2.0 and other vendored parts are listed in
@@ -48,7 +48,7 @@ MARKERS = (f"{DIST_INFO}/RECORD", "debugpy/adapter/__main__.py")
 
 def cache_dir() -> Path:
     """The application cache folder, as the IDE computes it."""
-    override = os.environ.get("OXSHIFT_CACHE_DIR", os.environ.get("PYOXIDE_CACHE_DIR"))
+    override = os.environ.get("OXSHIFT_CACHE_DIR")
     if override:
         return Path(override)
     if sys.platform == "win32":
@@ -62,13 +62,6 @@ def cache_dir() -> Path:
         xdg = os.environ.get("XDG_CACHE_HOME")
         base = Path(xdg) if xdg and Path(xdg).is_absolute() else Path.home() / ".cache"
 
-    for name in ("oxshift-python", "pyoxide"):
-        path = base / name
-        try:
-            path.lstat()
-        except FileNotFoundError:
-            continue
-        return path
     return base / "oxshift-python"
 
 

@@ -259,10 +259,7 @@ fn the_unmapped_actions_of_the_vs_code_keymaps_are_expected(_cx: &mut TestAppCon
         actual.sort();
         let file = expectation_file(name);
         let text = actual.join("\n") + "\n";
-        if std::env::var_os("OXSHIFT_BLESS")
-            .or_else(|| std::env::var_os("PYOXIDE_BLESS"))
-            .is_some()
-        {
+        if std::env::var_os("OXSHIFT_BLESS").is_some() {
             std::fs::create_dir_all(file.parent().unwrap()).unwrap();
             std::fs::write(&file, &text).unwrap();
         }

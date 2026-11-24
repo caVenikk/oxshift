@@ -17,7 +17,7 @@ description: >-
 - Services here: LSP client + server process management, DAP client (debugpy), DB drivers (`db-oracle-thin`, `db-oracle-odpi`, Postgres, SQLite) behind `db-core`, VCS (git), Docker (bollard), terminal/PTY, settings import, keychain for secrets.
 - Integrations section = external tools (ruff, ty/basedpyright/pyrefly, debugpy, uv/poetry/conda): detect, version-check, install guidance, graceful degradation when missing.
 - Security checklist: secrets only via keychain/env, redacted Debug, no telemetry by default, plugins sandboxed (WASM), no network calls the user did not trigger, parser inputs fuzzed.
-- Keep service code behind traits so the UI and the CLI (`pyoxide-db`) both use it.
+- Keep service code behind traits so the UI and the CLI (`oxshift-db`) both use it.
 
 Reads `replica/architecture.md`. Writes migrations and server code, and keeps
 `replica/backend.md` (checklist below) up to date.

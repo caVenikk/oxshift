@@ -2,37 +2,37 @@
 //!
 //! | variable | effect |
 //! |---|---|
-//! | `PYOXIDE_BACKGROUND=1` | open windows without activating the app or taking focus; the main window is drawn as the active one (`inactive`: as it is, the project colour dimmed) |
-//! | `PYOXIDE_THEME=light` | use the light theme in this run (`dark`, or a theme id), whatever the settings store, until a theme is chosen in the IDE |
-//! | `PYOXIDE_SHOT=<file.png>` | save an image of the main window after it settled, then quit (macOS) |
-//! | `PYOXIDE_WINDOW_SIZE=<w>x<h>` | open the main window with this content size in points, below the usual minimum too (pictures at several widths) |
-//! | `PYOXIDE_RUN=<json>` | run UI commands once the window settled, e.g. `[["find.search", {"text": "def"}]]` (before `PYOXIDE_SHOT`); `workbench.simulate-mouse` moves the mouse or clicks for hover states |
-//! | `PYOXIDE_FORCE_FRAMES=<n>` | with `PYOXIDE_RUN`: after the commands draw `n` frames at 60 Hz (a window covered by others draws nothing), then keep running or take `PYOXIDE_SHOT`; for memory measurements of a window in the background |
-//! | `PYOXIDE_BENCH=startup` | print the first-frame marker and quit |
-//! | `PYOXIDE_BENCH=typing` | type 3 x 200 keys at line 50,000 of the open file, print key-to-frame times, quit |
-//! | `PYOXIDE_BENCH_MARKS=<n>` | with `typing`: show `n` problems spread over the file first (underlines, error stripe, inspection widget) |
-//! | `PYOXIDE_BENCH=open:<file>` | open a file, print the time to its first painted text and to highlighting, scroll it, quit |
-//! | `PYOXIDE_BENCH=find:<query>` | type a query into the find bar of the open file char by char (5 runs), print key-to-highlight times, quit |
-//! | `PYOXIDE_BENCH=find-in-files:<query>` | search the open project for a query with Find in Files (5 runs), print the times to the first row and to the end of the search, quit |
-//! | `PYOXIDE_BENCH=go-to-file:<query>` | type a query into Go to File char by char (5 runs), print the index build time and key-to-rows times, quit |
-//! | `PYOXIDE_BENCH=completion[:<ms>]` | with a service that answers after `ms` (50) with 200 items, type `.` 30 times at the end of the open file, print key-to-popup and answer-to-popup times (with `PYOXIDE_SHOT`: a picture of the popup), quit |
-//! | `PYOXIDE_BENCH=terminal-typing` | type 3 x 200 keys into `cat` in the Terminal tool window, print key-to-frame times of the echo, quit |
-//! | `PYOXIDE_BENCH=terminal-flood[:<MiB>]` | `cat` a generated file (64 MiB) in the Terminal tool window, print the time to its last line and the frames, quit |
-//! | `PYOXIDE_BENCH=terminal-scroll` | scroll the Terminal tool window's scrollback with the wheel for 6 s, print frame times and gaps, quit |
-//! | `PYOXIDE_BENCH_FLOOD=1` | with `typing`: a terminal prints without pause while the editor is typed in |
-//! | `PYOXIDE_BENCH=cursor` | move the mouse (synthetic events) over text, gutter, splitter and toolbar, print the system cursor shown, quit |
-//! | `PYOXIDE_DEBUG_CURSOR=1` | print the system cursor after every mouse move |
-//! | `PYOXIDE_NATIVE_POINTER=0` | do not set the pointer shape on every mouse move (leave it to GPUI) |
-//! | `PYOXIDE_CONFIG_DIR=<dir>` | keep the application settings (`settings.toml`) and other settings that last across sessions (`find.toml`, `settings-window.toml`) in this folder instead of the user's configuration folder |
-//! | `PYOXIDE_FIRST_RUN=1` | show the first-run window before the main window even when the settings exist (`0`: never); unset, it shows at a first start (no `settings.toml`) except in runs with `PYOXIDE_RUN`, `PYOXIDE_SHOT` or `PYOXIDE_BENCH`. Commands and the picture of such a run go to the first-run window while it is open |
-//! | `PYOXIDE_REFERENCE_CONFIG=<dir>` | look for the reference IDE's configuration folders (`PyCharm2026.2`, ...) in this folder instead of the platform's (`JetBrains` in the user's configuration folder) |
+//! | `OXSHIFT_BACKGROUND=1` | open windows without activating the app or taking focus; the main window is drawn as the active one (`inactive`: as it is, the project colour dimmed) |
+//! | `OXSHIFT_THEME=light` | use the light theme in this run (`dark`, or a theme id), whatever the settings store, until a theme is chosen in the IDE |
+//! | `OXSHIFT_SHOT=<file.png>` | save an image of the main window after it settled, then quit (macOS) |
+//! | `OXSHIFT_WINDOW_SIZE=<w>x<h>` | open the main window with this content size in points, below the usual minimum too (pictures at several widths) |
+//! | `OXSHIFT_RUN=<json>` | run UI commands once the window settled, e.g. `[["find.search", {"text": "def"}]]` (before `OXSHIFT_SHOT`); `workbench.simulate-mouse` moves the mouse or clicks for hover states |
+//! | `OXSHIFT_FORCE_FRAMES=<n>` | with `OXSHIFT_RUN`: after the commands draw `n` frames at 60 Hz (a window covered by others draws nothing), then keep running or take `OXSHIFT_SHOT`; for memory measurements of a window in the background |
+//! | `OXSHIFT_BENCH=startup` | print the first-frame marker and quit |
+//! | `OXSHIFT_BENCH=typing` | type 3 x 200 keys at line 50,000 of the open file, print key-to-frame times, quit |
+//! | `OXSHIFT_BENCH_MARKS=<n>` | with `typing`: show `n` problems spread over the file first (underlines, error stripe, inspection widget) |
+//! | `OXSHIFT_BENCH=open:<file>` | open a file, print the time to its first painted text and to highlighting, scroll it, quit |
+//! | `OXSHIFT_BENCH=find:<query>` | type a query into the find bar of the open file char by char (5 runs), print key-to-highlight times, quit |
+//! | `OXSHIFT_BENCH=find-in-files:<query>` | search the open project for a query with Find in Files (5 runs), print the times to the first row and to the end of the search, quit |
+//! | `OXSHIFT_BENCH=go-to-file:<query>` | type a query into Go to File char by char (5 runs), print the index build time and key-to-rows times, quit |
+//! | `OXSHIFT_BENCH=completion[:<ms>]` | with a service that answers after `ms` (50) with 200 items, type `.` 30 times at the end of the open file, print key-to-popup and answer-to-popup times (with `OXSHIFT_SHOT`: a picture of the popup), quit |
+//! | `OXSHIFT_BENCH=terminal-typing` | type 3 x 200 keys into `cat` in the Terminal tool window, print key-to-frame times of the echo, quit |
+//! | `OXSHIFT_BENCH=terminal-flood[:<MiB>]` | `cat` a generated file (64 MiB) in the Terminal tool window, print the time to its last line and the frames, quit |
+//! | `OXSHIFT_BENCH=terminal-scroll` | scroll the Terminal tool window's scrollback with the wheel for 6 s, print frame times and gaps, quit |
+//! | `OXSHIFT_BENCH_FLOOD=1` | with `typing`: a terminal prints without pause while the editor is typed in |
+//! | `OXSHIFT_BENCH=cursor` | move the mouse (synthetic events) over text, gutter, splitter and toolbar, print the system cursor shown, quit |
+//! | `OXSHIFT_DEBUG_CURSOR=1` | print the system cursor after every mouse move |
+//! | `OXSHIFT_NATIVE_POINTER=0` | do not set the pointer shape on every mouse move (leave it to GPUI) |
+//! | `OXSHIFT_CONFIG_DIR=<dir>` | keep the application settings (`settings.toml`) and other settings that last across sessions (`find.toml`, `settings-window.toml`) in this folder instead of the user's configuration folder |
+//! | `OXSHIFT_FIRST_RUN=1` | show the first-run window before the main window even when the settings exist (`0`: never); unset, it shows at a first start (no `settings.toml`) except in runs with `OXSHIFT_RUN`, `OXSHIFT_SHOT` or `OXSHIFT_BENCH`. Commands and the picture of such a run go to the first-run window while it is open |
+//! | `OXSHIFT_REFERENCE_CONFIG=<dir>` | look for the reference IDE's configuration folders (`PyCharm2026.2`, ...) in this folder instead of the platform's (`JetBrains` in the user's configuration folder) |
 
 use std::sync::OnceLock;
 use std::time::Instant;
 
 use themes::ThemeKind;
 
-/// Open windows in the background (`PYOXIDE_BACKGROUND=1` or `inactive`):
+/// Open windows in the background (`OXSHIFT_BACKGROUND=1` or `inactive`):
 /// shown, but the app is not activated and the window does not become key,
 /// so the person's frontmost application keeps the keyboard.
 pub fn background() -> bool {
@@ -44,13 +44,13 @@ pub fn background() -> bool {
 
 /// Whether the window's frame is drawn as the active window's (the project
 /// colour is dimmed in an inactive one). A window opened with
-/// `PYOXIDE_BACKGROUND=1` stands for the window in front and is drawn
-/// active; `PYOXIDE_BACKGROUND=inactive` draws it as it is.
+/// `OXSHIFT_BACKGROUND=1` stands for the window in front and is drawn
+/// active; `OXSHIFT_BACKGROUND=inactive` draws it as it is.
 pub fn drawn_active(window: &gpui::Window) -> bool {
     window.is_window_active() || app_info::var("BACKGROUND").as_deref() == Some("1")
 }
 
-/// Theme kind requested with `PYOXIDE_THEME` (the theme drawn before
+/// Theme kind requested with `OXSHIFT_THEME` (the theme drawn before
 /// the settings are read).
 pub fn theme_kind() -> ThemeKind {
     match app_info::var("THEME").as_deref() {
@@ -59,22 +59,22 @@ pub fn theme_kind() -> ThemeKind {
     }
 }
 
-/// The theme `PYOXIDE_THEME` pins for this run: `light`, `dark` or a
+/// The theme `OXSHIFT_THEME` pins for this run: `light`, `dark` or a
 /// theme id.
 pub fn theme_override() -> Option<String> {
     app_info::var("THEME").filter(|t| !t.is_empty())
 }
 
-/// `PYOXIDE_DEBUG_CURSOR=1`: print the system cursor after every mouse move.
+/// `OXSHIFT_DEBUG_CURSOR=1`: print the system cursor after every mouse move.
 pub fn debug_cursor() -> bool {
     static ON: OnceLock<bool> = OnceLock::new();
     *ON.get_or_init(|| app_info::var_os("DEBUG_CURSOR").is_some_and(|v| v == "1"))
 }
 
 /// Whether the first-run window shows before the main window
-/// (`PYOXIDE_FIRST_RUN`): `1` always, `0` never; unset at a first start
-/// (`settings_exist` false) unless the run is driven by `PYOXIDE_RUN`,
-/// `PYOXIDE_SHOT` or `PYOXIDE_BENCH`.
+/// (`OXSHIFT_FIRST_RUN`): `1` always, `0` never; unset at a first start
+/// (`settings_exist` false) unless the run is driven by `OXSHIFT_RUN`,
+/// `OXSHIFT_SHOT` or `OXSHIFT_BENCH`.
 pub fn first_run(settings_exist: bool) -> bool {
     let scripted = ["RUN", "SHOT", "BENCH"]
         .iter()
@@ -96,9 +96,9 @@ fn first_run_for(asked: Option<&str>, scripted: bool, settings_exist: bool) -> b
 
 /// Whether a start with settings that were stored before takes the
 /// reference's settings once, without asking (`settings_ui::first_run::
-/// adopt_existing`): not with `PYOXIDE_FIRST_RUN=0`, and not in a scripted
-/// run (`PYOXIDE_RUN`, `PYOXIDE_SHOT`, `PYOXIDE_BENCH`) unless it names the
-/// folders to import from (`PYOXIDE_REFERENCE_CONFIG`), so that a scripted
+/// adopt_existing`): not with `OXSHIFT_FIRST_RUN=0`, and not in a scripted
+/// run (`OXSHIFT_RUN`, `OXSHIFT_SHOT`, `OXSHIFT_BENCH`) unless it names the
+/// folders to import from (`OXSHIFT_REFERENCE_CONFIG`), so that a scripted
 /// run never reads the machine's own.
 pub fn adopt_existing(settings_exist: bool, scripted: bool) -> bool {
     adopt_existing_for(
@@ -118,7 +118,7 @@ fn adopt_existing_for(
     settings_exist && asked != Some("0") && (!scripted || reference_named)
 }
 
-/// `PYOXIDE_REFERENCE_CONFIG`: the folder of the reference IDE's
+/// `OXSHIFT_REFERENCE_CONFIG`: the folder of the reference IDE's
 /// configuration folders to look in instead of the platform's.
 pub fn reference_config_root() -> Option<std::path::PathBuf> {
     app_info::var_os("REFERENCE_CONFIG")
@@ -126,12 +126,12 @@ pub fn reference_config_root() -> Option<std::path::PathBuf> {
         .map(Into::into)
 }
 
-/// `PYOXIDE_SHOT`: where to save a screenshot of the main window.
+/// `OXSHIFT_SHOT`: where to save a screenshot of the main window.
 pub fn shot_path() -> Option<std::path::PathBuf> {
     app_info::var_os("SHOT").map(Into::into)
 }
 
-/// `PYOXIDE_WINDOW_SIZE=<width>x<height>`: the main window's content size
+/// `OXSHIFT_WINDOW_SIZE=<width>x<height>`: the main window's content size
 /// in points; `None` when unset or not two numbers.
 pub fn window_size() -> Option<(f32, f32)> {
     parse_window_size(&app_info::var("WINDOW_SIZE")?)
@@ -143,7 +143,7 @@ fn parse_window_size(text: &str) -> Option<(f32, f32)> {
     (w > 0.0 && h > 0.0).then_some((w, h))
 }
 
-/// `PYOXIDE_RUN`: UI commands with their arguments to run once the window
+/// `OXSHIFT_RUN`: UI commands with their arguments to run once the window
 /// settled (a JSON list of `[id, args]` pairs); `Err` when it does not parse.
 pub fn run_commands() -> Option<Result<Vec<(String, serde_json::Value)>, String>> {
     let text = app_info::var("RUN")?;
@@ -153,10 +153,10 @@ pub fn run_commands() -> Option<Result<Vec<(String, serde_json::Value)>, String>
     )
 }
 
-/// The measurement requested with `PYOXIDE_BENCH` (see `bench.rs`).
+/// The measurement requested with `OXSHIFT_BENCH` (see `bench.rs`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Bench {
-    /// Print `PYOXIDE first_frame` and quit.
+    /// Print `OXSHIFT first_frame` and quit.
     Startup,
     /// Typing latency in the open file.
     Typing,
@@ -251,7 +251,7 @@ pub fn since_main_ms() -> f64 {
 pub fn marker(text: &str) {
     use std::io::Write as _;
     let mut out = std::io::stdout().lock();
-    let _ = writeln!(out, "{} {text}", app_info::get().measurement_prefix);
+    let _ = writeln!(out, "{} {text}", app_info::env_prefix());
     let _ = out.flush();
 }
 

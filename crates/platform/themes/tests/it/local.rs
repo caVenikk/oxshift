@@ -24,7 +24,6 @@ use themes::{Registry, Rgba, ThemeFile, UiRole};
 
 fn local_root() -> Option<PathBuf> {
     let root = std::env::var_os("OXSHIFT_THEMES_LOCAL")
-        .or_else(|| std::env::var_os("PYOXIDE_THEMES_LOCAL"))
         .map(PathBuf::from)
         .unwrap_or_else(|| {
             Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../tests/fixtures/themes-local")
@@ -103,10 +102,7 @@ fn every_local_theme_file_imports() {
 #[test]
 #[ignore = "needs a theme plugin archive in OXSHIFT_THEME_JAR"]
 fn the_background_colour_of_a_local_archive_is_the_editor_background() {
-    let Some(jar) = std::env::var_os("OXSHIFT_THEME_JAR")
-        .or_else(|| std::env::var_os("PYOXIDE_THEME_JAR"))
-        .map(PathBuf::from)
-    else {
+    let Some(jar) = std::env::var_os("OXSHIFT_THEME_JAR").map(PathBuf::from) else {
         println!("OXSHIFT_THEME_JAR is not set, nothing to do");
         return;
     };

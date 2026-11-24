@@ -51,16 +51,15 @@ use crate::roots::{DetectRoots, Roots, detected_roots};
 pub fn store_dir() -> &'static str {
     app_info::project_dir()
 }
-/// The complete project store selected for this root. Reading never creates it.
-/// The current folder wins; an existing legacy folder is used in place.
+/// The project store path. Resolving it never probes or creates directories.
 pub fn directory(root: &Path) -> PathBuf {
     app_info::get().project_storage_dir(root)
 }
 
-/// Whether a name is either generation of the internal project folder.
+/// Whether a name is the internal project folder.
 /// Purely lexical so tree walks and file watcher batches perform no extra I/O.
 pub fn is_store_dir(name: &str) -> bool {
-    name == store_dir() || app_info::get().legacy_project_dir == Some(name)
+    name == store_dir()
 }
 
 /// The shared project settings in [`store_dir`].

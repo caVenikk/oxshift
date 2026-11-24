@@ -113,25 +113,13 @@ pub(crate) fn trusted_binaries() -> Vec<PathBuf> {
     trusted_siblings(&exe, app_info::binaries())
 }
 
-// Keep one identity per program even when its current and legacy binaries
-// are both installed. The running executable represents its own program.
-fn trusted_siblings(exe: &Path, programs: &[&[&str]]) -> Vec<PathBuf> {
+// The running executable represents itself; include existing shipped siblings.
+fn trusted_siblings(exe: &Path, programs: &[&str]) -> Vec<PathBuf> {
     let mut list = vec![exe.to_owned()];
-    let Some(dir) = exe.parent() else {
-        return list;
-    };
-    for names in programs {
-        if names
-            .iter()
-            .any(|name| exe.file_name() == Some(name.as_ref()))
-        {
-            continue;
-        }
-        if let Some(path) = names
-            .iter()
-            .map(|name| dir.join(name))
-            .find(|p| p.is_file())
-        {
+    let Some(dir) = exe.parent() else { return list };
+    for name in programs {
+        let path = dir.join(name);
+        if path != exe && path.is_file() {
             list.push(path);
         }
     }
@@ -505,23 +493,16 @@ mod tests {
     }
 
     #[test]
-    fn a_legacy_executable_and_its_new_name_share_one_acl_slot() {
+    fn trusted_siblings_include_only_shipped_program_names() {
         let temp = tempfile::tempdir().unwrap();
         let dir = temp.path();
-        for name in ["editor", "old-editor", "db", "old-db", "old-cli"] {
+        for name in ["editor", "db", "unrelated"] {
             std::fs::write(dir.join(name), []).unwrap();
         }
-        let roles: &[&[&str]] = &[
-            &["editor", "old-editor"],
-            &["db", "old-db"],
-            &["cli", "old-cli"],
-        ];
-        for current in ["editor", "old-editor"] {
-            assert_eq!(
-                trusted_siblings(&dir.join(current), roles),
-                [dir.join(current), dir.join("db"), dir.join("old-cli")]
-            );
-        }
+        assert_eq!(
+            trusted_siblings(&dir.join("editor"), &["editor", "db", "cli"]),
+            [dir.join("editor"), dir.join("db")]
+        );
     }
 
     #[test]

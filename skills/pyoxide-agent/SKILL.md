@@ -31,7 +31,7 @@ You work on one GitHub issue of Pyoxide IDE (repo `caVenikk/oxshift`, a Rust/GPU
 - Do not edit `replica/features/`, `README.md`, `replica/plan.md` (the lead does). Never commit generated progress output: the report is published from `main` (ADR 0020).
 
 ## GUI runs and visual parity
-- Only `PYOXIDE_BACKGROUND=1` runs (non-activating, behind other windows) with `PYOXIDE_SHOT=<png>` / `PYOXIDE_RUN=<json commands>`. Never a foreground window, never `osascript`/System Events. No `PYOXIDE_BENCH` runs unless the lead says the machine is free (bench windows stay on top of everything). Close every process you start.
+- Only `OXSHIFT_BACKGROUND=1` runs (non-activating, behind other windows) with `OXSHIFT_SHOT=<png>` / `OXSHIFT_RUN=<json commands>`. Never a foreground window, never `osascript`/System Events. No `OXSHIFT_BENCH` runs unless the lead says the machine is free (bench windows stay on top of everything). Close every process you start.
 - Visual parity is part of done: release build, screenshots of every new window/popup state, compared with the reference screenshots (kept locally, never committed, see `docs/clean-room.md`) or the sources; list remaining differences.
 - Check the real app path once (release build, real entry points), not only headless tests.
 

@@ -22,9 +22,9 @@ use crate::store::DataSourceStore;
 /// Where a setting is kept.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Kind {
-    /// `.oxide/project.toml`, meant to be committed.
+    /// `.oxshift/project.toml`, meant to be committed.
     Shared,
-    /// `.oxide/workspace.toml`, this person only.
+    /// `.oxshift/workspace.toml`, this person only.
     Personal,
 }
 

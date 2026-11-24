@@ -195,15 +195,13 @@ fn environment(d: &mut Diag) {
     ];
     let set: Vec<String> = vars
         .iter()
-        .map(
-            |v| match app_info::get().lookup_env(v, |name| std::env::var_os(name)) {
-                Some((name, value)) => {
-                    let state = if value.is_empty() { "empty" } else { "set" };
-                    format!("{name} {state}")
-                }
-                None => format!("{v} unset"),
-            },
-        )
+        .map(|v| match std::env::var_os(v).map(|value| (v, value)) {
+            Some((name, value)) => {
+                let state = if value.is_empty() { "empty" } else { "set" };
+                format!("{name} {state}")
+            }
+            None => format!("{v} unset"),
+        })
         .collect();
     d.ok(
         "environment",

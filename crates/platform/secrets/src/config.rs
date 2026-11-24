@@ -1,7 +1,7 @@
 //! IDE-wide secret settings: which store keeps passwords and, for a
 //! KeePass database, where its master password comes from.
 //!
-//! File: `$PYOXIDE_SECRETS_CONFIG`, else `<config dir>/pyoxide/secrets.toml`.
+//! File: `$OXSHIFT_SECRETS_CONFIG`, else `<config dir>/oxshift-python/secrets.toml`.
 //!
 //! ```toml
 //! store = "keepass"              # keychain (default) | keepass | memory
@@ -184,7 +184,7 @@ impl SecretsConfig {
 /// Settings file location: the `SECRETS_CONFIG` environment variable of the
 /// product, else `secrets.toml` in the active OS profile directory.
 pub fn config_path(env: &EnvLookup) -> PathBuf {
-    if let Some((_, p)) = crate::env_setting(app_info::get(), &config_env(), env) {
+    if let Some((_, p)) = crate::env_setting(&config_env(), env) {
         return PathBuf::from(p);
     }
     app_info::default_config_dir_or_local().join("secrets.toml")
@@ -288,18 +288,16 @@ pub fn keepass_master_password(
         .ok_or_else(|| settings_err(SecretErrorKind::Locked, "no master password entered"))
     };
     match kp.master_password {
-        MasterPasswordSource::Env => {
-            match crate::env_setting(app_info::get(), &keepass_master_env(), env) {
-                Some((_, v)) => Ok(Secret::new(v)),
-                None => Err(settings_err(
-                    SecretErrorKind::Locked,
-                    format!(
-                        "set {} to the KeePass master password",
-                        keepass_master_env()
-                    ),
-                )),
-            }
-        }
+        MasterPasswordSource::Env => match crate::env_setting(&keepass_master_env(), env) {
+            Some((_, v)) => Ok(Secret::new(v)),
+            None => Err(settings_err(
+                SecretErrorKind::Locked,
+                format!(
+                    "set {} to the KeePass master password",
+                    keepass_master_env()
+                ),
+            )),
+        },
         MasterPasswordSource::Prompt => prompt("no interactive prompt available"),
         MasterPasswordSource::Keychain => {
             match os_store.get(&keepass_master_service(), &kp.master_password_account()) {

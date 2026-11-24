@@ -375,7 +375,7 @@ pub fn init(cx: &mut App, product: &Product) {
 pub fn window_options(cx: &App, product: &Product) -> WindowOptions {
     let (width, height) = env::window_size().unwrap_or(WINDOW_SIZE);
     let content = size(px(width), px(height));
-    // Smaller still when `PYOXIDE_WINDOW_SIZE` asks for it.
+    // Smaller still when `OXSHIFT_WINDOW_SIZE` asks for it.
     let min = crate::layout::window_min_size(cx);
     let min_size = size(min.width.min(content.width), min.height.min(content.height));
     let mut bounds = Bounds::centered(None, content, cx);
@@ -462,7 +462,7 @@ pub fn run(product: Product, paths: Vec<std::path::PathBuf>) {
             settings_ui::store::load(cx, file);
         }
         // The imported themes and the theme stored, or the one
-        // `PYOXIDE_THEME` asks for in this run.
+        // `OXSHIFT_THEME` asks for in this run.
         settings_ui::theme_switch::load(cx, ::settings::themes_dir(), env::theme_override());
         // The imported keymaps and the keymap stored.
         crate::keymap::active::load(cx, ::settings::keymaps_dir());
@@ -502,7 +502,7 @@ pub fn run(product: Product, paths: Vec<std::path::PathBuf>) {
             }
         })
         .detach();
-        // `PYOXIDE_NATIVE_POINTER=0` leaves the pointer to GPUI alone
+        // `OXSHIFT_NATIVE_POINTER=0` leaves the pointer to GPUI alone
         // (diagnostics, see ui::pointer).
         if app_info::var_os("NATIVE_POINTER").is_none_or(|v| v != "0") {
             ui::pointer::enable_native();
@@ -543,7 +543,7 @@ pub fn run(product: Product, paths: Vec<std::path::PathBuf>) {
 }
 
 /// Opens the main window with `paths`, quits with its last window, runs
-/// `PYOXIDE_RUN` and `PYOXIDE_SHOT` there, shows the balloon of an import
+/// `OXSHIFT_RUN` and `OXSHIFT_SHOT` there, shows the balloon of an import
 /// the first-run window made, and lets areas that came after an earlier
 /// import take their part of it (`settings_ui::first_run::pick_up`).
 fn open_main(
@@ -600,7 +600,7 @@ fn open_main(
     }
 }
 
-/// `PYOXIDE_RUN` and `PYOXIDE_SHOT` of a run that shows the first-run
+/// `OXSHIFT_RUN` and `OXSHIFT_SHOT` of a run that shows the first-run
 /// window: the commands run in it; the picture is of it while it is open
 /// (its popup next to it, `<name>-popup.png`), else of the main window
 /// that followed it. Then the application quits.
@@ -717,7 +717,7 @@ fn draw_scripted_windows(cx: &mut gpui::AsyncApp) {
     }
 }
 
-/// `PYOXIDE_RUN` and `PYOXIDE_SHOT`: wait until the window is on screen and
+/// `OXSHIFT_RUN` and `OXSHIFT_SHOT`: wait until the window is on screen and
 /// its files are open, run the commands, then save the window's image and
 /// quit.
 fn run_commands_and_shot(
@@ -773,7 +773,7 @@ fn run_commands_and_shot(
                     .await;
             }
         }
-        // `PYOXIDE_FORCE_FRAMES=<n>`: draw `n` frames at 60 Hz after the
+        // `OXSHIFT_FORCE_FRAMES=<n>`: draw `n` frames at 60 Hz after the
         // commands, as an uncovered window would (a window behind others
         // draws nothing, so memory measurements would miss the painting).
         let frames = app_info::var("FORCE_FRAMES")

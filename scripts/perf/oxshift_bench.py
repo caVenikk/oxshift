@@ -14,7 +14,7 @@
 # 50,000 of a generated file of 52,000 long lines (120 to 520 chars).
 #
 #     cargo build --release -p oxshift-python
-#     python3 scripts/perf/pyoxide_bench.py --work <empty dir> [--runs 3] [--marks 1000]
+#     python3 scripts/perf/oxshift_bench.py --work <empty dir> [--runs 3] [--marks 1000]
 #         [--only completion --latency 50] [--soft-wraps]
 import argparse, json, os, statistics, subprocess, sys
 from pathlib import Path
@@ -48,21 +48,17 @@ def long_lines(work: Path) -> Path:
 
 
 def run(binary: Path, args, bench: str, timeout: int, marks: int = 0):
-    # --binary also accepts a pre-rename IDE when comparing revisions.
-    env = dict(os.environ)
-    for prefix in ("OXSHIFT", "PYOXIDE"):
-        env[f"{prefix}_BACKGROUND"] = "1"
-        env[f"{prefix}_BENCH"] = bench
-        env[f"{prefix}_BENCH_MARKS"] = str(marks)
-        if CONFIG is not None:
-            env[f"{prefix}_CONFIG_DIR"] = str(CONFIG)
+    env = {**os.environ, "OXSHIFT_BACKGROUND": "1", "OXSHIFT_BENCH": bench,
+           "OXSHIFT_BENCH_MARKS": str(marks)}
+    if CONFIG is not None:
+        env["OXSHIFT_CONFIG_DIR"] = str(CONFIG)
     proc = subprocess.run([str(binary), *map(str, args)], env=env, capture_output=True,
                           text=True, timeout=timeout)
     markers = {}
     for line in proc.stdout.splitlines():
-        if not line.startswith("PYOXIDE "):
+        if not line.startswith("OXSHIFT "):
             continue
-        name, _, rest = line[len("PYOXIDE "):].partition(" ")
+        name, _, rest = line[len("OXSHIFT "):].partition(" ")
         try:
             markers[name] = json.loads(rest)
         except ValueError:
@@ -128,7 +124,7 @@ def main():
             vals = [r[key] for r in results["open"] if r.get(key) is not None]
             summary[f"open_{key}"] = (statistics.median(vals), max(vals)) if vals else None
     print(json.dumps(summary, indent=2))
-    (work / "pyoxide-results.json").write_text(json.dumps(results, indent=2))
+    (work / "oxshift-results.json").write_text(json.dumps(results, indent=2))
 
 
 if __name__ == "__main__":

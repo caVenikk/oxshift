@@ -1,6 +1,6 @@
 //! Python > Debugger (`PyDebuggerConfigurable`), the Python debugger options
 //! of the project (`py_debug::settings`: `[python.debugger]` of
-//! `.oxide/workspace.toml`, picked up once from the reference's
+//! `.oxshift/workspace.toml`, picked up once from the reference's
 //! `.idea/workspace.xml`). The page reads them off the UI thread when it
 //! opens and writes them off it on Apply; the next debug session starts
 //! with them.

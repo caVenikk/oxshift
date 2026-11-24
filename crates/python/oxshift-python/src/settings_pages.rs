@@ -1,8 +1,8 @@
 //! The Python pages of the Settings window (ADR 0017): the Python group,
 //! Python > Type Engine (`PyTypeEngineConfigurable`) and Python > Tools >
 //! External Tools (`PyExternalToolsConfigurable`), over the project's tool
-//! settings (`py_lsp::settings`: `.oxide/project.toml`, and the custom
-//! executables in `.oxide/workspace.toml`). Both pages are project pages:
+//! settings (`py_lsp::settings`: `.oxshift/project.toml`, and the custom
+//! executables in `.oxshift/workspace.toml`). Both pages are project pages:
 //! they read the settings off the UI thread when they open, write them off
 //! it on Apply, and the project's servers are prepared again.
 //!

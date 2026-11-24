@@ -52,7 +52,7 @@ ui.workspace = true
 vcs.workspace = true
 vcs-ui.workspace = true
 
-# Window screenshots (PYOXIDE_SHOT) ask the window server for an image of
+# Window screenshots (OXSHIFT_SHOT) ask the window server for an image of
 # the app's own window; these crates are already in GPUI's dependency tree.
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics = "0.24"

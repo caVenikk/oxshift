@@ -1,4 +1,4 @@
-//! Language services for measurements (`PYOXIDE_BENCH=completion`): a
+//! Language services for measurements (`OXSHIFT_BENCH=completion`): a
 //! service that answers completion after a fixed latency, so that the
 //! time from its answer to the frame with the popup measures the client
 //! alone.

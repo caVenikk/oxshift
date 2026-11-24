@@ -6,11 +6,10 @@ use db_service::secrets::{SecretKind, SecretResolver, SecretSource};
 use secrets::{EnvLookup, MemoryStore, Secret, SecretStore};
 
 #[test]
-fn canonical_secret_presence_wins_and_diagnostics_name_the_source() {
+fn configured_environment_and_diagnostics_name_the_source() {
     assert!(app_info::install(app_info::AppInfo {
         db_cli_name: "new-db",
         env_prefix: "NEW",
-        legacy_env_prefix: Some("OLD"),
         ..app_info::AppInfo::NEUTRAL
     }));
     let store = MemoryStore::default();
@@ -27,20 +26,15 @@ fn canonical_secret_presence_wins_and_diagnostics_name_the_source() {
             SecretKind::Password => "DB_PASSWORD",
             SecretKind::WalletPassword => "DB_WALLET_PASSWORD",
         };
-        for (canonical, legacy, value, prefix) in [
-            (None, Some("old"), "old", "OLD"),
-            (Some("new"), Some("old"), "new", "NEW"),
-            (Some(""), Some("old"), "saved", ""),
-            (None, Some(""), "saved", ""),
+        for (configured, value, prefix) in [
+            (None, "saved", ""),
+            (Some("new"), "new", "NEW"),
+            (Some(""), "saved", ""),
         ] {
             let env: EnvLookup = Arc::new(move |name| {
-                if name == format!("NEW_{suffix}") {
-                    canonical.map(str::to_owned)
-                } else if name == format!("OLD_{suffix}") {
-                    legacy.map(str::to_owned)
-                } else {
-                    None
-                }
+                (name == format!("NEW_{suffix}"))
+                    .then(|| configured.map(str::to_owned))
+                    .flatten()
             });
             let resolver = SecretResolver {
                 store: &store,
@@ -58,12 +52,9 @@ fn canonical_secret_presence_wins_and_diagnostics_name_the_source() {
             assert!(error.is_none());
         }
     }
-    // A profile may explicitly contain the old generic name. It still resolves
-    // canonically, while arbitrary user-chosen names retain their precedence.
-    profile.password_env = Some("OLD_DB_PASSWORD".into());
+    // Arbitrary profile-specific variables retain their precedence.
     let env: EnvLookup = Arc::new(|name| match name {
         "NEW_DB_PASSWORD" => Some("canonical".into()),
-        "OLD_DB_PASSWORD" => Some("legacy".into()),
         "CUSTOM_PASSWORD" => Some("custom".into()),
         _ => None,
     });

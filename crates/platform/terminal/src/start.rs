@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 pub const TERMINAL_EMULATOR_VAR: &str = "TERMINAL_EMULATOR";
 /// The product's value of [`TERMINAL_EMULATOR_VAR`].
 pub fn terminal_emulator_name() -> &'static str {
-    app_info::identity_name()
+    app_info::name()
 }
 /// A random id per session (as the reference sets it).
 pub const TERM_SESSION_ID_VAR: &str = "TERM_SESSION_ID";

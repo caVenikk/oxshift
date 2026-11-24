@@ -3,14 +3,14 @@
 //! configures them, running in the LSP client. Ignored by default: they
 //! need ruff, ty and basedpyright installed (and uv for the environment of
 //! the sample). The tools are looked up as the IDE looks them up; the
-//! folder `PYOXIDE_PY_TOOLS` names is searched first, for tools installed
+//! folder `OXSHIFT_PY_TOOLS` names is searched first, for tools installed
 //! only for the tests. Run them one at a time: they report the memory of
 //! the servers this process started.
 //!
 //! ```sh
 //! export UV_TOOL_DIR=/tmp/py-tools/tools UV_TOOL_BIN_DIR=/tmp/py-tools/bin
 //! uv tool install ruff && uv tool install ty && uv tool install basedpyright
-//! PYOXIDE_PY_TOOLS=/tmp/py-tools/bin cargo test -p py-lsp --test it real_tools:: \
+//! OXSHIFT_PY_TOOLS=/tmp/py-tools/bin cargo test -p py-lsp --test it real_tools:: \
 //!     -- --ignored --test-threads=1 --nocapture
 //! ```
 
@@ -38,7 +38,7 @@ const WAIT: Duration = Duration::from_secs(90);
 /// nowhere, and a module of the sample's environment.
 const SAMPLE: &str = "import os\n\nimport samplepkg\n\n\ndef greet(name: str) -> str:\n    return \"hi \" + name + samplepkg.NAME\n\n\ngreet(1)\nprint(undefined_name)\n";
 
-/// Where the tools are searched: `PYOXIDE_PY_TOOLS` first.
+/// Where the tools are searched: `OXSHIFT_PY_TOOLS` first.
 fn search() -> SearchPaths {
     let mut search = SearchPaths::from_env();
     if let Some(dir) = brand::var_os("PY_TOOLS") {

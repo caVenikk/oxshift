@@ -40,7 +40,7 @@ pub const PRODUCT_NAME: &str = "Oxshift Python";
 /// Full name, in window titles and user agents.
 pub const PRODUCT_FULL_NAME: &str = "Oxshift Python IDE";
 
-/// Stable, case-sensitive identity used by existing KeePass groups and shells.
+/// Stable, case-sensitive identity used by existing KeePass groups.
 /// Unlike display names, changing this requires a compatibility migration.
 pub const IDENTITY_NAME: &str = "Pyoxide";
 
@@ -50,20 +50,11 @@ pub const SLUG: &str = slug!();
 /// Prefix of the environment variables (`<ENV_PREFIX>_CONFIG_DIR`, ...).
 pub const ENV_PREFIX: &str = env_prefix!();
 
-/// Compatibility input prefix; canonical variables always take precedence.
-pub const LEGACY_ENV_PREFIX: &str = "PYOXIDE";
-
-/// Stable measurement output protocol, independent of environment names.
-pub const MEASUREMENT_PREFIX: &str = "PYOXIDE";
-
-/// Directory for new user profiles and caches under the OS standard locations.
+/// Directory for user profiles and caches under the OS standard locations.
 pub const PROFILE_DIR: &str = "oxshift-python";
 
 /// The product's folder in a project root.
 pub const PROJECT_DIR: &str = ".oxshift";
-
-/// Existing project stores remain in place until explicitly migrated.
-pub const LEGACY_PROJECT_DIR: &str = ".oxide";
 
 /// Identifier of the application bundle.
 pub const BUNDLE_ID: &str = "dev.pyoxide.ide";
@@ -84,29 +75,18 @@ pub const INFO: AppInfo = AppInfo {
     identity_name: IDENTITY_NAME,
     slug: SLUG,
     profile_dir: PROFILE_DIR,
-    legacy_profile_dir: Some(SLUG),
     env_prefix: ENV_PREFIX,
-    legacy_env_prefix: Some(LEGACY_ENV_PREFIX),
-    measurement_prefix: MEASUREMENT_PREFIX,
     project_dir: PROJECT_DIR,
-    legacy_project_dir: Some(LEGACY_PROJECT_DIR),
     bundle_id: BUNDLE_ID,
     cli_name: CLI_NAME,
     db_cli_name: DB_CLI_NAME,
-    binaries: &[
-        &[IDE_NAME, concat!(slug!(), "-ide")],
-        &[DB_CLI_NAME, concat!(slug!(), "-db")],
-        &[CLI_NAME, slug!()],
-    ],
+    binaries: &[IDE_NAME, DB_CLI_NAME, CLI_NAME],
 };
 
 /// Read a product environment variable even before platform installation.
-/// Canonical presence wins over the compatibility name, including empty values.
+/// Empty values remain present.
 pub fn var_os(suffix: &str) -> Option<std::ffi::OsString> {
-    INFO.lookup_env(&format!("{ENV_PREFIX}_{suffix}"), |name| {
-        std::env::var_os(name)
-    })
-    .map(|(_, value)| value)
+    std::env::var_os(format!("{ENV_PREFIX}_{suffix}"))
 }
 
 /// Read a Unicode product environment variable.
@@ -125,23 +105,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_values_stay_what_existing_users_have_on_disk() {
+    fn canonical_interfaces_keep_stable_credential_identity() {
         assert_eq!(IDENTITY_NAME, "Pyoxide");
         assert_eq!(BUNDLE_ID, "dev.pyoxide.ide");
         assert_eq!(CLI_NAME, "oxshift");
         assert_eq!(SLUG, "pyoxide");
         assert_eq!(INFO.profile_dir, "oxshift-python");
-        assert_eq!(INFO.legacy_profile_dir, Some("pyoxide"));
         assert_eq!(ENV_PREFIX, "OXSHIFT");
-        assert_eq!(LEGACY_ENV_PREFIX, "PYOXIDE");
-        assert_eq!(MEASUREMENT_PREFIX, "PYOXIDE");
         assert_eq!(PROJECT_DIR, ".oxshift");
-        assert_eq!(LEGACY_PROJECT_DIR, ".oxide");
         assert_eq!(DB_CLI_NAME, "oxshift-db");
         assert_eq!(IDE_NAME, "oxshift-python");
-        assert_eq!(INFO.binaries[0], ["oxshift-python", "pyoxide-ide"]);
-        assert_eq!(INFO.binaries[1], ["oxshift-db", "pyoxide-db"]);
-        assert_eq!(INFO.binaries[2], ["oxshift", "pyoxide"]);
+        assert_eq!(INFO.binaries[0], "oxshift-python");
+        assert_eq!(INFO.binaries[1], "oxshift-db");
+        assert_eq!(INFO.binaries[2], "oxshift");
         assert_eq!(env_name!("CONFIG_DIR"), "OXSHIFT_CONFIG_DIR");
     }
 
@@ -151,34 +127,6 @@ mod tests {
         assert_eq!(PRODUCT_FULL_NAME, "Oxshift Python IDE");
         assert_eq!(INFO.identity_name, "Pyoxide");
         assert_ne!(INFO.name, INFO.identity_name);
-    }
-
-    #[test]
-    fn canonical_environment_presence_wins_over_legacy() {
-        for (canonical, legacy, expected) in [
-            (None, None, None),
-            (None, Some("old"), Some(("PYOXIDE_UV", "old"))),
-            (Some("new"), None, Some(("OXSHIFT_UV", "new"))),
-            (Some("new"), Some("old"), Some(("OXSHIFT_UV", "new"))),
-            (Some(""), Some("old"), Some(("OXSHIFT_UV", ""))),
-            (None, Some(""), Some(("PYOXIDE_UV", ""))),
-        ] {
-            for requested in ["OXSHIFT_UV", "PYOXIDE_UV"] {
-                let actual = INFO.lookup_env(requested, |name| match name {
-                    "OXSHIFT_UV" => canonical,
-                    "PYOXIDE_UV" => legacy,
-                    _ => None,
-                });
-                assert_eq!(
-                    actual.as_ref().map(|(name, value)| (name.as_str(), *value)),
-                    expected
-                );
-            }
-        }
-        assert_eq!(
-            INFO.lookup_env("CUSTOM_PASSWORD", |name| Some(name.to_owned())),
-            Some(("CUSTOM_PASSWORD".into(), "CUSTOM_PASSWORD".into()))
-        );
     }
 
     #[test]

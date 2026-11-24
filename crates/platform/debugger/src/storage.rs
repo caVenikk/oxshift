@@ -1,5 +1,5 @@
 //! Breakpoints, watches and the mute state in the personal project state
-//! (ADR 0009, 0015): the `[debugger]` table of `.oxide/workspace.toml`.
+//! (ADR 0009, 0015): the `[debugger]` table of `.oxshift/workspace.toml`.
 //! Paths are relative to the project root with `/` (absolute outside it),
 //! lines as shown (from 1).
 //!

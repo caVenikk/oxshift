@@ -119,8 +119,8 @@ them (ruff: rule names, Disable for this line as a sub-action) and adds
 its own intentions. `FileType` gets a language id (`"python"`).
 
 ### Settings
-Shared settings in `.oxide/project.toml`, personal executable paths in
-`.oxide/workspace.toml` (ADR 0008, 0009):
+Shared settings in `.oxshift/project.toml`, personal executable paths in
+`.oxshift/workspace.toml` (ADR 0008, 0009):
 
 ```toml
 [python.tools.ruff]
@@ -135,7 +135,7 @@ name = "ty"             # ty | basedpyright (ADR 0011)
 ```
 
 ```toml
-# .oxide/workspace.toml
+# .oxshift/workspace.toml
 [python.tools.ruff]
 path = "/opt/tools/ruff"   # optional custom executable
 ```

@@ -56,7 +56,7 @@ reference them with `Refs #N`, pull requests with `Closes #N`.
 | #18 Application shell and editor MVP on GPUI | sub-agent shell | `crates/platform/{text,syntax,project,ui,editor,workbench}`, `crates/python/{py-syntax,pyoxide-ide}`, ADR 0007 | #12 | done (PR #22) |
 | #31 Find and replace in file | sub-agent find | new `crates/platform/search`, `editor` (find bar, highlights), `ui` (field components), `themes` (search roles), keymaps | #18 | done (PR #46) |
 | #47 Tree scrolls with the wheel and trackpad | sub-agent scroll | `workbench` (project panel), `editor` (one-line fields) | #18 | done (PR #54) |
-| #61 Excluded folders and ignored files | sub-agent exclusions | `project` (filter, `.oxide` store, `.idea` import), `ui` (context menu), `workbench` (tree), `themes`, ADR 0008 | #18 | done (PR #62) |
+| #61 Excluded folders and ignored files | sub-agent exclusions | `project` (filter, `.oxshift` store, `.idea` import), `ui` (context menu), `workbench` (tree), `themes`, ADR 0008 | #18 | done (PR #62) |
 | #43 Find in Files | sub-agent find | new `crates/platform/project-search`, `workbench` (popup frame, find in files), `ui` | #31, #61 | done (PR #63) |
 | #64 Drop files onto the window to open them | sub-agent drop | `workbench` (editor area, empty state) | #18 | done (PR #70) |
 | #71 SQLite lock waits starved by back-to-back commits | sub-agent sqlite | `db-sqlite` | - | done (PR #72) |

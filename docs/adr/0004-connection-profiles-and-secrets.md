@@ -30,7 +30,7 @@ PostgreSQL uses `database`; SQLite uses `path`; the Oracle Client backend also
 accepts `dsn` (TNS alias or full descriptor). Unknown keys are rejected.
 
 Location: `PYOXIDE_DB_PROFILES` if set, otherwise
-`<config dir>/pyoxide/db-profiles.toml` (`~/Library/Application Support` on
+`<config dir>/oxshift-python/db-profiles.toml` (`~/Library/Application Support` on
 macOS, `%APPDATA%` on Windows, `$XDG_CONFIG_HOME` or `~/.config` on Linux).
 
 **Secrets** are looked up in this order:

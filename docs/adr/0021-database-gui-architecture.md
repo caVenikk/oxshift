@@ -214,7 +214,7 @@ checked already.
   all, a list, patterns; system schemas light and hidden by default) decides
   what a pass reads.
 - **Disk cache**: one file per data source in the user cache directory
-  (`<cache dir>/pyoxide/db/<data source id>/model.json`, source texts beside it),
+  (`<cache dir>/oxshift-python/db/<data source id>/model.json`, source texts beside it),
   with a format version, written to a temporary file and renamed, never in the
   project folder, never containing secrets. A cache with another version or a
   failing parse is ignored and rebuilt. The tree and completion read it before

@@ -74,9 +74,9 @@ https://github.com/JetBrains/intellij-community @
 Option 3.
 
 ### Project folder
-- Pyoxide keeps project settings in `.oxide/` in the project root. The
+- Pyoxide keeps project settings in `.oxshift/` in the project root. The
   name is provisional and lives in one constant, `project::STORE_DIR`.
-- Shared settings are in `.oxide/project.toml`, which is meant to be
+- Shared settings are in `.oxshift/project.toml`, which is meant to be
   committed: exclusions are shared project settings.
 - The format is TOML with a `version` (now 1) and an `[exclusions]` table:
   `paths`, relative to the project root with `/` separators on every OS,
@@ -96,24 +96,24 @@ Option 3.
 - Keys and comments Pyoxide does not know survive a rewrite (`toml_edit`),
   so later settings can be added without losing data. A file with a
   higher version is read as far as it is understood and never rewritten.
-- Writes replace the file at once: a temporary file in `.oxide/`, flushed,
+- Writes replace the file at once: a temporary file in `.oxshift/`, flushed,
   then renamed over the old one.
-- `.oxide/` is created only when there is something to store: an import
+- `.oxshift/` is created only when there is something to store: an import
   found exclusions, or the person marked a folder. Opening a project never
   creates an empty folder.
 
 ### Import from the reference
-- When a project is opened and has no `.oxide/` yet, Pyoxide reads the
+- When a project is opened and has no `.oxshift/` yet, Pyoxide reads the
   exclusions of `.idea` (the module files listed in `modules.xml`, or the
   `.iml` files in `.idea` without it; `excludeFolder` entries inside the
   project, and the `excludePattern` entries of a content root at the
-  project root) and saves them into `.oxide/project.toml`.
-- After that `.oxide/` is the only source. Pyoxide never writes into
+  project root) and saves them into `.oxshift/project.toml`.
+- After that `.oxshift/` is the only source. Pyoxide never writes into
   `.idea` and never reads it again for exclusions.
 
 ### Hidden and excluded
 - Hidden (never shown, never searched): the reference's default ignored
-  list above, and `.oxide/`. The reference shows `.idea` and only leaves
+  list above, and `.oxshift/`. The reference shows `.idea` and only leaves
   it out of Find in Files; Pyoxide hides its own folder from both, and
   shows `.idea` as an ordinary folder.
 - Excluded: the paths of the project settings and everything below them,
@@ -129,7 +129,7 @@ Option 3.
   interpreter's environment. Once interpreters are chosen in the IDE,
   that rule becomes "the selected interpreter's environment".
   Automatic exclusions are rules, not stored entries, so they create no
-  `.oxide/` folder, and they cannot be cancelled: the reference excludes
+  `.oxshift/` folder, and they cannot be cancelled: the reference excludes
   them again on its own.
 - `Filter::is_project_config` reports the reference's settings files
   (anything in `.idea`, `*.iml`, `*.ipr`, `*.iws`). They are shown and not
@@ -167,7 +167,7 @@ Option 3.
 - There is no two-way sync. Exclusions made in the reference after the
   import are not picked up, and exclusions made in Pyoxide do not reach
   the reference. A command that imports `.idea` again can follow.
-- Projects get a committable `.oxide/` folder once they have settings.
+- Projects get a committable `.oxshift/` folder once they have settings.
 - Exclude patterns of content roots below the project root and modules
   that the reference has unloaded are not taken into account by the
   import.

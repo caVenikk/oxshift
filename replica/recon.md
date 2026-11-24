@@ -459,8 +459,8 @@ Diagnostic      range, severity, message, source, code (rule name for
                 evidence: source 11 LspDiagnosticsCustomizer, ruff docs  confidence: high
 ```
 
-Pyoxide mapping: tool and engine settings in `.oxide/project.toml`
-(shared) with personal executable paths in `.oxide/workspace.toml`
+Pyoxide mapping: tool and engine settings in `.oxshift/project.toml`
+(shared) with personal executable paths in `.oxshift/workspace.toml`
 (ADR 0009), imported once from `.idea/pyLspTools.xml` and
 `.idea/pyTypeEngine.xml`; the rest is runtime state of the language
 services crates (ADR 0010).
@@ -638,7 +638,7 @@ TerminalOptions  application (terminal.xml, terminal-local.xml,
 ```
 
 Pyoxide mapping: application options in the application settings store;
-project options and tabs in `.oxide/workspace.toml` (ADR 0009), imported
+project options and tabs in `.oxshift/workspace.toml` (ADR 0009), imported
 once from `.idea`. Emulator and PTY: ADR 0014 (proposed; candidate
 `alacritty_terminal`, a grid element of its own); venv activation through
 a product hook (ADR 0005).
@@ -816,7 +816,7 @@ DebuggerOptions      project (workspace.xml): attach to subprocesses (on),
 ```
 
 Pyoxide mapping: breakpoints, watches, mute state and project options in
-`.oxide/workspace.toml` (ADR 0009), imported once from
+`.oxshift/workspace.toml` (ADR 0009), imported once from
 `.idea/workspace.xml` (never written); application options in the
 application settings store. debugpy 1.8.21 ships with the application;
 the program starts through DAP `runInTerminal` so the Console keeps stdin
@@ -989,7 +989,7 @@ VcsSettings  mapping root -> Git (shared .idea/vcs.xml); path to git
 ```
 
 Pyoxide mapping: path to git in the application settings store; commit
-draft, recent messages and branches in `.oxide/workspace.toml` (ADR 0009);
+draft, recent messages and branches in `.oxshift/workspace.toml` (ADR 0009);
 only `.idea/vcs.xml` is imported once. Every operation runs the `git`
 executable as the reference does (ADR 0016, proposed): reads with
 `GIT_OPTIONAL_LOCKS=0`, no terminal prompts, the user's credential helper
@@ -1171,10 +1171,10 @@ Interpreter      name, path, kind, associated project; an application list,
                  evidence: sources 7, 9               confidence: high
 ```
 
-Pyoxide mapping (ADR 0017, proposed): `<config>/pyoxide/settings.toml`
+Pyoxide mapping (ADR 0017, proposed): `<config>/oxshift-python/settings.toml`
 (versioned, unknown keys kept, atomic writes, a done-once import marker),
 growing data in their own files (`interpreters.toml`, themes, keymaps);
-project settings in `.oxide/project.toml` and `.oxide/workspace.toml`
+project settings in `.oxshift/project.toml` and `.oxshift/workspace.toml`
 (ADR 0009). The import reads only the XML data files above and theme,
 scheme and keymap data in plugin archives; reading a plugin descriptor to
 resolve a theme id is a decision for that ADR. Keymap format and runtime
@@ -1502,7 +1502,7 @@ Pyoxide mapping: `DataSource` is an ADR 0004 profile plus GUI options;
 `Cursor::next_page`; `MetadataModel` is new (ADR 0021). Console files,
 histories and bindings live in the personal project state and the
 configuration folder (ADR 0009); the committable part of a data source goes
-to `.oxide/` (ADR 0008).
+to `.oxshift/` (ADR 0008).
 
 ### Feature matrix
 See `replica/features/`, areas `db-gui` (this area, one file per feature)

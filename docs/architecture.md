@@ -41,7 +41,7 @@ Platform (`crates/platform/`, language-agnostic):
 - `syntax`: tree-sitter parsing off the UI thread and highlight spans as
   theme text roles; grammars and queries come from the products.
 - `project`: an opened folder, its lazily listed file tree with hidden and
-  excluded entries, the active project folder (`.oxshift/`, or an existing `.oxide/`) with the shared
+  excluded entries, the project folder (`.oxshift/`) with the shared
   project settings (exclusions, source roots, and values by dotted table
   for products) and the one-time import of the reference IDE's exclusions
   and source folders (ADR 0008, 0013), the folders a product sees as

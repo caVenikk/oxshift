@@ -4,7 +4,7 @@
 1. Open a folder with `pyproject.toml`, `app/__init__.py`,
    `app/api/__init__.py`, `app/static/site.css`,
    `services/api/pyproject.toml`, `src/lib/core.py`, `tests/test_x.py`
-   and no `.idea` or `.oxide` folder. Expand `app` and `services`.
+   and no `.idea` or `.oxshift` folder. Expand `app` and `services`.
 2. Right-click the project root row and choose *Mark Directory As >
    Sources Root*.
 3. Right-click `tests`, then `src`, and open *Mark Directory As* each
@@ -19,7 +19,7 @@
    marks the project folder and `services/api` as sources roots
    (`<sourceFolder url="file://$MODULE_DIR$" isTestSource="false" />`)
    and `tests` as a test sources root, and that already has a
-   `.oxide/project.toml` with exclusions only.
+   `.oxshift/project.toml` with exclusions only.
 9. Run `app/api/views.py` with *Add source roots to PYTHONPATH* on, and
    find `core.py` with Go to File.
 
@@ -30,11 +30,11 @@
   `services` and `tests` the folder icon. `services/api` has the module
   icon with the Python badge and its name in bold. `src` is a sources
   root on its own (`src` and the root package folder of `setup.py` are
-  detected) with the blue sources root folder and no hint. No `.oxide`
+  detected) with the blue sources root folder and no hint. No `.oxshift`
   folder is created.
 - Step 2: the submenu of the project root offers *Sources Root* and *Test
   Sources Root* only. Afterwards the root row reads
-  `name  sources root, ~/path/to/name` and `.oxide/project.toml` has
+  `name  sources root, ~/path/to/name` and `.oxshift/project.toml` has
   `[roots] sources = [".", "src"]`.
 - Step 3: `tests` (inside a sources root) offers *Sources Root* and
   *Excluded*, not *Test Sources Root*. `src` offers *Excluded*, *Test

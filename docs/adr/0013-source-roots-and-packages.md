@@ -56,7 +56,7 @@ every folder alike. Platform crates know no language (ADR 0005).
 2. Keep roots out of the project settings and detect them every time:
    marks made in Pyoxide would not survive, and a detected root could not
    be unmarked.
-3. Store the roots in `.oxide/project.toml` next to the exclusions, with
+3. Store the roots in `.oxshift/project.toml` next to the exclusions, with
    the detected roots and the reference's source folders in effect until
    the project stores its own, and import the reference's once.
 
@@ -70,7 +70,7 @@ Option 3.
   *Excluded* (`workbench::RootKind`, `TreeHooks`). Python offers
   *Sources Root* (nests, before *Excluded*) and *Test Sources Root*
   (after it, does not nest).
-- `[roots]` in `.oxide/project.toml` lists the folders by kind, `.` for
+- `[roots]` in `.oxshift/project.toml` lists the folders by kind, `.` for
   the project root, `/`-separated paths relative to the project root; a
   folder has one kind:
 
@@ -89,7 +89,7 @@ Option 3.
   product detects. Detected roots are rules, not entries: they are stored
   only when the person marks or unmarks a folder or the reference's
   source folders are imported, so opening a project still creates no
-  `.oxide` folder.
+  `.oxshift` folder.
 - The reference's source folders are imported once, together with the
   detected roots, while the settings have no `[roots]` table. The
   exclusions import (ADR 0008) runs first and still only when the project

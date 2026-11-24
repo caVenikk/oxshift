@@ -67,7 +67,7 @@
   and keeps the unsaved change, which is written to `main.py`.
 - Step 5: "Rename directory 'pkg' to:"; the folder stays expanded under
   its new name and the tab of `n.py` shows `src/lib/n.py`. The excluded
-  folder stays excluded under its new name (`.oxide/project.toml` lists
+  folder stays excluded under its new name (`.oxshift/project.toml` lists
   `manual`).
 - Step 6: a dialog titled *Delete* with a question icon asks 'Delete
   directory "src"?' and warns 'All files and subdirectories in "src" will

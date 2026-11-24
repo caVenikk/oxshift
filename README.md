@@ -83,9 +83,11 @@ For builds from source, the compatibility packages `pyoxide-ide`,
 `cargo build --release -p oxshift-python -p oxshift-cli -p oxshift-db` to
 build all three current programs.
 
-Existing projects keep their settings in `.oxide/`. New projects use
-`.oxshift/`. The same compatibility rule applies to user profiles and caches.
-See [upgrading an existing installation](docs/rebrand.md#opening-an-existing-installation).
+Project settings are stored in `.oxshift/`. Supported PyCharm project settings
+are imported from `.idea/`; personal PyCharm settings can be imported on first run.
+User settings and caches use the OS `oxshift-python/` locations. Existing Pyoxide
+profiles and project settings are not imported automatically.
+See [project storage and PyCharm import](docs/rebrand.md#project-storage-and-pycharm-import).
 
 The database client:
 

@@ -5,7 +5,7 @@ description: Working rules for a sub-agent implementing or researching a Pyoxide
 
 # Pyoxide sub-agent rules
 
-You work on one GitHub issue of Pyoxide IDE (repo `caVenikk/pyoxide-ide`, a Rust/GPUI clone of PyCharm 2026.2.3). The lead gives you the issue number `N`, a branch name and whether there is a checkpoint. These rules apply unless the lead's prompt says otherwise.
+You work on one GitHub issue of Pyoxide IDE (repo `caVenikk/oxshift`, a Rust/GPUI clone of PyCharm 2026.2.3). The lead gives you the issue number `N`, a branch name and whether there is a checkpoint. These rules apply unless the lead's prompt says otherwise.
 
 ## Start
 - You are in your own git worktree (your current directory). First: `git fetch origin && git checkout -b <branch> origin/main` (or the base the lead names).

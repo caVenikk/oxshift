@@ -21,12 +21,11 @@ names and compatibility identifiers are defined in the `brand` crate
 
 | Constant | Today | Where it shows up |
 |---|---|---|
-| `PRODUCT_NAME` | `Oxshift Python` | window title, menus, messages |
-| `IDENTITY_NAME` | `Pyoxide` | existing KeePass group and the shell-visible `TERMINAL_EMULATOR` value |
+| `PRODUCT_NAME` | `Oxshift Python` | window title, menus, messages and `TERMINAL_EMULATOR` |
+| `IDENTITY_NAME` | `Pyoxide` | existing KeePass group |
 | `PRODUCT_FULL_NAME` | `Oxshift Python IDE` | LSP and DAP client name, Oracle session module, `--help` |
 | `SLUG` | `pyoxide` | Linux window app ID, database `application_name`, thread names, temporary files, base theme ids (`pyoxide-dark`, `pyoxide-light`), keychain service prefix, save-file marker |
-| `ENV_PREFIX` | `OXSHIFT` | environment variables, including `OXSHIFT_CONFIG_DIR` and `OXSHIFT_DB_PASSWORD` |
-| `MEASUREMENT_PREFIX` | `OXSHIFT` | measurement lines consumed by automation |
+| `ENV_PREFIX` | `OXSHIFT` | environment variables, including `OXSHIFT_CONFIG_DIR` and `OXSHIFT_DB_PASSWORD`, and the `OXSHIFT ` measurement-line prefix |
 | `PROFILE_DIR` | `oxshift-python` | profile in the OS configuration and cache locations |
 | `PROJECT_DIR` | `.oxshift` | shared and personal project settings, run configurations and project data sources |
 | `BUNDLE_ID` | `dev.pyoxide.ide` | technical product identifier used before the packaging migration |
@@ -56,8 +55,11 @@ still override the default. CLI database profiles and the secret-store
 configuration retain their own overrides, `OXSHIFT_DB_PROFILES` and
 `OXSHIFT_SECRETS_CONFIG`.
 
-Existing theme IDs, the KeePass group, keychain service and signing identities
-are stable. A saved connection continues to use its original credential entry.
+Existing theme IDs, the KeePass group, keychain services and signing identities
+are stable. A connection configured with the same profile name and secret store
+can read its existing credential entry (`pyoxide-db`, account = profile name).
+This preserves access to saved passwords; it does not select an old settings
+folder or enable old command or environment names.
 
 ## Rollout
 

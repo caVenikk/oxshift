@@ -37,7 +37,7 @@ another program, keeps its old list until it is stored again
 (`oxshift-db secret set <profile>`, or save the data source in the IDE).
 
 PyCharm creates its items with the default list and is the only reader, so it
-is not prompted once its signature is stable. Oxshift Python has two binaries that
+is not prompted once its signature is stable. Oxshift Python has three programs that
 share items, hence the explicit list.
 
 The local signing helper retains the signing identifiers `pyoxide-ide`,

@@ -48,7 +48,11 @@ read once per run. On macOS the item is created so that the IDE and this
 command trust each other's items; local builds need a stable signature for
 that to hold across builds (see [code-signing.md](code-signing.md)).
 
-Where stored passwords live is an IDE-wide setting (`secrets.toml` in the
+The credential service remains `pyoxide-db`, with the profile name as the
+account. A configured profile can reuse its saved password without old CLI or
+environment aliases. Old profile files are not imported automatically.
+
+Where stored passwords live is an IDE-wide setting (`secrets.toml` in
 `<config dir>/oxshift-python/`, `OXSHIFT_SECRETS_CONFIG` overrides it):
 
 ```bash

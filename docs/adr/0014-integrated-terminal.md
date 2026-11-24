@@ -144,7 +144,7 @@ terminal:
 |---|---|---|---|
 | `terminal` | platform | no | session (PTY, `Term`, reader and writer threads, OSC pre-scan), snapshot types, input encoding, start rules, shell detection, integration scripts, `ShellCustomizer`, `terminal.*` engine commands |
 | `terminal-ui` | platform | yes | grid element, session view (input, selection, find, links), Terminal tool window content |
-| `pyoxide-ide` (extended) | python | yes | venv and uv activation, the "Activate virtualenv" setting |
+| `oxshift-python` (extended) | python | yes | venv and uv activation, the "Activate virtualenv" setting |
 
 `scripts/check-layers.py`: `terminal` knows no toolkit, only `terminal`
 depends on `alacritty_terminal`, the workbench only embeds `terminal-ui`.

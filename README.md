@@ -9,7 +9,7 @@ the same engine.
 
 > **Pre-alpha.** Run the IDE with `cargo run --release -p oxshift-python -- <folder>`.
 > The commands are `oxshift-python` (IDE), `oxshift` (CLI), and `oxshift-db`
-> (database client). The former `pyoxide*` commands remain available. See the [feature matrix](replica/features/) for implemented features
+> (database client). See the [feature matrix](replica/features/) for implemented features
 > and the [roadmap](docs/ROADMAP.md) for upcoming work.
 
 ## Goals
@@ -78,9 +78,7 @@ git clone https://github.com/caVenikk/oxshift && cd oxshift
 cargo run --release -p oxshift-python -- path/to/project
 ```
 
-For builds from source, the compatibility packages `pyoxide-ide`,
-`pyoxide-cli`, and `db-cli` provide the old executable names. Run
-`cargo build --release -p oxshift-python -p oxshift-cli -p oxshift-db` to
+Run `cargo build --release -p oxshift-python -p oxshift-cli -p oxshift-db` to
 build all three current programs.
 
 Project settings are stored in `.oxshift/`. Supported PyCharm project settings
@@ -102,7 +100,7 @@ cargo run -p oxshift-db -- --service FREEPDB1 --user pyoxide diagnose
 
 Passwords come from the environment, the OS credential store or a prompt,
 never from arguments. Profiles, secrets and diagnostics:
-[docs/pyoxide-db.md](docs/pyoxide-db.md).
+[docs/oxshift-db.md](docs/oxshift-db.md).
 
 Python environments (needs [uv](https://docs.astral.sh/uv/); details in
 [docs/python-environments.md](docs/python-environments.md)):
@@ -130,7 +128,7 @@ cargo test -p db-postgres -p db-oracle-thin -- --ignored   # needs docker compos
 ## Documentation
 
 - [Roadmap](docs/ROADMAP.md) · [Architecture](docs/architecture.md) · [Performance](docs/performance.md)
-- [oxshift-db](docs/pyoxide-db.md) · [Testing against databases](docs/testing-databases.md) · [Decisions (ADR)](docs/adr/)
+- [oxshift-db](docs/oxshift-db.md) · [Testing against databases](docs/testing-databases.md) · [Decisions (ADR)](docs/adr/)
 - [Clean-room rules](docs/clean-room.md) · [Theme formats](docs/theme-formats.md)
 - [Contributing](CONTRIBUTING.md) · [Agent workflow](docs/agent-workflow.md) · [AGENTS.md](AGENTS.md)
 

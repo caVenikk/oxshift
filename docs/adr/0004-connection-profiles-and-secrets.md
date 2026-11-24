@@ -29,13 +29,13 @@ wallet_dir = "/path/to/wallet"
 PostgreSQL uses `database`; SQLite uses `path`; the Oracle Client backend also
 accepts `dsn` (TNS alias or full descriptor). Unknown keys are rejected.
 
-Location: `PYOXIDE_DB_PROFILES` if set, otherwise
+Location: `OXSHIFT_DB_PROFILES` if set, otherwise
 `<config dir>/oxshift-python/db-profiles.toml` (`~/Library/Application Support` on
 macOS, `%APPDATA%` on Windows, `$XDG_CONFIG_HOME` or `~/.config` on Linux).
 
 **Secrets** are looked up in this order:
 1. The environment variable named by the profile's `password_env`, else
-   `PYOXIDE_DB_PASSWORD`.
+   `OXSHIFT_DB_PASSWORD`.
 2. The configured secret store (crate `secrets`), service `pyoxide-db`,
    account = profile name; wallet passwords use `<profile>/wallet`. Stores:
    - the OS credential store through the `keyring` crate (macOS Keychain,
@@ -46,7 +46,7 @@ macOS, `%APPDATA%` on Windows, `$XDG_CONFIG_HOME` or `~/.config` on Linux).
    - memory only (forget on exit).
 3. An interactive prompt without echo (CLI only, when stdin is a terminal).
 
-Passwords are never accepted as command-line arguments. `pyoxide-db secret set
+Passwords are never accepted as command-line arguments. `oxshift-db secret set
 <profile>` reads the password from a prompt or stdin and stores it in the OS
 store.
 

@@ -2,8 +2,8 @@
 
 ## Steps
 1. Start Pyoxide with an empty configuration directory
-   (`PYOXIDE_CONFIG_DIR=<empty dir>`) on a machine without the reference
-   IDE's configuration (`PYOXIDE_REFERENCE_CONFIG=<empty dir>`).
+   (`OXSHIFT_CONFIG_DIR=<empty dir>`) on a machine without the reference
+   IDE's configuration (`OXSHIFT_REFERENCE_CONFIG=<empty dir>`).
 2. Click New Script; close its tab and click it again. Click Open File
    and choose a file.
 3. Click "Theme: Islands Dark" at the bottom of the Welcome tab and choose

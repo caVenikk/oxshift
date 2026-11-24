@@ -8,7 +8,7 @@
 - [theme-mapping.md](theme-mapping.md): PyCharm colour scheme and UI theme keys mapped to Oxshift theme tokens
 - [theme-formats.md](theme-formats.md): PyCharm theme and colour-scheme formats the importer must read
 - [agent-workflow.md](agent-workflow.md): how AI agents work in this repository
-- [pyoxide-db.md](pyoxide-db.md): the database command line: profiles, passwords, diagnostics
+- [oxshift-db.md](oxshift-db.md): the database command line: profiles, passwords, diagnostics
 - [python-environments.md](python-environments.md): interpreter discovery, uv and pip integration
 - [code-signing.md](code-signing.md): keychain prompts on macOS, signing local builds, signing releases
 - [testing-databases.md](testing-databases.md): integration tests against Docker databases

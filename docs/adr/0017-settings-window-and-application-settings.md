@@ -66,7 +66,7 @@ Storage option 2, window option 2, a `settings-ui` crate.
 
 ### Application store
 - `<config dir>/oxshift-python/settings.toml` (the configuration folder of
-  `dirs::config_dir()`, overridden by `PYOXIDE_CONFIG_DIR` as today),
+  `dirs::config_dir()`, overridden by `OXSHIFT_CONFIG_DIR` as today),
   `version = 1`, tables by area (`[appearance]`, `[keymap]`,
   `[editor.font]`, `[editor.soft-wraps]`, `[system.files]`, `[terminal]`,
   `[git]`, `[debugger]`, `[import]`). The conventions of ADR 0008 hold:

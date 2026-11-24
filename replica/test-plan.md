@@ -3,7 +3,7 @@
 Generated from the flows in `replica/recon.md`. Case ids: `F-<flow>-H` happy
 path, `-E` edge case, `-N` negative case. "Where" names the test layer:
 unit (always runs), int (`#[ignore]`, Docker databases), cli (end-to-end
-through `pyoxide-db`), scenario (`tests/scenarios/`).
+through `oxshift-db`), scenario (`tests/scenarios/`).
 
 ## Area: db
 

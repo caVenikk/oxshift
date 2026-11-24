@@ -45,7 +45,7 @@ side's width.
 `workbench.layout` (the sizes for the current window size),
 `workbench.state` (`tool_window_areas`: the sizes the user gave),
 `workbench.toggle-run`, `workbench.activate-tool-window {"id": ...}`.
-`PYOXIDE_WINDOW_SIZE=<w>x<h>` opens the window at a given size.
+`OXSHIFT_WINDOW_SIZE=<w>x<h>` opens the window at a given size.
 
 ## Source
 observed (PyCharm 2026.2.3, four window widths and a very low window);

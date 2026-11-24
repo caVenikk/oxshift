@@ -27,7 +27,7 @@ Option 3, in the `commands` crate:
 - `CommandError { code, message }`: codes are stable (`invalid_args`,
   `not_found`, `db.auth`, ...), messages never contain secrets.
 - Front-ends: the CLI maps sub-commands to typed calls and exposes
-  `pyoxide-db call <id> <json>` and `pyoxide-db commands`; the UI command
+  `oxshift-db call <id> <json>` and `oxshift-db commands`; the UI command
   palette and the control channel read the same registry.
 
 ## Consequences

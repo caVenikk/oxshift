@@ -4,10 +4,8 @@ Command-line front-end of the Oxshift database engine: Oracle (thin driver or
 Oracle Client), PostgreSQL and SQLite. Every sub-command is also a `db.*`
 command of the IDE (`oxshift-db commands` lists them).
 
-The former `pyoxide-db` command uses the same implementation. Variables with
-the `PYOXIDE_` prefix remain supported. An explicit option takes precedence
-over the environment, and a set `OXSHIFT_*` variable takes precedence over its
-legacy spelling, including when empty.
+The commands use `OXSHIFT_*` environment variables. Explicit command-line
+options take precedence over their environment defaults.
 
 ## Install
 - From CI: the `binaries` job of the CI workflow uploads `oxshift-db` for
@@ -28,7 +26,7 @@ oxshift-db profile list
 oxshift-db --backend sqlite --path :memory: query "select sqlite_version()"
 ```
 
-Profiles live in `db-profiles.toml` in the user config directory
+Profiles live in `<config dir>/oxshift-python/db-profiles.toml`
 (`OXSHIFT_DB_PROFILES` overrides it) and never contain passwords. Oracle
 options: `--sid` instead of `--service`, `--dsn` for a TNS alias or connect
 descriptor (Oracle Client backend), `--tls require|verify-ca|verify-full`,
@@ -51,7 +49,7 @@ command trust each other's items; local builds need a stable signature for
 that to hold across builds (see [code-signing.md](code-signing.md)).
 
 Where stored passwords live is an IDE-wide setting (`secrets.toml` in the
-user config directory, `OXSHIFT_SECRETS_CONFIG` overrides it):
+`<config dir>/oxshift-python/`, `OXSHIFT_SECRETS_CONFIG` overrides it):
 
 ```bash
 oxshift-db secret-store show

@@ -25,8 +25,8 @@ names and compatibility identifiers are defined in the `brand` crate
 | `IDENTITY_NAME` | `Pyoxide` | existing KeePass group and the shell-visible `TERMINAL_EMULATOR` value |
 | `PRODUCT_FULL_NAME` | `Oxshift Python IDE` | LSP and DAP client name, Oracle session module, `--help` |
 | `SLUG` | `pyoxide` | Linux window app ID, database `application_name`, thread names, temporary files, base theme ids (`pyoxide-dark`, `pyoxide-light`), keychain service prefix, save-file marker |
-| `ENV_PREFIX`, `LEGACY_ENV_PREFIX` | `OXSHIFT`, `PYOXIDE` | environment variables, including `OXSHIFT_CONFIG_DIR` and `OXSHIFT_DB_PASSWORD` |
-| `MEASUREMENT_PREFIX` | `PYOXIDE` | measurement lines consumed by existing automation |
+| `ENV_PREFIX` | `OXSHIFT` | environment variables, including `OXSHIFT_CONFIG_DIR` and `OXSHIFT_DB_PASSWORD` |
+| `MEASUREMENT_PREFIX` | `OXSHIFT` | measurement lines consumed by automation |
 | `PROFILE_DIR` | `oxshift-python` | profile in the OS configuration and cache locations |
 | `PROJECT_DIR` | `.oxshift` | shared and personal project settings, run configurations and project data sources |
 | `BUNDLE_ID` | `dev.pyoxide.ide` | technical product identifier used before the packaging migration |
@@ -65,12 +65,12 @@ are stable. A saved connection continues to use its original credential entry.
    Oxshift Python for the IDE. The application menu, welcome screen, CLI help,
    README, and feature progress page take the new name. Examples use the current package names, repository URL, and environment variables.
 2. **Commands and packages.** The primary packages are `oxshift-python`
-   (IDE), `oxshift-cli` (the `oxshift` executable), and `oxshift-db`. Existing
-   scripts can still launch `pyoxide-ide`, `pyoxide`, or `pyoxide-db` and use
-   the former Cargo package selectors for `cargo run`. Use the new package
-   names for tests. CLI flags take precedence over environment defaults. A set
-   `OXSHIFT_*` variable wins over its `PYOXIDE_*` counterpart, including when
-   empty. The applications use the Oxshift settings locations; existing credential identities remain stable.
+   (IDE), `oxshift-cli` (the `oxshift` executable), and `oxshift-db`. Use these
+   package names for builds, runs and tests. Commands and environment variables
+   use only the Oxshift names: `oxshift-python`, `oxshift`, `oxshift-db`, and
+   `OXSHIFT_*`. There are no old command wrappers or environment aliases.
+   CLI flags take precedence over environment defaults. The applications use
+   the Oxshift settings locations; existing credential identities remain stable.
 3. **Settings, projects, and credentials.** Use the product storage paths
    and import supported PyCharm settings as described above.
    Distribution signing and packaged Keychain acceptance are release checks.

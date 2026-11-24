@@ -51,9 +51,9 @@ reference them with `Refs #N`, pull requests with `Closes #N`.
 | #12 UI toolkit decision (prototypes + ADR 0006) | sub-agent ui | `docs/adr/0006-ui-toolkit.md` | - | done: GPUI (ADR 0006); prototypes not kept |
 | #13 Control channel and headless UI tests | - | - | #12 | todo |
 | #14 Theme import and Pyoxide theme model | sub-agent themes | `crates/platform/themes`, `docs/theme-mapping.md` | - | merged (importer; settings UI later) |
-| #15 Python environments engine (uv) | sub-agent py-env | `crates/python/py-env`, `crates/python/pyoxide-cli` | - | merged (engine and CLI; UI later) |
+| #15 Python environments engine (uv) | sub-agent py-env | `crates/python/py-env`, `crates/python/oxshift-cli` | - | merged (engine and CLI; UI later) |
 
-| #18 Application shell and editor MVP on GPUI | sub-agent shell | `crates/platform/{text,syntax,project,ui,editor,workbench}`, `crates/python/{py-syntax,pyoxide-ide}`, ADR 0007 | #12 | done (PR #22) |
+| #18 Application shell and editor MVP on GPUI | sub-agent shell | `crates/platform/{text,syntax,project,ui,editor,workbench}`, `crates/python/{py-syntax,oxshift-python}`, ADR 0007 | #12 | done (PR #22) |
 | #31 Find and replace in file | sub-agent find | new `crates/platform/search`, `editor` (find bar, highlights), `ui` (field components), `themes` (search roles), keymaps | #18 | done (PR #46) |
 | #47 Tree scrolls with the wheel and trackpad | sub-agent scroll | `workbench` (project panel), `editor` (one-line fields) | #18 | done (PR #54) |
 | #61 Excluded folders and ignored files | sub-agent exclusions | `project` (filter, `.oxshift` store, `.idea` import), `ui` (context menu), `workbench` (tree), `themes`, ADR 0008 | #18 | done (PR #62) |
@@ -61,8 +61,8 @@ reference them with `Refs #N`, pull requests with `Closes #N`.
 | #64 Drop files onto the window to open them | sub-agent drop | `workbench` (editor area, empty state) | #18 | done (PR #70) |
 | #71 SQLite lock waits starved by back-to-back commits | sub-agent sqlite | `db-sqlite` | - | done (PR #72) |
 | #44 Go to File and Search Everywhere | sub-agent find | `ui` (popup, list, fuzzy), `project` (file name index), `workbench` | #43 | done (PR #73) |
-| #45 Run the current Python file | sub-agents run (A1 non-UI, A2 UI, B interpreter) | new `crates/platform/{process,console}`, `crates/python/py-run`; `workbench` (bottom tool window area, Run tool window, run widget, dialogs, product hooks), `editor` (console mode), `project` (personal state, ADR 0009), `ui` (list popups), `pyoxide-ide` (Python run provider, interpreter widget) | #18 | done (PR #76) |
-| #74 Run configurations with a one-time import from `.idea` | sub-agent run-config | new `crates/platform/run-config`, `workbench/src/run/**`, `ui` (menu), `py-run`, `pyoxide-ide`, ADR 0012 | #45 | done (PR #117) |
+| #45 Run the current Python file | sub-agents run (A1 non-UI, A2 UI, B interpreter) | new `crates/platform/{process,console}`, `crates/python/py-run`; `workbench` (bottom tool window area, Run tool window, run widget, dialogs, product hooks), `editor` (console mode), `project` (personal state, ADR 0009), `ui` (list popups), `oxshift-python` (Python run provider, interpreter widget) | #18 | done (PR #76) |
+| #74 Run configurations with a one-time import from `.idea` | sub-agent run-config | new `crates/platform/run-config`, `workbench/src/run/**`, `ui` (menu), `py-run`, `oxshift-python`, ADR 0012 | #45 | done (PR #117) |
 | #75 Configured interpreters, Add New Interpreter, interpreter settings | - | python-env | #45 | todo |
 
 ## M3: Python intelligence (recon done)
@@ -80,7 +80,7 @@ intelligence".
 | #84 Problems in the editor, hover input | sub-agent editor | `crates/platform/editor` (`editor.rs`, `element.rs`, new `diagnostics.rs`), F2 bindings | #82 | done (PR #98) |
 | #85 Completion, controller, Language Services widget | sub-agent intel-ui | `crates/platform/code-intel-ui`, `workbench.rs` integration hunks, keymaps, `tests/keymap.rs` | #82, events of #84 | done (PR #100) |
 | #86 Quick doc, parameter info, navigation, intentions, reformat | sub-agent intel-ui-2 | `code-intel-ui` (own modules), `ui/src/markdown.rs` | #85 first checkpoint | done (PR #102) |
-| #87 Python services: ruff, ty, basedpyright option | sub-agent py-lsp | `crates/python/py-lsp`, `pyoxide-ide` (provider, type engine widget, ruff intentions, interpreter observer) | #82, #83 for live runs | done (PR #99) |
+| #87 Python services: ruff, ty, basedpyright option | sub-agent py-lsp | `crates/python/py-lsp`, `oxshift-python` (provider, type engine widget, ruff intentions, interpreter observer) | #82, #83 for live runs | done (PR #99) |
 
 Order: #82 on `main`, then #83, #84, #85, #87 in parallel, #86 from #85's
 first checkpoint. Merge order #84, #83, #87, #85, #86 (the integration and
@@ -113,7 +113,7 @@ Wave 1 (parallel sub-agents in worktrees, merged in this order):
 | #103 Navigation history (Back / Forward) | sub-agent nav | `workbench` (`navigation.rs`, history hooks), `editor` (jump event), `code-intel-ui` | done (PR #113) |
 | #36 Reload files changed on disk | sub-agent sync | new `crates/platform/file-watcher`, `project` (stamps, changes), `text` (reload), `workbench` (file sync, conflict dialog) | done (PR #115) |
 | #74 Run configurations | sub-agent run-config | see M2 table | done (PR #117) |
-| #37 Project tree file operations | sub-agent tree | `project` (`fs_ops`, trash), `workbench` (project panel), `pyoxide-ide` (Python new items) | done (PR #116) |
+| #37 Project tree file operations | sub-agent tree | `project` (`fs_ops`, trash), `workbench` (project panel), `oxshift-python` (Python new items) | done (PR #116) |
 | #129 Tree: Reload from Disk in the menu, drag and drop look | sub-agent tree | `workbench` (project panel), `themes` | done (PR #130) |
 | #128, #69 Menus: full-row highlight, shortcuts; run dropdown rows (#127) | sub-agent run-config | `ui` (menu) | done (PR #131) |
 | #127 Run/Debug Configurations in a window of its own | sub-agent run-config | `ui` (`dialog_window`), `workbench/src/run` | done (PR #132) |
@@ -126,8 +126,8 @@ Wave 2: recon for terminal, debugger, git and settings (`replica/recon.md`,
 
 | issue | crates / files | status |
 |---|---|---|
-| #120 Python packages and source roots | `project`, `workbench` (project panel), `pyoxide-ide` | PR #143 |
-| #121 File type icons | `workbench` (`file_types`), `ui`, `pyoxide-ide` | PR #146 |
+| #120 Python packages and source roots | `project`, `workbench` (project panel), `oxshift-python` | PR #143 |
+| #121 File type icons | `workbench` (`file_types`), `ui`, `oxshift-python` | PR #146 |
 | #119 Editor soft wraps | `editor`, `workbench` | in progress |
 | #118 Search Everywhere preview | `workbench` (find in files preview, search everywhere) | in progress |
 

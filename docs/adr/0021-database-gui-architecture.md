@@ -87,7 +87,7 @@ depend on it; the platform never does.
 | `db-session` (new) | database | no | the asynchronous layer: runtime, data source handles, sessions, query jobs, the pager, refresh jobs, export and import jobs, console files and history. Depends on `db-core`, `db-model`, `sql-syntax`, `tokio`. |
 | `db-ui` (new) | database | GPUI | explorer tool window, data source dialog, console tab, results panel, grid element, value panel, export and import dialogs, settings pages, the SQL editor glue (file type, highlighter, dialect widget). Depends on `db-session`, `db-model`, `sql-syntax`, `sql-intel`, `db-core` (types only), `editor`, `ui`, `commands`. Never on a driver crate, `db-service` or `tokio`. |
 
-The product composes (ADR 0022, "Module layer"): `pyoxide-ide` builds the
+The product composes (ADR 0022, "Module layer"): `oxshift-python` builds the
 `ConnectionSource` from `db-service`, starts the `DbRuntime` and hands both
 to `db_ui::module(..)`, a `workbench::Module` that registers the Database
 tool window, the commands, the settings pages, the keymap files, the SQL

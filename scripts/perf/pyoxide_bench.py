@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-# Pyoxide measurements on the same generated files as the reference runs
+# Oxshift Python measurements on the same generated files as the reference runs
 # (replica/perf.md): start-up to the first frame, typing at line 50,000 of a
 # 100,000-line file (3 x 200 keys, one every 50 ms, the text of
 # pycharm_typing.py), opening a 10 MB file and scrolling it, and the
 # completion popup in the 200-line file against a service that answers after
 # a fixed latency (--latency, ms). Runs the release
-# binary with PYOXIDE_BENCH; the window opens without taking the focus
-# (PYOXIDE_BACKGROUND=1). Measure on an idle machine: the load average is
+# binary with OXSHIFT_BENCH; the window opens without taking the focus
+# (OXSHIFT_BACKGROUND=1). Measure on an idle machine: the load average is
 # printed first. `--marks N` shows N problems spread over the big file during
 # the typing runs (underlines, error stripe, inspection widget).
 # `--soft-wraps` opens every file with soft wraps (an `editor.toml` in a
 # configuration folder of its own); `--only typing-long` types at line
 # 50,000 of a generated file of 52,000 long lines (120 to 520 chars).
 #
-#     cargo build --release -p pyoxide-ide
+#     cargo build --release -p oxshift-python
 #     python3 scripts/perf/pyoxide_bench.py --work <empty dir> [--runs 3] [--marks 1000]
 #         [--only completion --latency 50] [--soft-wraps]
 import argparse, json, os, statistics, subprocess, sys
@@ -48,10 +48,14 @@ def long_lines(work: Path) -> Path:
 
 
 def run(binary: Path, args, bench: str, timeout: int, marks: int = 0):
-    env = dict(os.environ, PYOXIDE_BACKGROUND="1", PYOXIDE_BENCH=bench,
-               PYOXIDE_BENCH_MARKS=str(marks))
-    if CONFIG is not None:
-        env["PYOXIDE_CONFIG_DIR"] = str(CONFIG)
+    # --binary also accepts a pre-rename IDE when comparing revisions.
+    env = dict(os.environ)
+    for prefix in ("OXSHIFT", "PYOXIDE"):
+        env[f"{prefix}_BACKGROUND"] = "1"
+        env[f"{prefix}_BENCH"] = bench
+        env[f"{prefix}_BENCH_MARKS"] = str(marks)
+        if CONFIG is not None:
+            env[f"{prefix}_CONFIG_DIR"] = str(CONFIG)
     proc = subprocess.run([str(binary), *map(str, args)], env=env, capture_output=True,
                           text=True, timeout=timeout)
     markers = {}
@@ -71,7 +75,7 @@ def run(binary: Path, args, bench: str, timeout: int, marks: int = 0):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--work", required=True, type=Path)
-    ap.add_argument("--binary", type=Path, default=ROOT / "target/release/pyoxide-ide")
+    ap.add_argument("--binary", type=Path, default=ROOT / "target/release/oxshift-python")
     ap.add_argument("--runs", type=int, default=3)
     ap.add_argument("--only", choices=["startup", "typing", "typing-long", "open", "completion"])
     ap.add_argument("--marks", type=int, default=0)

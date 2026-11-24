@@ -251,7 +251,7 @@ pub fn since_main_ms() -> f64 {
 pub fn marker(text: &str) {
     use std::io::Write as _;
     let mut out = std::io::stdout().lock();
-    let _ = writeln!(out, "{} {text}", app_info::env_prefix());
+    let _ = writeln!(out, "{} {text}", app_info::get().measurement_prefix);
     let _ = out.flush();
 }
 

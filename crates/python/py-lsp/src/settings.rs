@@ -615,7 +615,10 @@ mod tests {
         assert_eq!(load(root).unwrap(), settings);
         assert!(has_tool_settings(root).unwrap());
         let text = read(root);
-        assert!(text.starts_with("# Pyoxide project settings."), "{text}");
+        assert!(
+            text.starts_with("# Oxshift Python project settings."),
+            "{text}"
+        );
         assert!(text.contains("version = 1"), "{text}");
         assert!(
             text.contains(
@@ -655,7 +658,7 @@ mod tests {
         brand::install();
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
-        std::fs::create_dir_all(root.join(".oxide")).unwrap();
+        std::fs::create_dir_all(root.join(".oxshift")).unwrap();
         let text = "version = 1\n\n\
                     [python.tools.ruff]\n\
                     # the CI pins its own ruff\n\
@@ -694,7 +697,7 @@ mod tests {
         brand::install();
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
-        std::fs::create_dir_all(root.join(".oxide")).unwrap();
+        std::fs::create_dir_all(root.join(".oxshift")).unwrap();
         let text = "version = 2\n\n[python.tools.ruff]\nlookup = \"path\"\n";
         std::fs::write(store::settings_file(root), text).unwrap();
         // Read as far as understood.
@@ -753,7 +756,7 @@ mod tests {
         assert_eq!(custom_path(root, Tool::Ty).unwrap(), None);
         // Personal state only: the shared settings are not created.
         assert!(!store::settings_file(root).exists());
-        assert!(root.join(".oxide").join(".gitignore").is_file());
+        assert!(root.join(".oxshift").join(".gitignore").is_file());
 
         workspace::save_value(root, "python.tools.ty", "path", Some("bin/ty")).unwrap();
         assert_eq!(

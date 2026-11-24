@@ -1,5 +1,5 @@
 //! Personal project state (ADR 0009): `workspace.toml` in Pyoxide's
-//! project folder ([`store_dir`]) holds what belongs to one person on one
+//! project folder ([`crate::store::store_dir`]) holds what belongs to one person on one
 //! machine, such as the chosen interpreter. It is never meant to be
 //! committed, like the reference IDE's `.idea/workspace.xml`.
 //!
@@ -26,12 +26,14 @@ use std::path::{Path, PathBuf};
 
 use toml_edit::{DocumentMut, Item};
 
+#[cfg(test)]
+use crate::store::store_dir;
+
 use crate::store::{
-    StoreError, find_table, find_table_mut, lock_root, read_document, store_dir, version_of,
-    write_atomic,
+    StoreError, find_table, find_table_mut, lock_root, read_document, version_of, write_atomic,
 };
 
-/// The personal state in [`store_dir`].
+/// The personal state in [`crate::store::store_dir`].
 pub const WORKSPACE_FILE: &str = "workspace.toml";
 /// Version of the personal state format this build reads and writes.
 pub const WORKSPACE_VERSION: i64 = 1;
@@ -51,7 +53,7 @@ pub const GITIGNORE_TEXT: &str = "# Default ignored files\n/workspace.toml\n";
 
 /// The personal state file of a project.
 pub fn workspace_file(root: &Path) -> PathBuf {
-    root.join(store_dir()).join(WORKSPACE_FILE)
+    crate::store::directory(root).join(WORKSPACE_FILE)
 }
 
 /// The string value of `key` in `[table]` (a dotted path such as
@@ -307,7 +309,7 @@ pub fn save_table(
 /// Writes `.oxide/.gitignore` unless it exists (any file there, even an
 /// empty one, is the person's and stays as it is).
 fn write_gitignore(root: &Path) -> Result<(), StoreError> {
-    let path = root.join(store_dir()).join(GITIGNORE_FILE);
+    let path = crate::store::directory(root).join(GITIGNORE_FILE);
     let file = std::fs::OpenOptions::new()
         .write(true)
         .create_new(true)

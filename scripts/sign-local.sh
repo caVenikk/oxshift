@@ -7,14 +7,14 @@
 # after each rebuild. A fixed identity and a fixed identifier give every build
 # the same designated requirement; "Always Allow" once and the prompts stop.
 #
-#   scripts/sign-local.sh                     sign target/release/{pyoxide-ide,pyoxide-db,pyoxide}
+#   scripts/sign-local.sh                     sign target/release/{oxshift-python,oxshift-db,oxshift} and installed aliases
 #   scripts/sign-local.sh PATH...             sign these binaries (or .app bundles)
 #   scripts/sign-local.sh --setup             print the one-time commands that create the identity
 #   scripts/sign-local.sh --check PATH...     print the designated requirement of binaries
 #
 # Environment:
-#   PYOXIDE_SIGN_IDENTITY   certificate common name (default: Pyoxide Local Dev)
-#   PYOXIDE_SIGN_KEYCHAIN   keychain that holds it (default:
+#   OXSHIFT_SIGN_IDENTITY   certificate common name (default: Pyoxide Local Dev)
+#   OXSHIFT_SIGN_KEYCHAIN   keychain that holds it (default:
 #                           ~/Library/Keychains/pyoxide-signing.keychain-db)
 #
 # The identity lives in its own keychain file, never in the login keychain.
@@ -22,8 +22,8 @@
 # Release builds are signed with a Developer ID instead: docs/code-signing.md.
 set -euo pipefail
 
-IDENTITY="${PYOXIDE_SIGN_IDENTITY:-Pyoxide Local Dev}"
-KEYCHAIN="${PYOXIDE_SIGN_KEYCHAIN:-$HOME/Library/Keychains/pyoxide-signing.keychain-db}"
+IDENTITY="${OXSHIFT_SIGN_IDENTITY-${PYOXIDE_SIGN_IDENTITY:-Pyoxide Local Dev}}"
+KEYCHAIN="${OXSHIFT_SIGN_KEYCHAIN-${PYOXIDE_SIGN_KEYCHAIN:-$HOME/Library/Keychains/pyoxide-signing.keychain-db}}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 if [ "$(uname -s)" != "Darwin" ]; then
@@ -70,7 +70,14 @@ identity_present() {
 identifier_for() {
     # A fixed identifier per binary. Without one, codesign derives it from
     # the file name plus a hash of the contents, which changes per build.
-    basename "${1%.app}"
+    local name
+    name=$(basename "${1%.app}")
+    case "$name" in
+        oxshift-python) echo pyoxide-ide ;;
+        oxshift-db) echo pyoxide-db ;;
+        oxshift) echo pyoxide ;;
+        *) echo "$name" ;;
+    esac
 }
 
 sign_one() {
@@ -117,7 +124,7 @@ if ! identity_present; then
 fi
 
 if [ "$#" -eq 0 ]; then
-    set -- "$ROOT"/target/release/pyoxide-ide "$ROOT"/target/release/pyoxide-db "$ROOT"/target/release/pyoxide
+    set -- "$ROOT"/target/release/{oxshift-python,oxshift-db,oxshift,pyoxide-ide,pyoxide-db,pyoxide}
 fi
 for path in "$@"; do
     sign_one "$path"

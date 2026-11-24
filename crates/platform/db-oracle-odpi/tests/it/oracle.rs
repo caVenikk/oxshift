@@ -8,7 +8,7 @@
 //!
 //! on a machine where the Oracle Client libraries can be found (see the crate
 //! README). See `docs/testing-databases.md` for the connection defaults and
-//! the `PYOXIDE_TEST_ORACLE_*` overrides.
+//! the `OXSHIFT_TEST_ORACLE_*` overrides.
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -22,16 +22,16 @@ use db_core::{
 use db_oracle_odpi::OdpiDriver;
 
 fn env_or(name: &str, default: &str) -> String {
-    std::env::var(name).unwrap_or_else(|_| default.to_owned())
+    crate::product_env::var(name).unwrap_or_else(|_| default.to_owned())
 }
 
 fn base_params() -> ConnectParams {
     ConnectParams {
-        host: env_or("PYOXIDE_TEST_ORACLE_HOST", "localhost"),
-        port: env_or("PYOXIDE_TEST_ORACLE_PORT", "1521").parse().unwrap(),
-        database: env_or("PYOXIDE_TEST_ORACLE_SERVICE", "FREEPDB1"),
+        host: env_or("TEST_ORACLE_HOST", "localhost"),
+        port: env_or("TEST_ORACLE_PORT", "1521").parse().unwrap(),
+        database: env_or("TEST_ORACLE_SERVICE", "FREEPDB1"),
         user: "pyoxide".into(),
-        password: Secret::new(env_or("PYOXIDE_DB_PASSWORD", "pyoxide")),
+        password: Secret::new(env_or("DB_PASSWORD", "pyoxide")),
         connect_timeout: Duration::from_secs(10),
         ..ConnectParams::default()
     }

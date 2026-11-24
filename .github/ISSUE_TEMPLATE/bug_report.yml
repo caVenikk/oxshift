@@ -31,7 +31,7 @@ body:
   - type: textarea
     id: logs
     attributes:
-      label: Logs or screenshots of Pyoxide
+      label: Logs or screenshots of Oxshift Python
       description: Do not paste secrets, connection strings or content from proprietary software.
   - type: checkboxes
     id: checks

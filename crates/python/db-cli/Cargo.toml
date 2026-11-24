@@ -1,22 +1,17 @@
 [package]
 name = "db-cli"
-description = "pyoxide-db: command-line front-end of the Pyoxide database engine"
+description = "Compatibility entry point for oxshift-db"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
+publish = false
 
 [[bin]]
 name = "pyoxide-db"
 path = "src/main.rs"
+test = false
+bench = false
 
 [dependencies]
-brand.workspace = true
-commands.workspace = true
-db-core.workspace = true
-db-service.workspace = true
-secrets.workspace = true
-serde.workspace = true
-serde_json.workspace = true
-tokio.workspace = true
-clap = { version = "4", features = ["derive", "env"] }
+product = { package = "oxshift-db", path = "../oxshift-db" }

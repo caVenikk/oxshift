@@ -2,7 +2,7 @@
 //! repository. Ignored by default.
 //!
 //! ```text
-//! PYOXIDE_THEMES_LOCAL=/path/to/themes cargo test -p themes --test it local:: -- --ignored --nocapture
+//! OXSHIFT_THEMES_LOCAL=/path/to/themes cargo test -p themes --test it local:: -- --ignored --nocapture
 //! ```
 //!
 //! Without the variable the git-ignored folder `tests/fixtures/themes-local/`
@@ -11,7 +11,7 @@
 //! file, and that the class files of archives are never opened.
 //!
 //! ```text
-//! PYOXIDE_THEME_JAR=/path/to/plugin.jar cargo test -p themes --test it local:: -- --ignored --nocapture
+//! OXSHIFT_THEME_JAR=/path/to/plugin.jar cargo test -p themes --test it local:: -- --ignored --nocapture
 //! ```
 //!
 //! checks one theme plugin archive: every scheme in it that sets the
@@ -23,7 +23,8 @@ use themes::import::{KeySource, Library};
 use themes::{Registry, Rgba, ThemeFile, UiRole};
 
 fn local_root() -> Option<PathBuf> {
-    let root = std::env::var_os("PYOXIDE_THEMES_LOCAL")
+    let root = std::env::var_os("OXSHIFT_THEMES_LOCAL")
+        .or_else(|| std::env::var_os("PYOXIDE_THEMES_LOCAL"))
         .map(PathBuf::from)
         .unwrap_or_else(|| {
             Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../tests/fixtures/themes-local")
@@ -45,7 +46,7 @@ fn files_below(dir: &Path, out: &mut Vec<PathBuf>) {
 }
 
 #[test]
-#[ignore = "needs third-party themes in tests/fixtures/themes-local or PYOXIDE_THEMES_LOCAL"]
+#[ignore = "needs third-party themes in tests/fixtures/themes-local or OXSHIFT_THEMES_LOCAL"]
 fn every_local_theme_file_imports() {
     let Some(root) = local_root() else {
         println!("no local theme folder, nothing to do");
@@ -100,10 +101,13 @@ fn every_local_theme_file_imports() {
 }
 
 #[test]
-#[ignore = "needs a theme plugin archive in PYOXIDE_THEME_JAR"]
+#[ignore = "needs a theme plugin archive in OXSHIFT_THEME_JAR"]
 fn the_background_colour_of_a_local_archive_is_the_editor_background() {
-    let Some(jar) = std::env::var_os("PYOXIDE_THEME_JAR").map(PathBuf::from) else {
-        println!("PYOXIDE_THEME_JAR is not set, nothing to do");
+    let Some(jar) = std::env::var_os("OXSHIFT_THEME_JAR")
+        .or_else(|| std::env::var_os("PYOXIDE_THEME_JAR"))
+        .map(PathBuf::from)
+    else {
+        println!("OXSHIFT_THEME_JAR is not set, nothing to do");
         return;
     };
     let mut library = Library::new();

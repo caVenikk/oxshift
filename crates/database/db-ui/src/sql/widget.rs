@@ -40,7 +40,7 @@ ui::ui_commands! {
         "Opens the SQL popup of the file's toolbar: the dialects, and the data sources the file can be attached to.";
     /// Set the dialect of a file, folder or the project.
     SetDialect { dialect: String, target: Option<String>, shared: Option<bool> } => "sql.set-dialect", "Set SQL Dialect",
-        "Maps the active SQL file, its folder (`target`: `folder`) or the whole project (`project`) to a dialect (`generic`, `postgres`, `oracle`, `sqlite`; `default` removes the mapping). The mapping is personal unless `shared` is true, which writes it to the project's `.oxide/project.toml`. Open files are coloured again.",
+        "Maps the active SQL file, its folder (`target`: `folder`) or the whole project (`project`) to a dialect (`generic`, `postgres`, `oracle`, `sqlite`; `default` removes the mapping). The mapping is personal unless `shared` is true, which writes it to the project's shared settings file. Open files are coloured again.",
         r#"{"dialect": "postgres", "target": "folder"}"#;
     /// Attach a data source to a file, folder or the project.
     AttachDataSource { name: Option<String>, schema: Option<String>, target: Option<String>, shared: Option<bool> } => "sql.attach-data-source", "Attach Data Source",

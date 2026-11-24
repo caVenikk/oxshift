@@ -1,0 +1,32 @@
+{
+  "fill": {
+    "linear-gradient": [
+      "srgb:0.080,0.070,0.980,1.000",
+      "srgb:0.900,0.310,0.990,1.000"
+    ]
+  },
+  "groups": [
+    {
+      "layers": [
+        {
+          "image-name": "mark.svg",
+          "name": "Oxshift",
+          "glass": false
+        }
+      ],
+      "lighting": "individual",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0
+      },
+      "specular": false,
+      "translucency": {
+        "enabled": false,
+        "value": 0
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": "shared"
+  }
+}

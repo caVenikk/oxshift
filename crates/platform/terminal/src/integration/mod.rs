@@ -131,10 +131,9 @@ pub fn version() -> String {
 }
 
 /// Where the integration folders are written by default:
-/// `shell-integration` in the application's folder (`app_info::slug`) of the
-/// user's cache folder.
+/// `shell-integration` under the application's active cache directory.
 pub fn default_base_dir() -> Option<PathBuf> {
-    dirs::cache_dir().map(|d| d.join(app_info::slug()).join("shell-integration"))
+    app_info::cache_dir().map(|d| d.join("shell-integration"))
 }
 
 /// The folder of this version's scripts in `base`, written unless it is

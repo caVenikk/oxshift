@@ -14,8 +14,8 @@ use crate::support::{Harness, env, failure, harness, int, outcome, password, uni
 
 fn params() -> ConnectParams {
     ConnectParams {
-        host: env("PYOXIDE_TEST_PG_HOST", "localhost"),
-        port: env("PYOXIDE_TEST_PG_PORT", "55432").parse().expect("port"),
+        host: env("TEST_PG_HOST", "localhost"),
+        port: env("TEST_PG_PORT", "55432").parse().expect("port"),
         database: "pyoxide".into(),
         user: "pyoxide".into(),
         password: password(),

@@ -1,15 +1,14 @@
 # Python environments
 
-How Pyoxide finds Python interpreters, reads a project and changes its
+How Oxshift Python finds Python interpreters, reads a project and changes its
 environment. The code is the product crate `crates/python/py-env` (library, the
-`env.*` commands) and `crates/python/pyoxide-cli` (the `pyoxide` binary); both
+`env.*` commands) and `crates/python/oxshift-cli` (the `oxshift` binary); both
 sit in the Python product layer of [ADR 0005](adr/0005-platform-and-language-products.md)
 and use the platform command registry ([ADR 0001](adr/0001-command-registry.md)).
 
-Pyoxide does not reimplement a package manager. [uv](https://docs.astral.sh/uv/)
-does the work (virtual environments, projects, locking, installing, Python
-downloads); `python -m pip` is the fallback for listing and installing when uv is
-missing. Everything runs as a child process behind a typed function.
+Oxshift Python uses [uv](https://docs.astral.sh/uv/) to manage virtual
+environments, projects, lockfiles, packages, and Python downloads. When uv is
+missing, the IDE falls back to `python -m pip` to list and install packages. Everything runs as a child process behind a typed function.
 
 ## Rules for every external process
 - Started with tokio, never on the caller's thread; stdin is closed.
@@ -27,7 +26,7 @@ missing. Everything runs as a child process behind a typed function.
   `UV_PYTHON_INSTALL_DIR`. Nothing else of uv's own configuration is touched.
 
 ## Finding tools
-uv is searched in `$PYOXIDE_UV`, then `PATH`, then the places installers use
+uv is searched in `$OXSHIFT_UV`, then `PATH`, then the places installers use
 (`~/.local/bin`, `~/.cargo/bin`, Homebrew and `/usr/local/bin` on Unix,
 `%LOCALAPPDATA%\Programs\uv` on Windows). A GUI application does not inherit the
 shell's `PATH`, which is why the extra places matter. Poetry and conda are found
@@ -200,7 +199,7 @@ implementation tests use. Versions are ordered by an own PEP 440 comparison
 (`version::Version`).
 
 ## Commands
-`py_env::register` adds these to a registry; `pyoxide commands` lists them together
+`py_env::register` adds these to a registry; `oxshift commands` lists them together
 with the platform's `db.*` commands. Results carry the tool's report in `log`
 because the registry has no streaming yet.
 
@@ -221,25 +220,25 @@ because the registry has no streaming yet.
 
 Paths default to the current directory; relative paths are resolved against it.
 
-## The `pyoxide` command line
-`pyoxide env <command>` calls the same typed functions as the commands above and
+## The `oxshift` command line
+`oxshift env <command>` calls the same typed functions as the commands above and
 streams uv's progress to stderr (Ctrl-C cancels the running tool and exits with 130).
 `--json` prints the result types as JSON and keeps stderr quiet; errors are printed
 as `{code, message, tool, exit_code, detail}`.
 
 ```
-pyoxide env interpreters [--project DIR]
-pyoxide env info [PATH]
-pyoxide env init [PATH] [--name N] [--lib|--package|--bare|--script] [--python V]
-pyoxide env venv [PATH] [--python 3.12] [--seed] [--clear]
-pyoxide env packages [--venv PATH] [--project DIR] [--outdated]
-pyoxide env add <PACKAGE>... [--group G] [--optional E] [--dev] [--venv PATH] [-r FILE]
-pyoxide env remove <PACKAGE>... [--group G] [--venv PATH]
-pyoxide env sync | lock | tree [--project DIR] ...
-pyoxide env python-install <VERSION>...
-pyoxide env search <NAME> [--versions N]
-pyoxide commands
-pyoxide call <id> [<json>]
+oxshift env interpreters [--project DIR]
+oxshift env info [PATH]
+oxshift env init [PATH] [--name N] [--lib|--package|--bare|--script] [--python V]
+oxshift env venv [PATH] [--python 3.12] [--seed] [--clear]
+oxshift env packages [--venv PATH] [--project DIR] [--outdated]
+oxshift env add <PACKAGE>... [--group G] [--optional E] [--dev] [--venv PATH] [-r FILE]
+oxshift env remove <PACKAGE>... [--group G] [--venv PATH]
+oxshift env sync | lock | tree [--project DIR] ...
+oxshift env python-install <VERSION>...
+oxshift env search <NAME> [--versions N]
+oxshift commands
+oxshift call <id> [<json>]
 ```
 
 ## Platform notes
@@ -258,7 +257,7 @@ pyoxide call <id> [<json>]
   temporary directories (venv, init, add and remove with `--frozen`, lock, sync, tree,
   `pip` install of a wheel built on the spot, typed failures). It skips itself without
   uv or an installed Python.
-- `crates/python/pyoxide-cli/tests/it/cli.rs` runs the binary: `commands`, `call` and an
+- `crates/python/oxshift-cli/tests/it/cli.rs` runs the binary: `commands`, `call` and an
   offline project workflow.
 - Ignored, need the network (`cargo test -p py-env --test it uv_integration:: -- --ignored`):
   adding and syncing `requests` from PyPI with the outdated check and the tree,

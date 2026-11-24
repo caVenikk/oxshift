@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Fetches the debugger helper of Pyoxide IDE (ADR 0015): the pure-Python
+# Fetches the debugger helper for Oxshift Python (ADR 0015): the pure-Python
 # wheel of debugpy 1.8.21 from PyPI, checked against its pinned size and
 # SHA-256, unpacked unmodified (every file checked against the wheel's
 # RECORD) into a helper folder.
@@ -9,10 +9,10 @@
 #     python3 scripts/fetch-debugpy.py --wheel <file>   # a wheel downloaded before (still checked)
 #     python3 scripts/fetch-debugpy.py --print-dest     # where the app cache folder is
 #
-# The app cache folder is `helpers/debugpy-1.8.21` in `PYOXIDE_CACHE_DIR`,
-# else in `pyoxide` of the user's cache folder (`~/Library/Caches` on macOS,
-# `$XDG_CACHE_HOME` or `~/.cache` on Linux, `%LOCALAPPDATA%` on Windows),
-# where the IDE looks after its own bundle (crates/python/py-debug).
+# The helper lives under helpers/debugpy-1.8.21 in the IDE cache.
+# OXSHIFT_CACHE_DIR overrides its location (legacy name: PYOXIDE_CACHE_DIR).
+# In the system cache the IDE uses oxshift-python, or an existing pyoxide
+# directory. The IDE checks its own bundle before looking in the cache.
 #
 # The folder is never committed. Licences: debugpy is MIT; its vendored
 # pydevd is EPL-2.0 and other vendored parts are listed in
@@ -48,20 +48,28 @@ MARKERS = (f"{DIST_INFO}/RECORD", "debugpy/adapter/__main__.py")
 
 def cache_dir() -> Path:
     """The application cache folder, as the IDE computes it."""
-    override = os.environ.get("PYOXIDE_CACHE_DIR")
+    override = os.environ.get("OXSHIFT_CACHE_DIR", os.environ.get("PYOXIDE_CACHE_DIR"))
     if override:
         return Path(override)
     if sys.platform == "win32":
-        base = os.environ.get("LOCALAPPDATA")
-        if not base:
+        local = os.environ.get("LOCALAPPDATA")
+        if not local:
             sys.exit("LOCALAPPDATA is not set; pass --dest")
-        return Path(base) / "pyoxide"
-    home = Path.home()
-    if sys.platform == "darwin":
-        return home / "Library" / "Caches" / "pyoxide"
-    xdg = os.environ.get("XDG_CACHE_HOME")
-    base = Path(xdg) if xdg and Path(xdg).is_absolute() else home / ".cache"
-    return base / "pyoxide"
+        base = Path(local)
+    elif sys.platform == "darwin":
+        base = Path.home() / "Library" / "Caches"
+    else:
+        xdg = os.environ.get("XDG_CACHE_HOME")
+        base = Path(xdg) if xdg and Path(xdg).is_absolute() else Path.home() / ".cache"
+
+    for name in ("oxshift-python", "pyoxide"):
+        path = base / name
+        try:
+            path.lstat()
+        except FileNotFoundError:
+            continue
+        return path
+    return base / "oxshift-python"
 
 
 def default_dest() -> Path:
@@ -74,7 +82,7 @@ def is_helper(folder: Path) -> bool:
 
 def download() -> bytes:
     print(f"Downloading {URL}")
-    request = urllib.request.Request(URL, headers={"User-Agent": "pyoxide-fetch-debugpy"})
+    request = urllib.request.Request(URL, headers={"User-Agent": "oxshift-fetch-debugpy"})
     with urllib.request.urlopen(request, timeout=60) as response:
         data = response.read(SIZE + 1)
     return data
@@ -146,7 +154,7 @@ def unpack(data: bytes, target: Path) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description=f"Fetch debugpy {VERSION} (the debugger helper of Pyoxide IDE)"
+        description=f"Fetch debugpy {VERSION} (the debugger helper for Oxshift Python)"
     )
     parser.add_argument("--dest", type=Path, help="the helper folder (default: the app cache)")
     parser.add_argument("--wheel", type=Path, help=f"use this {WHEEL} instead of downloading")

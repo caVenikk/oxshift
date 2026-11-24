@@ -1,6 +1,6 @@
 //! Integration tests against Oracle Database Free (`docker compose up -d
 //! oracle`, then `cargo test -p db-oracle-thin -- --ignored`). Host, port
-//! and service come from PYOXIDE_TEST_ORACLE_HOST/PORT/SERVICE.
+//! and service come from OXSHIFT_TEST_ORACLE_HOST/PORT/SERVICE.
 
 use std::time::{Duration, Instant};
 

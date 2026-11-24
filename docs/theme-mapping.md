@@ -1,6 +1,6 @@
 # Theme mapping
 
-Pyoxide has its own theme model (crate `themes`). This document lists how the
+Oxshift has its own theme model (crate `themes`). This document lists how the
 keys of PyCharm colour schemes (`.icls`, scheme XML) and UI themes
 (`.theme.json`) map to it, how a value is chosen when several keys compete, and
 what is approximated or dropped. The key names are format identifiers and are
@@ -92,8 +92,8 @@ to that theme's own scheme.
 |---|---|---|
 | `islands-dark` | Islands Dark | default dark theme, generated from the IntelliJ Platform Community New UI files |
 | `islands-light` | Islands Light | default light theme, generated the same way |
-| `pyoxide-dark` | Pyoxide Dark | original colours; base of an import (not under an islands theme) |
-| `pyoxide-light` | Pyoxide Light | original colours; base of an import (not under an islands theme) |
+| `pyoxide-dark` | Oxshift Python Dark | original colours; base of an import (not under an islands theme) |
+| `pyoxide-light` | Oxshift Python Light | original colours; base of an import (not under an islands theme) |
 
 The islands themes are produced by this importer from the IntelliJ Platform
 Community repository (Apache-2.0, see NOTICE): the Islands UI themes with
@@ -224,7 +224,7 @@ attributes empty, `syntax.diagnostic-hint` is a grey dotted line
 
 ### General
 
-| Pyoxide role | Sources, in order | Used for |
+| Oxshift role | Sources, in order | Used for |
 |---|---|---|
 | `ui.surface` | `Panel.background` | Main window and panel background |
 | `ui.surface-alt` | `SidePanel.background`, `Tree.background` | Secondary panels such as the project tree and side panels |
@@ -267,7 +267,7 @@ attributes empty, `syntax.diagnostic-hint` is a grey dotted line
 
 ### Chrome
 
-| Pyoxide role | Sources, in order | Used for |
+| Oxshift role | Sources, in order | Used for |
 |---|---|---|
 | `ui.title-bar` | `TitlePane.background` | Window title bar |
 | `ui.toolbar` | `MainToolbar.background`, `Toolbar.background` | Main toolbar |
@@ -325,7 +325,7 @@ the report lists them as approximations. Tree arrows are chevron icons
 for New UI controls and filled triangles in `ui.icon-gray-stroke` for
 classic ones (as the reference shows them with classic theme plugins).
 
-| Pyoxide role | Sources, in order | Used for |
+| Oxshift role | Sources, in order | Used for |
 |---|---|---|
 | `ui.checkbox-background` | `Checkbox.Background.Default` (icon palette) | Fill of a check box that is off |
 | `ui.checkbox-border` | `Checkbox.Border.Default` (icon palette) | Outline of a check box that is off |
@@ -349,7 +349,7 @@ writes the colour it stands for instead of its name (`"#CED0D6":
 "icon-default-stroke"` of Islands Dark is `Gray.Stroke`). `Blue.Solid`,
 `Green.Solid` and `Red.Solid` stand for a colour in light themes only.
 
-| Pyoxide role | Sources, in order | Colour it stands for, light / dark |
+| Oxshift role | Sources, in order | Colour it stands for, light / dark |
 |---|---|---|
 | `ui.icon-gray-fill` | `Gray.Fill` (icon palette) | `#EBECF0` / `#43454A` |
 | `ui.icon-gray-secondary-stroke` | `Gray.SecondaryStroke` (icon palette) | `#A8ADBD` / `#6F737A` |
@@ -378,7 +378,7 @@ colours the New UI icons do not use and are listed as unmapped.
 
 ### Editor
 
-| Pyoxide role | Sources, in order | Used for |
+| Oxshift role | Sources, in order | Used for |
 |---|---|---|
 | `ui.editor-background` | `TEXT` background (the scheme color `BACKGROUND` replaces it, see rule 5), `Editor.background` | Editor background |
 | `ui.editor-text` | `TEXT` foreground, `Editor.foreground` | Default editor text |
@@ -412,7 +412,7 @@ colours the New UI icons do not use and are listed as unmapped.
 
 ### Version control
 
-| Pyoxide role | Sources, in order | Used for |
+| Oxshift role | Sources, in order | Used for |
 |---|---|---|
 | `ui.gutter-added` | `ADDED_LINES_COLOR` (scheme color) | Gutter marker of added lines |
 | `ui.gutter-modified` | `MODIFIED_LINES_COLOR` (scheme color) | Gutter marker of modified lines |
@@ -442,7 +442,7 @@ colours the New UI icons do not use and are listed as unmapped.
 
 ### Diagnostics
 
-| Pyoxide role | Sources, in order | Used for |
+| Oxshift role | Sources, in order | Used for |
 |---|---|---|
 | `ui.diagnostic-error` | `ERRORS_ATTRIBUTES` effect color, `ERRORS_ATTRIBUTES` error stripe color, `ERRORS_ATTRIBUTES` foreground | Error marker, underline and stripe |
 | `ui.diagnostic-warning` | `WARNING_ATTRIBUTES` effect color, `WARNING_ATTRIBUTES` error stripe color, `WARNING_ATTRIBUTES` foreground | Warning marker, underline and stripe |
@@ -454,7 +454,7 @@ colours the New UI icons do not use and are listed as unmapped.
 
 ### Terminal
 
-| Pyoxide role | Sources, in order | Used for |
+| Oxshift role | Sources, in order | Used for |
 |---|---|---|
 | `ui.terminal-background` | `CONSOLE_BACKGROUND_KEY` (scheme color) | Run console background |
 | `ui.terminal-foreground` | `CONSOLE_NORMAL_OUTPUT` foreground | Run console default text |
@@ -527,7 +527,7 @@ the reference would take its parent scheme's terminal colours.
 
 ### Debugger
 
-| Pyoxide role | Sources, in order | Used for |
+| Oxshift role | Sources, in order | Used for |
 |---|---|---|
 | `ui.debugger-value-name` | `Debugger.Variables.valueForeground` | Names in the variables view of the debugger |
 | `ui.debugger-type` | `Debugger.Variables.typeForeground` | Types in the variables view of the debugger: {list: 4} |
@@ -611,7 +611,7 @@ the token.
 
 ### Syntax
 
-| Pyoxide role | Scheme attribute keys, in order | Used for |
+| Oxshift role | Scheme attribute keys, in order | Used for |
 |---|---|---|
 | `syntax.keyword` | `PY.KEYWORD`, `DEFAULT_KEYWORD` | Keywords: def, class, if, return, import, ... |
 | `syntax.constant-builtin` | none (derived, see below) | True, False, None and Ellipsis |
@@ -657,7 +657,7 @@ the token.
 
 ### Editor decoration
 
-| Pyoxide role | Scheme attribute keys, in order | Used for |
+| Oxshift role | Scheme attribute keys, in order | Used for |
 |---|---|---|
 | `syntax.diagnostic-error` | `ERRORS_ATTRIBUTES` | Code with an error |
 | `syntax.diagnostic-warning` | `WARNING_ATTRIBUTES` | Code with a warning |
@@ -711,7 +711,7 @@ Editor decorations have no fallback except where listed.
 
 ### Attribute conversion
 
-| Scheme option | Pyoxide |
+| Scheme option | Oxshift |
 |---|---|
 | `FOREGROUND`, `BACKGROUND` | `fg`, `bg` |
 | `FONT_TYPE` bit 1 / bit 2 | `bold` / `italic` |
@@ -767,7 +767,7 @@ the base theme.
 
 ## Fonts
 
-| Pyoxide | Scheme option |
+| Oxshift | Scheme option |
 |---|---|
 | `font.editor-family` | `EDITOR_FONT_NAME` (in front of the base families, so missing fonts still fall back) |
 | `font.editor-size` | `EDITOR_FONT_SIZE` |
@@ -911,7 +911,7 @@ by the Python product and use `syntax.dunder`, `syntax.constant-builtin`,
   command prompt) and every other key
   not listed above. They are counted by the first part of their name in the
   report (`unmapped by group`).
-- `SELECTION_FOREGROUND`: Pyoxide keeps the syntax colours on selected text.
+- `SELECTION_FOREGROUND`: Oxshift keeps the syntax colours on selected text.
 - Other `FILESTATUS_*` entries, and copies of them under a plugin specific
   prefix.
 

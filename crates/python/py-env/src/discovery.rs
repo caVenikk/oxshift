@@ -59,7 +59,7 @@ impl Tools {
             .filter(|p| p.is_file())
             .or_else(|| find_tool("conda"));
         Tools {
-            uv: std::env::var_os(brand::env_name!("UV"))
+            uv: brand::var_os("UV")
                 .map(PathBuf::from)
                 .filter(|p| p.is_file())
                 .or_else(|| find_tool("uv")),

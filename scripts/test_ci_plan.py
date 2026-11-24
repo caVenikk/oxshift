@@ -84,10 +84,10 @@ class PlannerTests(unittest.TestCase):
         meta = metadata(self.root, {'workbench': [],
                                     'workbench-fixture-module': [('workbench', 'dev')],
                                     'db-ui': [('workbench', None)],
-                                    'pyoxide-ide': [('db-ui', None)], 'db-core': []})
+                                    'oxshift-python': [('db-ui', None)], 'db-core': []})
         result = plan.make_plan(['workbench/src/menu.rs'], meta, 'integration/batch', root=self.root)
         self.assertEqual(result['mode'], 'fast')
-        self.assertEqual(result['packages'], ['db-ui', 'pyoxide-ide', 'workbench', 'workbench-fixture-module'])
+        self.assertEqual(result['packages'], ['db-ui', 'oxshift-python', 'workbench', 'workbench-fixture-module'])
         self.assertEqual(result['libs'], result['packages'])
         self.assertEqual(len(result['matrix']['include']), 3)
         self.assertFalse(result['integration'])

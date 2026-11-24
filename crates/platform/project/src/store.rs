@@ -51,6 +51,18 @@ use crate::roots::{DetectRoots, Roots, detected_roots};
 pub fn store_dir() -> &'static str {
     app_info::project_dir()
 }
+/// The complete project store selected for this root. Reading never creates it.
+/// The current folder wins; an existing legacy folder is used in place.
+pub fn directory(root: &Path) -> PathBuf {
+    app_info::get().project_storage_dir(root)
+}
+
+/// Whether a name is either generation of the internal project folder.
+/// Purely lexical so tree walks and file watcher batches perform no extra I/O.
+pub fn is_store_dir(name: &str) -> bool {
+    name == store_dir() || app_info::get().legacy_project_dir == Some(name)
+}
+
 /// The shared project settings in [`store_dir`].
 pub const SETTINGS_FILE: &str = "project.toml";
 /// Version of the settings format this build reads and writes.
@@ -169,7 +181,7 @@ pub enum StoreError {
 
 /// The settings file of a project.
 pub fn settings_file(root: &Path) -> PathBuf {
-    root.join(store_dir()).join(SETTINGS_FILE)
+    directory(root).join(SETTINGS_FILE)
 }
 
 /// Whether the project has shared settings yet. Only the shared settings
@@ -182,7 +194,23 @@ pub fn has_store(root: &Path) -> bool {
 pub(crate) fn read_document(path: &Path) -> Result<Option<DocumentMut>, StoreError> {
     let text = match std::fs::read_to_string(path) {
         Ok(text) => text,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            // Windows reports PATH_NOT_FOUND for a child of a regular file.
+            // Distinguish an occupied settings directory from an absent document.
+            #[cfg(windows)]
+            if let Some(parent) = path.parent() {
+                let source = match parent.metadata() {
+                    Ok(metadata) if !metadata.is_dir() => std::io::ErrorKind::NotADirectory.into(),
+                    Err(source) if source.kind() != std::io::ErrorKind::NotFound => source,
+                    _ => return Ok(None),
+                };
+                return Err(StoreError::Io {
+                    path: parent.to_owned(),
+                    source,
+                });
+            }
+            return Ok(None);
+        }
         Err(source) => {
             return Err(StoreError::Io {
                 path: path.to_owned(),

@@ -24,7 +24,7 @@ Platform (`crates/platform/`, language-agnostic):
 - `db-testkit`: the conformance suite every database driver runs.
 - `db-service`: connection profiles (ADR 0004), driver dispatch, diagnostics,
   import of PyCharm data sources, `db.*` commands.
-- `db-cli`: `pyoxide-db`, a thin front-end over `db-service`.
+- `oxshift-db`: `oxshift-db`, a thin front-end over `db-service`.
 - `secrets`: secret stores (OS credential store, KeePass, memory), their
   settings and the reader of a JetBrains IDE credential store for import.
 - `settings-import`: PyCharm project settings (data sources, JDBC URLs),
@@ -41,7 +41,7 @@ Platform (`crates/platform/`, language-agnostic):
 - `syntax`: tree-sitter parsing off the UI thread and highlight spans as
   theme text roles; grammars and queries come from the products.
 - `project`: an opened folder, its lazily listed file tree with hidden and
-  excluded entries, Pyoxide's project folder (`.oxide/`) with the shared
+  excluded entries, the active project folder (`.oxshift/`, or an existing `.oxide/`) with the shared
   project settings (exclusions, source roots, and values by dotted table
   for products) and the one-time import of the reference IDE's exclusions
   and source folders (ADR 0008, 0013), the folders a product sees as
@@ -95,7 +95,7 @@ Platform (`crates/platform/`, language-agnostic):
   language-neutral model (common settings, environment variables with
   shared or personal values, options per type), the list with the
   selection, the reference's order, temporary ones, pinned ones and the
-  history; storage in `.oxide/run/` (shared) and the personal project
+  history; storage in the active project folder’s `run/` directory (shared) and the personal project
   state; the one-time import of the reference IDE's configurations
   (`.idea/workspace.xml`, `.idea/runConfigurations`, `*.run.xml`) with
   importers per type; the forms the Run/Debug Configurations dialog
@@ -224,23 +224,23 @@ Python product (`crates/python/`):
 - `py-env`: interpreter and virtualenv discovery, project model
   (`pyproject.toml`, `uv.lock`, PEP 723), uv and pip operations, `env.*`
   commands.
-- `pyoxide-cli`: `pyoxide`, the product's command line over the platform and
+- `oxshift-cli`: `oxshift`, the product's command line over the platform and
   Python command registries.
 - `py-syntax`: the Python grammar and highlight query for `syntax`.
 - `py-lsp`: Python language services (ADR 0010, 0011): the tools (ruff,
   ty, basedpyright), their lookup modes, settings and server specs, the
   import of the reference's tool settings. A skeleton.
-- `pyoxide-ide`: `pyoxide-ide`, the product's GUI application: the
+- `oxshift-python`: `oxshift-python`, the product's GUI application: the
   workbench with Python file types. Run it with
-  `cargo run --release -p pyoxide-ide [folder] [files]`.
+  `cargo run --release -p oxshift-python [folder] [files]`.
 
 The application shell and editor are described in ADR 0007.
 
 ## Platform, modules and products
 One repository, one Cargo workspace: a language-agnostic platform layer, one
 product layer per language, and reusable modules between them, composed at
-compile time into one binary per product (ADR 0005, 0022). Pyoxide is the
-Python product.
+compile time into one binary per product (ADR 0005, 0022). Oxshift provides the shared platform. Oxshift Python is the
+first language product.
 
 - `crates/platform/`: knows no language and no product or module.
 - `crates/<module>/` (first: `crates/database/`, the database interface and
@@ -332,7 +332,7 @@ crates (`scripts/check-layers.py` gets these rules).
 | `settings` | platform | no | the application settings store (`settings.toml` and dedicated files), scopes, change events, `settings.get` / `settings.set` | 0017 |
 | `settings-ui` | platform | yes | the Settings window, the page registry and page trait, pages that only edit the store (Appearance), the theme in use with its switchers and import, the first-run window and its importers | 0017, 0018 |
 | `py-debug` | python | no | debugpy helper lookup, launch arguments, stoppable lines, inline value positions, Python debugger settings | 0015 |
-| `pyoxide-ide` (extended) | python | yes | venv and uv activation in the terminal, the Python settings pages, the debug adapter provider | 0014, 0015, 0017 |
+| `oxshift-python` (extended) | python | yes | venv and uv activation in the terminal, the Python settings pages, the debug adapter provider | 0014, 0015, 0017 |
 
 Dependencies: `terminal-ui` -> `terminal`, `console`, `ui`;
 `debugger-ui` -> `debugger`, `console-ui`, `editor`, `run-config`, `ui`;

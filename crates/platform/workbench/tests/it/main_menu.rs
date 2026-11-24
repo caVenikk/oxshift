@@ -74,7 +74,7 @@ fn open(cx: &mut TestAppContext) -> H<'_> {
     let dir = tempfile::tempdir().unwrap();
     let file = dir.path().join("config").join(recent_projects::FILE);
     let product = Product {
-        name: "Pyoxide",
+        name: "Oxshift Python",
         ..Product::default()
     };
     let window = cx.update(|cx| {
@@ -120,7 +120,7 @@ fn the_state_query_describes_the_windows_menu(cx: &mut TestAppContext) {
     let text = state["text"].as_str().unwrap();
     assert!(
         text.starts_with(if cfg!(target_os = "macos") {
-            "Pyoxide\n"
+            "Oxshift Python\n"
         } else {
             "File\n"
         }),
@@ -136,7 +136,7 @@ fn every_row_has_a_registered_command(cx: &mut TestAppContext) {
     let h = open(cx);
     for macos in [true, false] {
         let spec = MenuSpec {
-            product: "Pyoxide".into(),
+            product: "Oxshift Python".into(),
             macos,
             recent: vec![("demo".into(), PathBuf::from("/p/demo"))],
         };

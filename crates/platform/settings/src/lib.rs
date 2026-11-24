@@ -40,7 +40,7 @@ pub use store::{Problem, SavePlan, Section, SettingsError, Store, VERSION, write
 pub use terminal::{TerminalFontSettings, TerminalSettings};
 
 /// The application's configuration folder: the product's `CONFIG_DIR`
-/// environment variable, else its slug in the user's configuration folder
+/// environment variable, else its active profile in the user's configuration folder
 /// (`app_info::config_dir`).
 pub fn config_dir() -> Option<PathBuf> {
     app_info::config_dir()

@@ -17,13 +17,13 @@ cargo test -p db-session -- --ignored     # sessions: cancel, savepoints, read-o
 
 | service | address | database | user | password |
 |---|---|---|---|---|
-| PostgreSQL 18 | `localhost:55432` | `pyoxide` | `pyoxide` | `$PYOXIDE_DB_PASSWORD`, default `pyoxide` |
-| Oracle Database Free 23 | `localhost:1521` | service `FREEPDB1` | `pyoxide` | `$PYOXIDE_DB_PASSWORD`, default `pyoxide` |
+| PostgreSQL 18 | `localhost:55432` | `pyoxide` | `pyoxide` | `$OXSHIFT_DB_PASSWORD`, default `pyoxide` |
+| Oracle Database Free 23 | `localhost:1521` | service `FREEPDB1` | `pyoxide` | `$OXSHIFT_DB_PASSWORD`, default `pyoxide` |
 
 The default password only protects throw-away local containers. Override any
-value with `PYOXIDE_TEST_PG_HOST`, `PYOXIDE_TEST_PG_PORT`,
-`PYOXIDE_TEST_ORACLE_HOST`, `PYOXIDE_TEST_ORACLE_PORT`,
-`PYOXIDE_TEST_ORACLE_SERVICE`.
+value with `OXSHIFT_TEST_PG_HOST`, `OXSHIFT_TEST_PG_PORT`,
+`OXSHIFT_TEST_ORACLE_HOST`, `OXSHIFT_TEST_ORACLE_PORT`,
+`OXSHIFT_TEST_ORACLE_SERVICE`.
 
 Oracle introspection tokens cover the whole fixture schema. Unique object
 prefixes prevent name collisions, but concurrent DDL still invalidates those
@@ -73,12 +73,12 @@ cargo test -p db-oracle-thin --test it conformance:: -- --ignored --test-threads
   (every dictionary view it reads is in 19c; the bulk load is not yet run on a
   real server, the Oracle conformance cases are the check).
 - Oracle Free is version 23; behaviour specific to 19c (the oldest supported
-  release) is checked with `pyoxide-db diagnose` on a real 19c server.
+  release) is checked with `oxshift-db diagnose` on a real 19c server.
 
 ## Oracle Client for the ODPI backend
 `db-oracle-odpi` loads Oracle Instant Client at runtime. Install Instant
 Client Basic (or Basic Light) from Oracle's download page and make it
 findable: on macOS set `DYLD_LIBRARY_PATH` or place the libraries next to the
 binary, on Linux `LD_LIBRARY_PATH`, on Windows `PATH`. Without it, the ODPI
-tests fail with `DPI-1047`, and `pyoxide-db diagnose` reports the backend as
+tests fail with `DPI-1047`, and `oxshift-db diagnose` reports the backend as
 unavailable.

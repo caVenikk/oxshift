@@ -104,6 +104,7 @@ fn project_storage_upgrade_selects_one_complete_directory() {
         let root = tempfile::tempdir().unwrap();
         std::fs::write(root.path().join(blocked), "not a directory").unwrap();
         assert!(store::load(root.path()).is_err());
+        assert!(workspace::load_value(root.path(), "test", "value").is_err());
         assert!(workspace::save_value(root.path(), "test", "value", Some("x")).is_err());
         let other = if blocked == ".oxshift" {
             ".oxide"

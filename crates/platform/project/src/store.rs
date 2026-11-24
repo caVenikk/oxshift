@@ -194,7 +194,23 @@ pub fn has_store(root: &Path) -> bool {
 pub(crate) fn read_document(path: &Path) -> Result<Option<DocumentMut>, StoreError> {
     let text = match std::fs::read_to_string(path) {
         Ok(text) => text,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            // Windows reports PATH_NOT_FOUND for a child of a regular file.
+            // Distinguish an occupied settings directory from an absent document.
+            #[cfg(windows)]
+            if let Some(parent) = path.parent() {
+                let source = match parent.metadata() {
+                    Ok(metadata) if !metadata.is_dir() => std::io::ErrorKind::NotADirectory.into(),
+                    Err(source) if source.kind() != std::io::ErrorKind::NotFound => source,
+                    _ => return Ok(None),
+                };
+                return Err(StoreError::Io {
+                    path: parent.to_owned(),
+                    source,
+                });
+            }
+            return Ok(None);
+        }
         Err(source) => {
             return Err(StoreError::Io {
                 path: path.to_owned(),

@@ -52,6 +52,7 @@ ui.workspace = true
 workbench.workspace = true
 
 [dev-dependencies]
+ui = { workspace = true, features = ["test-support"] }
 code-intel = { workspace = true, features = ["fake"] }
 # The events of terminal sessions (tests/it/terminal_venv.rs).
 flume.workspace = true

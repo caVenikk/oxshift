@@ -29,7 +29,34 @@ struct Surface {
 struct Surfaces(HashMap<Key, Surface>, HashSet<EntityId>);
 impl Global for Surfaces {}
 
+/// Selects independent popup surfaces on GPUI's headless platform without
+/// enabling native cursor handling. The previous mode is restored on drop.
+#[cfg(feature = "test-support")]
+pub mod testing {
+    use std::cell::Cell;
+
+    thread_local! {
+        pub(super) static INDEPENDENT: Cell<bool> = const { Cell::new(false) };
+    }
+
+    pub struct IndependentSurfaces(bool);
+
+    pub fn independent_surfaces() -> IndependentSurfaces {
+        IndependentSurfaces(INDEPENDENT.with(|flag| flag.replace(true)))
+    }
+
+    impl Drop for IndependentSurfaces {
+        fn drop(&mut self) {
+            INDEPENDENT.with(|flag| flag.set(self.0));
+        }
+    }
+}
+
 pub fn enabled() -> bool {
+    #[cfg(feature = "test-support")]
+    if testing::INDEPENDENT.with(std::cell::Cell::get) {
+        return true;
+    }
     cfg!(target_os = "macos") && crate::pointer::native()
 }
 

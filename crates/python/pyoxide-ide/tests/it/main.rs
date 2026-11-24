@@ -5,6 +5,7 @@
 
 mod debug_sessions;
 mod debugger_settings;
+mod external_tools;
 mod interpreter;
 mod live_services;
 mod run_configurations;

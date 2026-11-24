@@ -10,6 +10,10 @@
 6. Choose the other type engine, then change Ruff's switch and Lookup on
    External Tools without applying between pages; press Apply once.
    Repeat with External Tools edited before Type Engine; reopen the project.
+7. Click each enabled tool's Lookup cell, then click a different row in its
+   popup. Repeat with Settings returning to the foreground before and after
+   the choice. Apply, close Settings and reopen. Open Lookup again, move the
+   selection and press Escape.
 
 ## Expected
 - Step 2: "Type engine:" with a segmented button (ty, Basedpyright) and
@@ -30,6 +34,10 @@
 - Step 6: both choices survive Apply and reopening the project. Applying
   External Tools does not restore the type engine from when its page opened;
   unchanged tool fields and unknown project settings remain intact.
+
+- Step 7: the chosen chain updates immediately, remains selected when
+  Settings becomes active and enables Apply; it survives Apply and reopening.
+  Escape leaves the stored choice and Apply state unchanged.
 
 ## Commands
 `settings.open {"page": "python.type-engine"}`, `settings.edit`

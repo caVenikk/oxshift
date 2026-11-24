@@ -551,6 +551,10 @@ impl SettingsWindow {
         };
         if let Err(e) = view.edit(&a.field, &a.value, window, cx) {
             eprintln!("settings.edit: {e}");
+        } else if view.is_modified(cx) {
+            // A popup can deliver its choice before the owner is activated.
+            // This is a local draft, not an external change to reload on return.
+            self.popup_edited_draft();
         }
         cx.notify();
     }

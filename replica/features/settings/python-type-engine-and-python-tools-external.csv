@@ -1,2 +1,2 @@
 feature,area,priority,original,clone,notes
-Python > Type Engine and Python > Tools > External Tools pages,settings,must,yes,yes,"Community; project pages, off the UI thread (#154); no Configure dialog or Install / Upgrade yet"
+Python > Type Engine and Python > Tools > External Tools pages,settings,must,yes,yes,"Community; project pages, off the UI thread (#154); combined Apply preserves both pages and failed writes remain retryable; mouse Lookup choices survive popup focus return and Apply; no Configure dialog or Install / Upgrade yet"

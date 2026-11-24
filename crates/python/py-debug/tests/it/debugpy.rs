@@ -40,6 +40,7 @@ fn python() -> PathBuf {
 }
 
 fn helper() -> Helper {
+    brand::install();
     Helper::locate().unwrap_or_else(|missing| panic!("{missing}"))
 }
 

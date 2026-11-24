@@ -1,6 +1,6 @@
 //! Integration tests against Oracle Database Free (`docker compose up -d
 //! oracle`, then `cargo test -p db-oracle-thin -- --ignored`). Host, port
-//! and service come from PYOXIDE_TEST_ORACLE_HOST/PORT/SERVICE.
+//! and service come from OXSHIFT_TEST_ORACLE_HOST/PORT/SERVICE.
 
 use std::time::{Duration, Instant};
 
@@ -37,7 +37,7 @@ async fn connects_and_reports_version() {
     assert_eq!(c.ping().await.unwrap_err().kind, ErrorKind::ConnectionLost);
 }
 
-/// The query `pyoxide-db diagnose` uses.
+/// The query `oxshift-db diagnose` uses.
 #[tokio::test]
 #[ignore]
 async fn diagnose_probe_types() {

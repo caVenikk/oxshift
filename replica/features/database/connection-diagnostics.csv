@@ -1,2 +1,2 @@
 feature,area,priority,original,clone,notes
-Connection diagnostics,database,should,no,yes,pyoxide-db diagnose
+Connection diagnostics,database,should,no,yes,oxshift-db diagnose

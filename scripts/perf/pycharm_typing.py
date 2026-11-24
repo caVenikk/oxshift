@@ -17,7 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pycharm_baseline as base
 
-# The text typed by both this runner and Pyoxide's typing measurement.
+# The text typed by both this runner and Oxshift Python's typing measurement.
 TEXT = ("# the quick brown fox jumps over the lazy dog and keeps typing to fill "
         "two hundred characters for the latency run of the reference editor ok done")
 

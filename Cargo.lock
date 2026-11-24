@@ -1755,21 +1755,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be1e0bca6c3637f992fc1cc7cbc52a78c1ef6db076dbf1059c4323d6a2048376"
 
 [[package]]
-name = "db-cli"
-version = "0.0.1"
-dependencies = [
- "brand",
- "clap",
- "commands",
- "db-core",
- "db-service",
- "secrets",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "db-core"
 version = "0.0.1"
 dependencies = [
@@ -4986,6 +4971,79 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxshift-cli"
+version = "0.0.1"
+dependencies = [
+ "brand",
+ "clap",
+ "commands",
+ "db-service",
+ "git",
+ "py-env",
+ "secrets",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
+name = "oxshift-db"
+version = "0.0.1"
+dependencies = [
+ "brand",
+ "clap",
+ "commands",
+ "db-core",
+ "db-service",
+ "secrets",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "oxshift-python"
+version = "0.0.1"
+dependencies = [
+ "async-trait",
+ "brand",
+ "code-intel",
+ "code-intel-ui",
+ "db-core",
+ "db-model",
+ "db-service",
+ "db-ui",
+ "debugger",
+ "dirs 7.0.0",
+ "editor",
+ "flume",
+ "gpui",
+ "lsp-client",
+ "native-path",
+ "process",
+ "project",
+ "py-debug",
+ "py-env",
+ "py-lsp",
+ "py-run",
+ "py-syntax",
+ "run-config",
+ "secrets",
+ "serde_json",
+ "settings",
+ "settings-ui",
+ "tempfile",
+ "terminal",
+ "text",
+ "themes",
+ "tokio",
+ "toml_edit 0.25.17+spec-1.1.0",
+ "ui",
+ "workbench",
+]
+
+[[package]]
 name = "parking"
 version = "2.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5545,64 +5603,6 @@ dependencies = [
  "text",
  "themes",
  "tree-sitter-python",
-]
-
-[[package]]
-name = "pyoxide-cli"
-version = "0.0.1"
-dependencies = [
- "brand",
- "clap",
- "commands",
- "db-service",
- "git",
- "py-env",
- "secrets",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
-]
-
-[[package]]
-name = "pyoxide-ide"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "brand",
- "code-intel",
- "code-intel-ui",
- "db-core",
- "db-model",
- "db-service",
- "db-ui",
- "debugger",
- "dirs 7.0.0",
- "editor",
- "flume",
- "gpui",
- "lsp-client",
- "native-path",
- "process",
- "project",
- "py-debug",
- "py-env",
- "py-lsp",
- "py-run",
- "py-syntax",
- "run-config",
- "secrets",
- "serde_json",
- "settings",
- "settings-ui",
- "tempfile",
- "terminal",
- "text",
- "themes",
- "tokio",
- "toml_edit 0.25.17+spec-1.1.0",
- "ui",
- "workbench",
 ]
 
 [[package]]
@@ -7414,7 +7414,6 @@ version = "0.0.1"
 dependencies = [
  "alacritty_terminal",
  "app-info",
- "dirs 7.0.0",
  "flume",
  "libc",
  "native-path",

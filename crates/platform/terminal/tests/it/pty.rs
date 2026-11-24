@@ -207,16 +207,16 @@ fn environment_and_working_directory() {
             "TERMINAL_EMULATOR",
             "ALACRITTY_WINDOW_ID",
             "WINDOWID",
-            "PYOXIDE_TERMINAL_TEST",
+            "OXSHIFT_TERMINAL_TEST",
         ],
         TerminalSize::new(200, 24),
     );
     opts.env
-        .push(("PYOXIDE_TERMINAL_TEST".into(), "yes".into()));
+        .push(("OXSHIFT_TERMINAL_TEST".into(), "yes".into()));
     let mut h = start(opts);
-    let snapshot = h.wait_text("PYOXIDE_TERMINAL_TEST=");
+    let snapshot = h.wait_text("OXSHIFT_TERMINAL_TEST=");
     let text = snapshot.text();
-    assert!(text.contains("PYOXIDE_TERMINAL_TEST=yes"), "{text}");
+    assert!(text.contains("OXSHIFT_TERMINAL_TEST=yes"), "{text}");
     assert!(text.contains("COLORTERM=truecolor"), "{text}");
     assert!(text.contains("TERMINAL_EMULATOR=App"), "{text}");
     // Not Alacritty's window id (`tty` sets it on Unix; the session

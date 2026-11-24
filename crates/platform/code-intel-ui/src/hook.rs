@@ -53,11 +53,7 @@ pub trait CodeIntelProvider: 'static {
     /// (a click on a server in the Language Services popup opens it, until
     /// there is a settings window).
     fn settings_file(&self, project_root: &Path) -> Option<PathBuf> {
-        Some(
-            project_root
-                .join(app_info::project_dir())
-                .join("project.toml"),
-        )
+        Some(project::store::settings_file(project_root))
     }
 
     /// Whether completing a function or method of the language adds

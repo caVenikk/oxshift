@@ -12,9 +12,9 @@
 6. Mark `docs` as excluded again, close the project and open it again.
 7. Open a folder that the reference IDE opened before, whose `.idea/x.iml`
    excludes `venv` (`<excludeFolder url="file://$MODULE_DIR$/venv" />`),
-   and that has no `.oxide` folder yet. Then mark `venv` as not excluded
+   and that has no `.oxshift` folder yet. Then mark `venv` as not excluded
    in the reference IDE and open the folder in Pyoxide again.
-8. Open a folder that has neither `.idea` nor `.oxide` and no folder to
+8. Open a folder that has neither `.idea` nor `.oxshift` and no folder to
    exclude.
 
 ## Expected
@@ -27,7 +27,7 @@
 - Step 3: the menu has *Find in Files…* and *Replace in Files…*, then
   *Mark Directory As* with *Excluded*; after choosing
   it `docs` looks like `.venv` and stays collapsed. Expand All leaves it
-  closed. A `.oxide/project.toml` file appears with `docs` under
+  closed. A `.oxshift/project.toml` file appears with `docs` under
   `[exclusions] paths`.
 - Step 4: an excluded folder expands by hand; its subfolders show the
   excluded folder icon and all its rows the non-project background.
@@ -36,10 +36,10 @@
   longer lists it.
 - Step 6: `docs` is still excluded.
 - Step 7: `venv` is excluded as soon as the project opens and a
-  `.oxide/project.toml` lists it; `.idea` is unchanged. After the change in
+  `.oxshift/project.toml` lists it; `.idea` is unchanged. After the change in
   the reference IDE `venv` stays excluded in Pyoxide: `.idea` is read only
-  once, when there is no `.oxide` yet.
-- Step 8: no `.oxide` folder is created.
+  once, when there is no `.oxshift` yet.
+- Step 8: no `.oxshift` folder is created.
 - A right click on `.venv` (excluded by the rule for virtual environments),
   on a row inside an excluded folder or on the project root shows no
   *Excluded* and no *Cancel Exclusion*: automatic exclusions cannot be

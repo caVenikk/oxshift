@@ -7,7 +7,7 @@
 //! Keymap popup, and a keymap of the reference imports.
 //!
 //! The expected unmapped actions are in `tests/keymaps/`; after a change of
-//! the action table, `PYOXIDE_BLESS=1 cargo test -p workbench --test
+//! the action table, `OXSHIFT_BLESS=1 cargo test -p workbench --test
 //! keymaps` writes them anew for review.
 
 use std::collections::HashMap;
@@ -259,7 +259,7 @@ fn the_unmapped_actions_of_the_vs_code_keymaps_are_expected(_cx: &mut TestAppCon
         actual.sort();
         let file = expectation_file(name);
         let text = actual.join("\n") + "\n";
-        if std::env::var_os("PYOXIDE_BLESS").is_some() {
+        if std::env::var_os("OXSHIFT_BLESS").is_some() {
             std::fs::create_dir_all(file.parent().unwrap()).unwrap();
             std::fs::write(&file, &text).unwrap();
         }
@@ -277,7 +277,7 @@ fn the_unmapped_actions_of_the_vs_code_keymaps_are_expected(_cx: &mut TestAppCon
         assert!(
             now_mapped.is_empty() && now_unmapped.is_empty(),
             "{name}: mapped now {now_mapped:?}, unmapped now {now_unmapped:?}; \
-             review and run with PYOXIDE_BLESS=1"
+             review and run with OXSHIFT_BLESS=1"
         );
         // Every shortcut of a mapped action that Pyoxide cannot bind is a
         // mouse gesture.

@@ -137,7 +137,7 @@ validation until release.
 Each worktree keeps its own target directory. Seed it before the first build
 with `scripts/seed-target.sh` (or `--from <other-target-directory>`); the helper
 copies compiled dependencies with copy-on-write where available and respects
-Cargo's build locks. Do not concurrently build into one shared target.
+Cargo's build locks. Its default seed location is `~/.cache/oxshift/target-seed`. Do not concurrently build into one shared target.
 `scripts/check.sh` reports per-stage timing. GitHub cache restore is not proof
 of workspace artifact reuse: record the restored key, cache hit and compilation
 work when assessing an optimization. Preserve the assertions and avoid blanket

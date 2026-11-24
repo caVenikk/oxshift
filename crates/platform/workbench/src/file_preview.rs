@@ -805,7 +805,7 @@ struct Store {
 
 impl Global for Store {}
 
-/// Where the settings are kept: next to Find in Files' (`PYOXIDE_CONFIG_DIR`,
+/// Where the settings are kept: next to Find in Files' (`OXSHIFT_CONFIG_DIR`,
 /// else the user's configuration folder), in `preview.toml`.
 pub fn settings_file() -> Option<PathBuf> {
     crate::find_in_files::settings_file().map(|f| f.with_file_name("preview.toml"))

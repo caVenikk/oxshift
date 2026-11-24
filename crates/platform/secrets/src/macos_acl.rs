@@ -13,7 +13,7 @@
 //! `docs/code-signing.md`).
 
 use std::ffi::{CString, c_char, c_void};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::ptr;
 
 use core_foundation::array::{CFArray, CFArrayRef};
@@ -35,12 +35,6 @@ const GENERIC_PASSWORD_CLASS: u32 = 0x6765_6E70;
 const SERVICE_ATTR: u32 = 0x7376_6365;
 /// `kSecAccountItemAttr` ('acct').
 const ACCOUNT_ATTR: u32 = 0x6163_6374;
-
-/// Binaries that read and write data source passwords and ship together
-/// (the product's programs, `app_info::binaries`).
-fn trusted_names() -> &'static [&'static str] {
-    app_info::binaries()
-}
 
 #[link(name = "Security", kind = "framework")]
 unsafe extern "C" {
@@ -116,13 +110,17 @@ pub(crate) fn trusted_binaries() -> Vec<PathBuf> {
     let Ok(exe) = std::env::current_exe() else {
         return Vec::new();
     };
-    let mut list = vec![exe.clone()];
-    if let Some(dir) = exe.parent() {
-        for name in trusted_names() {
-            let path = dir.join(name);
-            if path.is_file() && !list.contains(&path) {
-                list.push(path);
-            }
+    trusted_siblings(&exe, app_info::binaries())
+}
+
+// The running executable represents itself; include existing shipped siblings.
+fn trusted_siblings(exe: &Path, programs: &[&str]) -> Vec<PathBuf> {
+    let mut list = vec![exe.to_owned()];
+    let Some(dir) = exe.parent() else { return list };
+    for name in programs {
+        let path = dir.join(name);
+        if path != exe && path.is_file() {
+            list.push(path);
         }
     }
     list
@@ -492,6 +490,19 @@ mod tests {
             .unwrap();
         assert_eq!(&*password, b"original");
         assert_eq!(k.acl_dump().matches("class: \"genp\"").count(), 1);
+    }
+
+    #[test]
+    fn trusted_siblings_include_only_shipped_program_names() {
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path();
+        for name in ["editor", "db", "unrelated"] {
+            std::fs::write(dir.join(name), []).unwrap();
+        }
+        assert_eq!(
+            trusted_siblings(&dir.join("editor"), &["editor", "db", "cli"]),
+            [dir.join("editor"), dir.join("db")]
+        );
     }
 
     #[test]

@@ -81,15 +81,12 @@ impl ProfilesFile {
 }
 
 /// Default profiles file: the `DB_PROFILES` environment variable of the
-/// product, else `<config dir>/<slug>/db-profiles.toml`.
+/// product, else `db-profiles.toml` in the active OS profile directory.
 pub fn default_path() -> PathBuf {
-    if let Some(p) = std::env::var_os(profiles_env()).filter(|p| !p.is_empty()) {
+    if let Some(p) = app_info::var_os("DB_PROFILES").filter(|p| !p.is_empty()) {
         return PathBuf::from(p);
     }
-    dirs::config_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join(app_info::slug())
-        .join("db-profiles.toml")
+    app_info::default_config_dir_or_local().join("db-profiles.toml")
 }
 
 #[cfg(test)]

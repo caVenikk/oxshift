@@ -153,18 +153,18 @@ fn standard_input_is_echoed_and_closed() {
 
 #[test]
 fn environment_and_working_directory() {
-    let cmd = helper(&["env", "PYOXIDE_TEST_VALUE"]).with_env("PYOXIDE_TEST_VALUE", "a b");
+    let cmd = helper(&["env", "OXSHIFT_TEST_VALUE"]).with_env("OXSHIFT_TEST_VALUE", "a b");
     let (_, rx) = spawn(&cmd).unwrap();
     assert_eq!(run_to_end(&rx).stdout(), "a b\n");
 
-    let cmd = helper(&["env", "PYOXIDE_TEST_VALUE"])
-        .with_env("PYOXIDE_TEST_VALUE", "first")
-        .without_env("PYOXIDE_TEST_VALUE");
+    let cmd = helper(&["env", "OXSHIFT_TEST_VALUE"])
+        .with_env("OXSHIFT_TEST_VALUE", "first")
+        .without_env("OXSHIFT_TEST_VALUE");
     let (_, rx) = spawn(&cmd).unwrap();
     assert_eq!(run_to_end(&rx).stdout(), "<unset>\n");
 
     // Without the system environment, PATH is not passed on.
-    let mut cmd = helper(&["env", "PATH"]).with_env("PYOXIDE_TEST_VALUE", "x");
+    let mut cmd = helper(&["env", "PATH"]).with_env("OXSHIFT_TEST_VALUE", "x");
     cmd.inherit_env = false;
     let (_, rx) = spawn(&cmd).unwrap();
     assert_eq!(run_to_end(&rx).stdout(), "<unset>\n");

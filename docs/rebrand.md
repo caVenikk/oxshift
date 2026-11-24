@@ -1,10 +1,11 @@
 # Rebranding
 
-The product name is spelled out in one place: the `brand` crate
-(`crates/python/brand/src/lib.rs`, product layer). Everything else takes it
-from there:
+Oxshift is the shared platform. Oxshift Python is its first IDE. Its display
+names and compatibility identifiers are defined in the `brand` crate
+(`crates/python/brand/src/lib.rs`, product layer). See the
+[brand guide](../replica/brand.md) for the approved icons and palettes.
 
-- Product crates (`crates/python/`, `db-cli`) use the `brand` constants and
+- Product crates in `crates/python/` use the `brand` constants and
   `brand::env_name!("X")` (compile time, for `concat!` and attributes).
 - Platform crates and modules know no name (ADR 0005). They read the
   `app_info::AppInfo` the product installs at startup (`brand::install()` in
@@ -12,7 +13,7 @@ from there:
   one (`App`, slug `app`, prefix `APP`, folder `.app`), which is what the tests
   of platform crates run with.
 - `python3 scripts/check-brand.py` (part of `scripts/check.sh` and CI) fails on
-  the name in the code of `crates/` outside `brand`, apart from comments, test
+  either the current or previous product name in the code of `crates/` outside `brand`, apart from comments, test
   code, `Cargo.toml` and a short allow-list in the script, each entry with its
   reason.
 
@@ -20,60 +21,67 @@ from there:
 
 | Constant | Today | Where it shows up |
 |---|---|---|
-| `PRODUCT_NAME` | `Pyoxide` | window title, menus, messages, KeePass group, `TERMINAL_EMULATOR` |
-| `PRODUCT_FULL_NAME` | `Pyoxide IDE` | LSP and DAP client name, Oracle session module, `--help` |
-| `SLUG` | `pyoxide` | configuration and cache folders, database `application_name`, thread names, temporary files, base theme ids (`pyoxide-dark`, `pyoxide-light`), keychain service prefix, save-file marker |
-| `ENV_PREFIX` | `PYOXIDE` | every environment variable (`PYOXIDE_CONFIG_DIR`, `PYOXIDE_THEME`, `PYOXIDE_DB_PASSWORD`, ...) and the `PYOXIDE <name> <json>` measurement lines |
-| `PROJECT_DIR` | `.oxide` | the product's folder in a project |
-| `BUNDLE_ID` | `dev.pyoxide.ide` | application bundle identifier (no bundle is built yet) |
-| `CLI_NAME`, `DB_CLI_NAME`, `IDE_NAME` | `pyoxide`, `pyoxide-db`, `pyoxide-ide` | command-line texts, the keychain service of database passwords (`pyoxide-db`), the programs trusted by keychain items |
+| `PRODUCT_NAME` | `Oxshift Python` | window title, menus, messages and `TERMINAL_EMULATOR` |
+| `IDENTITY_NAME` | `Pyoxide` | existing KeePass group |
+| `PRODUCT_FULL_NAME` | `Oxshift Python IDE` | LSP and DAP client name, Oracle session module, `--help` |
+| `SLUG` | `pyoxide` | Linux window app ID, database `application_name`, thread names, temporary files, base theme ids (`pyoxide-dark`, `pyoxide-light`), keychain service prefix, save-file marker |
+| `ENV_PREFIX` | `OXSHIFT` | environment variables, including `OXSHIFT_CONFIG_DIR` and `OXSHIFT_DB_PASSWORD`, and the `OXSHIFT ` measurement-line prefix |
+| `PROFILE_DIR` | `oxshift-python` | profile in the OS configuration and cache locations |
+| `PROJECT_DIR` | `.oxshift` | shared and personal project settings, run configurations and project data sources |
+| `BUNDLE_ID` | `dev.pyoxide.ide` | technical product identifier used before the packaging migration |
+| `CLI_NAME`, `DB_CLI_NAME`, `IDE_NAME` | `oxshift`, `oxshift-db`, `oxshift-python` | commands and help text. The credential service remains `pyoxide-db`. |
 
-## Changing a value is a migration
+Third-party notices that record a source or icon under
+`crates/python/pyoxide-ide/src/` or `crates/python/pyoxide-ide/assets/`
+describe files now under `crates/python/oxshift-python/src/` and
+`crates/python/oxshift-python/assets/`, respectively.
 
-The values are what existing installations have on disk. Before changing one
-decide what happens to the old data, or existing users lose it:
+## Project storage and PyCharm import
 
-- `SLUG`: the settings folder (`<config dir>/pyoxide/`), the cache folder, the
-  keychain items of `<slug>-db` and `<slug>-keepass`, the stored theme id.
-- `PROJECT_DIR`: `.oxide/` in every project (shared settings, run
-  configurations, personal state).
-- `ENV_PREFIX`: environment variables set in users' shells and scripts.
-- `DB_CLI_NAME`: the keychain service of the data source passwords.
+The IDE and both command-line tools use `oxshift-python/` in the OS
+configuration and cache locations. Existing Pyoxide profiles and caches are
+not selected or imported automatically. Explicit configuration and cache path
+overrides select the requested location instead of the default.
 
-Either keep the old value where it is only a storage name, or read the old
-location once and write the new one.
+Project settings always use `.oxshift/`, which holds `project.toml`,
+`workspace.toml`, shared run configurations and project data sources together.
+This directory is hidden from the project tree and index. There is no fallback
+to the former project directory and no automatic migration of it. Supported
+PyCharm project settings are imported from `.idea/` and shared `*.run.xml`
+files by their respective importers. The first-run import of personal PyCharm
+settings keeps a snapshot of supported configuration data; credentials,
+password stores and tokens are excluded. Explicit settings and cache paths
+still override the default. CLI database profiles and the secret-store
+configuration retain their own overrides, `OXSHIFT_DB_PROFILES` and
+`OXSHIFT_SECRETS_CONFIG`.
 
-## Manual steps
+Existing theme IDs, the KeePass group, keychain services and signing identities
+are stable. A connection configured with the same profile name and secret store
+can read its existing credential entry (`pyoxide-db`, account = profile name).
+This preserves access to saved passwords; it does not select an old settings
+folder or enable old command or environment names.
 
-These are not generated from `brand`; rename them by hand and keep them equal
-to the `brand` values.
+## Rollout
 
-- [ ] `crates/python/brand/src/lib.rs`: the values above.
-- [ ] Package names (`pyoxide-ide`, `pyoxide-cli`) and their directories, the
-      `[[bin]]` names (`pyoxide-ide`, `pyoxide`, `pyoxide-db`) in the
-      `Cargo.toml` files, the crate paths (`pyoxide_ide::...`), `description`
-      fields. `brand::IDE_NAME`, `CLI_NAME` and `DB_CLI_NAME` must equal the
-      binary names (keychain items trust those binaries).
-- [ ] `repository` in the workspace `Cargo.toml`, the GitHub repository, issue
-      templates, links in `README.md` and `CONTRIBUTING.md`.
-- [ ] Scripts: `scripts/sign-local.sh` (identifiers follow the binary names),
-      `scripts/seed-target.sh`, `scripts/fetch-debugpy.py` (computes the cache
-      folder `<slug>`), `scripts/perf/pyoxide_bench.py` (reads the environment
-      variables and the `PYOXIDE <name> <json>` lines), `scripts/progress.py`.
-- [ ] `.github/workflows/`: artifact and binary names.
-- [ ] Packaging, once there is any: bundle identifier, `Info.plist`, installer
-      ids, code-signing identity (`docs/code-signing.md`).
-- [ ] Development databases: `docker-compose.yml` and the tests use a database
-      and user called `pyoxide`; these are fixtures, not the product name.
-- [ ] Documentation: `README.md`, `docs/` (including the file name
-      `docs/pyoxide-db.md`), ADRs, `skills/`, `replica/`, `notices/`.
-- [ ] Comments and doc comments in the code: `grep -rni pyoxide crates`
-      (`check-brand.py` ignores comments).
-- [ ] Tests: they spell the names out where they test them, and platform
-      crates' tests run with the neutral names (`app`, `APP`, `.app`).
-      `grep -rni pyoxide crates/*/*/tests` and the `#[cfg(test)]` modules.
-- [ ] Icons and logo: `crates/platform/ui/assets`, the SVG headers that name
-      the product.
-- [ ] Internal protocol names carry no product name on purpose (`__IDE_*`
-      variables and `shell-integration.*` of the terminal scripts, the savepoint
-      `px_stmt`, the `PX$ERROR` and `PX$NATIVE` columns of the Oracle driver).
+1. **Names on screen and in public copy.** Use Oxshift for the platform and
+   Oxshift Python for the IDE. The application menu, welcome screen, CLI help,
+   README, and feature progress page take the new name. Examples use the current package names, repository URL, and environment variables.
+2. **Commands and packages.** The primary packages are `oxshift-python`
+   (IDE), `oxshift-cli` (the `oxshift` executable), and `oxshift-db`. Use these
+   package names for builds, runs and tests. Commands and environment variables
+   use only the Oxshift names: `oxshift-python`, `oxshift`, `oxshift-db`, and
+   `OXSHIFT_*`. There are no old command wrappers or environment aliases.
+   CLI flags take precedence over environment defaults. The applications use
+   the Oxshift settings locations; existing credential identities remain stable.
+3. **Settings, projects, and credentials.** Use the product storage paths
+   and import supported PyCharm settings as described above.
+   Distribution signing and packaged Keychain acceptance are release checks.
+4. **Repository and documentation.** The canonical repository is
+   [caVenikk/oxshift](https://github.com/caVenikk/oxshift). Existing clones can
+   update their SSH remote with `git remote set-url origin git@github.com:caVenikk/oxshift.git`.
+   The [feature report](https://cavenikk.github.io/oxshift/) and its
+   [badge data](https://cavenikk.github.io/oxshift/parity.json) use the new Pages path.
+5. **Distributions.** Apply the Python icon from `assets/brand/` and the product
+   name to the macOS bundle, Windows executable and installer, and Linux desktop
+   entry. Align installed binary names, bundle identifiers, and CI artifact
+   names with the migration decisions. Check install and upgrade on each OS.

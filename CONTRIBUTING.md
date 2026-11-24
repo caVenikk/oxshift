@@ -1,4 +1,4 @@
-# Contributing to Pyoxide IDE
+# Contributing to Oxshift
 
 Thanks for helping. This project aims to be fast, small and legally clean, so a
 few rules matter more than usual.
@@ -22,7 +22,7 @@ conflicting on [NOTICE](NOTICE), which only points there (ADR 0019).
 
 ```bash
 rustup default stable
-git clone <repository-url> && cd pyoxide-ide
+git clone <repository-url> && cd oxshift
 cargo build --workspace
 docker compose up -d      # optional: Oracle Free for database integration tests
 ```

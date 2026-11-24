@@ -1,7 +1,7 @@
 # Connection diagnostics (own feature)
 
 ## Steps
-Run `pyoxide-db diagnose --profile <name>` against: a healthy database; a
+Run `oxshift-db diagnose --profile <name>` against: a healthy database; a
 wrong password; an unknown service; a closed port; an unresolvable host; a
 server that requires TLS or native network encryption.
 

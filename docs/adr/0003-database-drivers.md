@@ -21,7 +21,7 @@ is Rust; non-Rust dependencies need a recorded decision.
 
 ## Decision
 - Oracle: `db-oracle-thin` (`oracle-rs`) is the default; `db-oracle-odpi` is
-  the fallback for environments thin cannot reach. `pyoxide-db diagnose`
+  the fallback for environments thin cannot reach. `oxshift-db diagnose`
   detects the typical thin limitations and points to the fallback.
 - PostgreSQL: `db-postgres` on `tokio-postgres` with `rustls`.
 - SQLite: `db-sqlite` on `rusqlite` with bundled SQLite. This is an accepted

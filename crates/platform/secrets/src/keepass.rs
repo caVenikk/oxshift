@@ -28,7 +28,7 @@ use crate::{Result, Secret, SecretError, SecretErrorKind, SecretStore};
 pub const STORE_NAME: &str = "KeePass database";
 /// Group that holds every entry of the product.
 pub fn root_group() -> &'static str {
-    app_info::name()
+    app_info::identity_name()
 }
 
 fn err(kind: SecretErrorKind, message: impl Into<String>) -> SecretError {

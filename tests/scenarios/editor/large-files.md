@@ -23,7 +23,7 @@
 
 ## Commands
 `project.open-file`, `editor.set-selection`, `editor.type`,
-`editor.scroll-to {"line": ...}`; the bench mode `PYOXIDE_BENCH` measures
+`editor.scroll-to {"line": ...}`; the bench mode `OXSHIFT_BENCH` measures
 these (replica/perf.md).
 
 ## Source

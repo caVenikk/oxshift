@@ -5,10 +5,10 @@
 //! crate, for example) [`get`] returns a neutral one. Names that users see
 //! are formatted from [`name`], technical names (configuration and cache
 //! folders, keychain services, environment variables, the project folder)
-//! from [`slug`], [`env_prefix`] and [`project_dir`].
+//! from [`AppInfo::profile_dir`], [`slug`], [`env_prefix`] and [`project_dir`].
 
 use std::ffi::OsString;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
 /// The names of a product. Every field is a plain value the product owns.
@@ -18,9 +18,13 @@ pub struct AppInfo {
     pub name: &'static str,
     /// Full name where the short one is too vague (window titles, user agents).
     pub full_name: &'static str,
-    /// Lower-case technical name: configuration and cache folders, the
-    /// application name of a database session, thread names.
+    /// Stable, case-sensitive name for existing credential groups.
+    /// Independent of the display name; changing it requires a migration.
+    pub identity_name: &'static str,
+    /// Stable technical name for database sessions and thread names.
     pub slug: &'static str,
+    /// Directory name under the OS configuration and cache locations.
+    pub profile_dir: &'static str,
     /// Prefix of the environment variables, without the trailing `_`.
     pub env_prefix: &'static str,
     /// Name of the product's folder in a project root, with the leading dot.
@@ -31,8 +35,7 @@ pub struct AppInfo {
     pub cli_name: &'static str,
     /// Name of the database command-line program.
     pub db_cli_name: &'static str,
-    /// Every program the product ships (the IDE, the command-line programs):
-    /// the ones that share the OS credential store.
+    /// Names of the programs sharing credentials.
     pub binaries: &'static [&'static str],
 }
 
@@ -41,7 +44,9 @@ impl AppInfo {
     pub const NEUTRAL: AppInfo = AppInfo {
         name: "App",
         full_name: "App",
+        identity_name: "App",
         slug: "app",
+        profile_dir: "app",
         env_prefix: "APP",
         project_dir: ".app",
         bundle_id: "app.example.app",
@@ -49,6 +54,13 @@ impl AppInfo {
         db_cli_name: "app-db",
         binaries: &["app", "app-db"],
     };
+}
+
+impl AppInfo {
+    /// The project store path, without probing or creating directories.
+    pub fn project_storage_dir(&self, root: &std::path::Path) -> PathBuf {
+        root.join(self.project_dir)
+    }
 }
 
 impl Default for AppInfo {
@@ -78,6 +90,11 @@ pub fn name() -> &'static str {
 /// The full product name.
 pub fn full_name() -> &'static str {
     get().full_name
+}
+
+/// The stable name used by credential groups.
+pub fn identity_name() -> &'static str {
+    get().identity_name
 }
 
 /// The technical name.
@@ -124,7 +141,7 @@ pub fn env_name(suffix: &str) -> String {
 /// The value of the product's environment variable `suffix` (see
 /// [`env_name`]); `None` when it is unset or not Unicode.
 pub fn var(suffix: &str) -> Option<String> {
-    std::env::var(env_name(suffix)).ok()
+    var_os(suffix)?.into_string().ok()
 }
 
 /// Like [`var`], without requiring Unicode.
@@ -132,29 +149,51 @@ pub fn var_os(suffix: &str) -> Option<OsString> {
     std::env::var_os(env_name(suffix))
 }
 
+fn profile_in(base: &Path) -> PathBuf {
+    base.join(get().profile_dir)
+}
+
+/// Standard location for files such as the DB profiles and credential store
+/// configuration. Those files have their own explicit path overrides.
+pub fn default_config_dir_or_local() -> PathBuf {
+    dirs::config_dir()
+        .map(|base| profile_in(&base))
+        .unwrap_or_else(|| profile_in(Path::new(".")))
+}
+
 /// The application's configuration folder: the environment variable
-/// `<prefix>_CONFIG_DIR`, else [`slug`] in the user's configuration folder.
+/// `<prefix>_CONFIG_DIR`, else the product profile in the user's configuration folder.
 pub fn config_dir() -> Option<PathBuf> {
     match var_os("CONFIG_DIR").filter(|d| !d.is_empty()) {
         Some(dir) => Some(PathBuf::from(dir)),
-        None => Some(dirs::config_dir()?.join(slug())),
+        None => dirs::config_dir().map(|base| profile_in(&base)),
     }
 }
 
 /// The application's cache folder: the environment variable
-/// `<prefix>_CACHE_DIR`, else [`slug`] in the user's cache folder
+/// `<prefix>_CACHE_DIR`, else the product profile in the user's cache folder
 /// (`~/Library/Caches` on macOS, `$XDG_CACHE_HOME` or `~/.cache` on Linux,
 /// the local application data folder on Windows).
 pub fn cache_dir() -> Option<PathBuf> {
     match var_os("CACHE_DIR").filter(|d| !d.is_empty()) {
         Some(dir) => Some(PathBuf::from(dir)),
-        None => Some(dirs::cache_dir()?.join(slug())),
+        None => dirs::cache_dir().map(|base| profile_in(&base)),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn storage_paths_are_lexical_and_use_only_the_product_names() {
+        let base = Path::new("project-root");
+        assert_eq!(
+            AppInfo::NEUTRAL.project_storage_dir(base),
+            base.join(".app")
+        );
+        assert_eq!(profile_in(base), base.join("app"));
+    }
 
     #[test]
     fn env_names_join_prefix_and_suffix() {

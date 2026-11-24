@@ -185,7 +185,7 @@ def page(rows):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pyoxide IDE progress</title>
+<title>Oxshift Python progress</title>
 <style>
 :root {{ color-scheme: light dark; font-family: system-ui, sans-serif; }}
 body {{ max-width: 64rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.45; }}
@@ -196,7 +196,7 @@ code {{ font-family: ui-monospace, monospace; }}
 </style>
 </head>
 <body>
-<h1>Pyoxide IDE: feature parity</h1>
+<h1>Oxshift Python feature parity</h1>
 <p>Generated from {source()} by <code>scripts/progress.py</code>.</p>
 {chr(10).join(body)}
 </body>

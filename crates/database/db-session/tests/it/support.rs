@@ -17,11 +17,11 @@ use db_session::{
 pub const WAIT: Duration = Duration::from_secs(60);
 
 pub fn env(key: &str, default: &str) -> String {
-    std::env::var(key).unwrap_or_else(|_| default.to_owned())
+    crate::product_env::var(key).unwrap_or_else(|_| default.to_owned())
 }
 
 pub fn password() -> Secret {
-    Secret::new(env("PYOXIDE_DB_PASSWORD", "pyoxide"))
+    Secret::new(env("DB_PASSWORD", "pyoxide"))
 }
 
 /// Opens connections with one driver and fixed parameters, and counts them.

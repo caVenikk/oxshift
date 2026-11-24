@@ -20,7 +20,7 @@ only the Oracle Client implements:
 | Cancel a running statement and call timeouts | no | yes |
 | Nothing to install | yes | no |
 
-`pyoxide-db diagnose` points to this backend when it recognises one of the
+`oxshift-db diagnose` points to this backend when it recognises one of the
 thin driver's limits.
 
 ## Installing the Oracle Client

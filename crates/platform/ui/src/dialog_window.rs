@@ -34,7 +34,7 @@
 //!
 //! Dialog and popup windows work on the test platform too, and open
 //! without taking the focus when [`DialogOptions::activate`] is off
-//! (`PYOXIDE_BACKGROUND`).
+//! (`OXSHIFT_BACKGROUND`).
 
 use std::cell::Cell;
 use std::collections::HashMap;

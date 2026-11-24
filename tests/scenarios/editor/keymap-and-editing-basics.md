@@ -6,7 +6,7 @@ Platform Community keymap files (see NOTICE); the behaviour is described
 here in Pyoxide's own words. Every binding of both keymaps is pressed as a
 real keystroke in `crates/platform/workbench/tests/it/keymap/`; the behaviour
 below is covered by `crates/platform/editor/tests/it/basics.rs` and the Python
-test of `crates/python/pyoxide-ide`.
+test of `crates/python/oxshift-python`.
 
 ## Where the keystrokes come from
 The "Reference action" column names the action of the reference keymaps

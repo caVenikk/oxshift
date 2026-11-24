@@ -13,18 +13,16 @@ use db_postgres::PostgresDriver;
 use db_testkit::{Expect, Hooks, Target};
 
 fn env_or(name: &str, default: &str) -> String {
-    std::env::var(name).unwrap_or_else(|_| default.to_owned())
+    crate::product_env::var(name).unwrap_or_else(|_| default.to_owned())
 }
 
 fn target() -> Target {
     let params = ConnectParams {
-        host: env_or("PYOXIDE_TEST_PG_HOST", "localhost"),
-        port: env_or("PYOXIDE_TEST_PG_PORT", "55432")
-            .parse()
-            .expect("port"),
+        host: env_or("TEST_PG_HOST", "localhost"),
+        port: env_or("TEST_PG_PORT", "55432").parse().expect("port"),
         database: "pyoxide".into(),
         user: "pyoxide".into(),
-        password: Secret::new(env_or("PYOXIDE_DB_PASSWORD", "pyoxide")),
+        password: Secret::new(env_or("DB_PASSWORD", "pyoxide")),
         ..ConnectParams::default()
     };
     Target::new(Arc::new(PostgresDriver), params, Hooks::postgres())

@@ -13,7 +13,7 @@
 #                                       checkout, say the main one) instead
 #                                       of the seed; nothing is built
 #
-# The seed is $PYOXIDE_TARGET_SEED, default ~/.cache/pyoxide/target-seed. It
+# The seed is $OXSHIFT_TARGET_SEED, default ~/.cache/oxshift/target-seed. It
 # is built with the same cargo commands and flags as scripts/check.sh (host
 # and, where installed, the Windows target), then the workspace crates' own
 # artifacts are removed: a checkout compiles them in its own path anyway, and
@@ -26,12 +26,12 @@
 # Limits:
 # - The clone costs no disk space until files change: APFS clonefile on
 #   macOS, reflink on Linux file systems that support it (btrfs, xfs). On any
-#   other file system it is skipped (set PYOXIDE_SEED_COPY=1 to copy the
+#   other file system it is skipped (set OXSHIFT_SEED_COPY=1 to copy the
 #   files instead; a seed is gigabytes).
 # - With --from, the clone takes the cargo build locks of DIR (shared) while
 #   it copies, so a cargo build running there waits for the clone instead of
 #   being read half-written, and a clone waits for a running build (up to
-#   PYOXIDE_SEED_WAIT seconds, default 600, then it is skipped). Test
+#   OXSHIFT_SEED_WAIT seconds, default 600, then it is skipped). Test
 #   binaries running from DIR do not matter: they write nothing there.
 #   Without the locks (a cargo that uses none) --from is not safe against a
 #   concurrent build.
@@ -42,7 +42,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-seed=${PYOXIDE_TARGET_SEED:-$HOME/.cache/pyoxide/target-seed}
+seed=${OXSHIFT_TARGET_SEED:-$HOME/.cache/oxshift/target-seed}
 WINDOWS_TARGET=x86_64-pc-windows-gnu
 refresh_only=0
 from=""
@@ -101,14 +101,14 @@ clone_tree() {
     case "$(uname -s)" in
         Darwin) cp -cpR "$1" "$2" ;;
         Linux)
-            if [ "${PYOXIDE_SEED_COPY:-0}" = 1 ]; then
+            if [ "${OXSHIFT_SEED_COPY:-0}" = 1 ]; then
                 cp -a --reflink=auto "$1" "$2"
             else
                 cp -a --reflink=always "$1" "$2"
             fi
             ;;
         *)
-            [ "${PYOXIDE_SEED_COPY:-0}" = 1 ] || return 1
+            [ "${OXSHIFT_SEED_COPY:-0}" = 1 ] || return 1
             cp -a "$1" "$2"
             ;;
     esac
@@ -146,7 +146,7 @@ with_build_locks() {
         "$dir/$WINDOWS_TARGET"/debug/.cargo-artifact-lock; do
         if [ -e "$f" ]; then files+=("$f"); fi
     done
-    python3 - "${PYOXIDE_SEED_WAIT:-600}" "${files[@]}" -- "$@" <<'PY'
+    python3 - "${OXSHIFT_SEED_WAIT:-600}" "${files[@]}" -- "$@" <<'PY'
 import fcntl, subprocess, sys, time
 
 wait = float(sys.argv[1])

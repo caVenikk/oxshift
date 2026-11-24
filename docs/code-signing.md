@@ -22,7 +22,8 @@ the command line alike.
 `KeyringStore::set` on macOS creates the item with an explicit access list
 (`SecAccessCreate` and `SecKeychainItemCreateFromContent`, module
 `secrets::macos_acl`) naming the running binary and its siblings
-`pyoxide-ide`, `pyoxide-db` and `pyoxide` in the same directory. An item
+`oxshift-python`, `oxshift-db` and `oxshift` in the same directory. Each
+program occupies one slot. An item
 stored by the CLI is then trusted by the IDE and the other way round, with no
 prompt for either. Setting a secret again replaces the item, so its list is
 refreshed with it. The `keyring` crate cannot do this: it uses the default
@@ -33,11 +34,14 @@ tied to a provisioning profile, which a command line tool does not have.
 
 Reading never changes the list. An item created before this change, or by
 another program, keeps its old list until it is stored again
-(`pyoxide-db secret set <profile>`, or save the data source in the IDE).
+(`oxshift-db secret set <profile>`, or save the data source in the IDE).
 
 PyCharm creates its items with the default list and is the only reader, so it
-is not prompted once its signature is stable. Pyoxide has two binaries that
+is not prompted once its signature is stable. Oxshift Python has three programs that
 share items, hence the explicit list.
+
+The local signing helper retains the signing identifiers `pyoxide-ide`,
+`pyoxide-db`, and `pyoxide` for the corresponding renamed executables.
 
 ## 3. Whether the code identity is stable
 
@@ -65,14 +69,14 @@ file of its own, never in the login keychain.
 1. `scripts/sign-local.sh --setup` prints the one-time commands: they create
    `~/Library/Keychains/pyoxide-signing.keychain-db` and the certificate
    "Pyoxide Local Dev" in it. Run them once.
-2. After each build: `scripts/sign-local.sh` (signs `target/release/pyoxide-ide`,
-   `pyoxide-db` and `pyoxide`; pass other paths to sign those). A rebuild
+2. After each build: `scripts/sign-local.sh` (signs `target/release/oxshift-python`,
+   `oxshift-db` and `oxshift`; pass other paths to sign those). A rebuild
    replaces the signature, so sign again after every build you run.
-3. `scripts/sign-local.sh --check target/release/pyoxide-ide` shows the
+3. `scripts/sign-local.sh --check target/release/oxshift-python` shows the
    designated requirement; it must show `certificate leaf`, not `cdhash`.
 4. Items created before the first signed build still list the old identities.
-   Store them once more (`pyoxide-db secret set <profile>`, signed
-   `pyoxide-db`; replacing the old item may ask for the login password once) or click "Always Allow" once per binary; both work from then
+   Store them once more (`oxshift-db secret set <profile>`, signed
+   `oxshift-db`; replacing the old item may ask for the login password once) or click "Always Allow" once per binary; both work from then
    on, whatever the build.
 
 The certificate is not trusted by the system (`CSSMERR_TP_NOT_TRUSTED` in
@@ -83,13 +87,13 @@ developer, as for any local build.
 ### Releases
 
 Release binaries are signed with one Developer ID Application certificate,
-all of them (`pyoxide-ide`, `pyoxide-db`, `pyoxide`, and the `.app` bundle
+all of them (`oxshift-python`, `oxshift-db`, `oxshift`, and the `.app` bundle
 that holds them), with a fixed identifier each:
 
 ```bash
 codesign --force --timestamp --options runtime \
   --sign "Developer ID Application: <Name> (<TEAMID>)" \
-  --identifier pyoxide-ide --entitlements release.entitlements pyoxide-ide
+  --identifier pyoxide-ide --entitlements release.entitlements oxshift-python
 ```
 
 - The same certificate for every binary: the access list of an item names

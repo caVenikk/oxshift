@@ -53,8 +53,11 @@ Rules for AI agents and human contributors. Read this file, then
   checked by `python3 scripts/check-layers.py`.
 - The product name comes from one place: product crates use `crates/python/brand`,
   platform crates and modules use `app_info` (installed at startup); never a
-  "Pyoxide"/"pyoxide"/`PYOXIDE_` literal in code (`python3 scripts/check-brand.py`,
+  hard-coded product name or environment prefix in code (`python3 scripts/check-brand.py`,
   [docs/rebrand.md](docs/rebrand.md)).
+  Public commands use `oxshift-python`, `oxshift`, `oxshift-db` and `OXSHIFT_*`
+  variables. Project storage is `.oxshift/`; OS profiles and caches use
+  `oxshift-python/`. Do not add legacy command, environment or storage aliases.
 - Every user-visible action is a command in the command registry (UI, CLI and
   agent control channel call the same functions).
 - Integration tests that need external services are `#[ignore]` and documented.

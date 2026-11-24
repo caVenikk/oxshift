@@ -8,18 +8,18 @@
 //! cargo test -p db-postgres -- --ignored
 //! ```
 //!
-//! Address and credentials come from `PYOXIDE_TEST_PG_HOST` (default
-//! `localhost`), `PYOXIDE_TEST_PG_PORT` (default `55432`) and
-//! `PYOXIDE_DB_PASSWORD` (default `pyoxide`). Every test creates objects with
+//! Address and credentials come from `OXSHIFT_TEST_PG_HOST` (default
+//! `localhost`), `OXSHIFT_TEST_PG_PORT` (default `55432`) and
+//! `OXSHIFT_DB_PASSWORD` (default `pyoxide`). Every test creates objects with
 //! a unique `pxpg_<test>` prefix and drops them again.
 //!
 //! The TLS tests against a TLS-enabled server only run when
-//! `PYOXIDE_TEST_PG_TLS_PORT` and `PYOXIDE_TEST_PG_TLS_CA` (path of the CA
+//! `OXSHIFT_TEST_PG_TLS_PORT` and `OXSHIFT_TEST_PG_TLS_CA` (path of the CA
 //! certificate the server certificate was issued by) are set. The server
 //! certificate must be valid for `localhost` and `127.0.0.1`. The mutual TLS
-//! test also needs `PYOXIDE_TEST_PG_TLS_CLIENT_CERT` and
-//! `PYOXIDE_TEST_PG_TLS_CLIENT_KEY` for a role that the server maps to the
-//! certificate (`PYOXIDE_TEST_PG_TLS_CLIENT_USER`, default `pyoxide_cert`,
+//! test also needs `OXSHIFT_TEST_PG_TLS_CLIENT_CERT` and
+//! `OXSHIFT_TEST_PG_TLS_CLIENT_KEY` for a role that the server maps to the
+//! certificate (`OXSHIFT_TEST_PG_TLS_CLIENT_USER`, default `pyoxide_cert`,
 //! with a `hostssl ... cert` rule in `pg_hba.conf`).
 
 use std::sync::Arc;
@@ -34,18 +34,16 @@ use db_core::{
 use db_postgres::PostgresDriver;
 
 fn env_or(name: &str, default: &str) -> String {
-    std::env::var(name).unwrap_or_else(|_| default.to_owned())
+    crate::product_env::var(name).unwrap_or_else(|_| default.to_owned())
 }
 
 fn params() -> ConnectParams {
     ConnectParams {
-        host: env_or("PYOXIDE_TEST_PG_HOST", "localhost"),
-        port: env_or("PYOXIDE_TEST_PG_PORT", "55432")
-            .parse()
-            .expect("port"),
+        host: env_or("TEST_PG_HOST", "localhost"),
+        port: env_or("TEST_PG_PORT", "55432").parse().expect("port"),
         database: "pyoxide".into(),
         user: "pyoxide".into(),
-        password: Secret::new(env_or("PYOXIDE_DB_PASSWORD", "pyoxide")),
+        password: Secret::new(env_or("DB_PASSWORD", "pyoxide")),
         ..Default::default()
     }
 }
@@ -1345,10 +1343,10 @@ async fn tls_against_a_server_without_tls() {
 #[ignore]
 async fn tls_modes_against_a_tls_server() {
     let (Ok(port), Ok(ca)) = (
-        std::env::var("PYOXIDE_TEST_PG_TLS_PORT"),
-        std::env::var("PYOXIDE_TEST_PG_TLS_CA"),
+        crate::product_env::var("TEST_PG_TLS_PORT"),
+        crate::product_env::var("TEST_PG_TLS_CA"),
     ) else {
-        eprintln!("skipped: PYOXIDE_TEST_PG_TLS_PORT / PYOXIDE_TEST_PG_TLS_CA not set");
+        eprintln!("skipped: OXSHIFT_TEST_PG_TLS_PORT / OXSHIFT_TEST_PG_TLS_CA not set");
         return;
     };
     let mut p = params();
@@ -1416,15 +1414,15 @@ async fn tls_modes_against_a_tls_server() {
 #[ignore]
 async fn mutual_tls_with_a_client_certificate() {
     let (Ok(port), Ok(ca), Ok(cert), Ok(key)) = (
-        std::env::var("PYOXIDE_TEST_PG_TLS_PORT"),
-        std::env::var("PYOXIDE_TEST_PG_TLS_CA"),
-        std::env::var("PYOXIDE_TEST_PG_TLS_CLIENT_CERT"),
-        std::env::var("PYOXIDE_TEST_PG_TLS_CLIENT_KEY"),
+        crate::product_env::var("TEST_PG_TLS_PORT"),
+        crate::product_env::var("TEST_PG_TLS_CA"),
+        crate::product_env::var("TEST_PG_TLS_CLIENT_CERT"),
+        crate::product_env::var("TEST_PG_TLS_CLIENT_KEY"),
     ) else {
-        eprintln!("skipped: the PYOXIDE_TEST_PG_TLS_* variables are not set");
+        eprintln!("skipped: the OXSHIFT_TEST_PG_TLS_* variables are not set");
         return;
     };
-    let user = env_or("PYOXIDE_TEST_PG_TLS_CLIENT_USER", "pyoxide_cert");
+    let user = env_or("TEST_PG_TLS_CLIENT_USER", "pyoxide_cert");
     let mut p = params();
     p.port = port.parse().expect("TLS port");
     p.user = user.clone();

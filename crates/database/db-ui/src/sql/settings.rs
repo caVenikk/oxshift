@@ -1,8 +1,8 @@
 //! The SQL settings of a project (ADR 0022, "How a document gets its
 //! dialect" and "Resolution scope"): a default dialect and scope and
 //! mappings of files and folders to a dialect, a data source and a schema.
-//! The shared set lives in `.oxide/project.toml`, the personal one in
-//! `.oxide/workspace.toml`; both have the same shape:
+//! The shared set lives in `.oxshift/project.toml`, the personal one in
+//! `.oxshift/workspace.toml`; both have the same shape:
 //!
 //! ```toml
 //! [sql]

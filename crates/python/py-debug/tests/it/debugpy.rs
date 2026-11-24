@@ -6,14 +6,14 @@
 //! cargo test -p py-debug --test it debugpy:: -- --ignored
 //! ```
 //!
-//! - `PYOXIDE_TEST_PYTHON`: the interpreter (default `python3`, `python` on
+//! - `OXSHIFT_TEST_PYTHON`: the interpreter (default `python3`, `python` on
 //!   Windows); an interpreter of a virtual environment also runs a
 //!   configuration with `uv run` on, which is debugged with that
 //!   interpreter directly;
-//! - `PYOXIDE_CACHE_DIR`: an application cache other than the user's;
-//! - `PYOXIDE_DEBUG_DEMO`: a copy of a project with the demo's `main.py`
+//! - `OXSHIFT_CACHE_DIR`: an application cache other than the user's;
+//! - `OXSHIFT_DEBUG_DEMO`: a copy of a project with the demo's `main.py`
 //!   (`describe`, `fail`) for [`the_demo_project`]; skipped without it;
-//! - `PYOXIDE_TEST_FASTAPI_PYTHON`: an interpreter with FastAPI and uvicorn
+//! - `OXSHIFT_TEST_FASTAPI_PYTHON`: an interpreter with FastAPI and uvicorn
 //!   for the web application tests; without it each makes a virtual
 //!   environment with `uv` (`fastapi[standard]`, from uv's cache or the
 //!   network).
@@ -33,7 +33,7 @@ use run_config::{EnvVar, RunConfiguration, Storage};
 const WAIT: Duration = Duration::from_secs(60);
 
 fn python() -> PathBuf {
-    std::env::var_os("PYOXIDE_TEST_PYTHON")
+    brand::var_os("TEST_PYTHON")
         .filter(|p| !p.is_empty())
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from(if cfg!(windows) { "python" } else { "python3" }))
@@ -333,7 +333,7 @@ fn a_module_with_arguments_and_environment() {
     std::fs::write(package.join("__init__.py"), "").unwrap();
     std::fs::write(
         package.join("__main__.py"),
-        "import os, sys\nprint(\"args\", sys.argv[1:])\nprint(\"var\", os.environ.get(\"PYOXIDE_DEBUG_VAR\"))\nprint(\"venv\", os.environ.get(\"VIRTUAL_ENV\") is not None)\n",
+        "import os, sys\nprint(\"args\", sys.argv[1:])\nprint(\"var\", os.environ.get(\"OXSHIFT_DEBUG_VAR\"))\nprint(\"venv\", os.environ.get(\"VIRTUAL_ENV\") is not None)\n",
     )
     .unwrap();
     let mut config = configuration("tool", |o| {
@@ -342,7 +342,7 @@ fn a_module_with_arguments_and_environment() {
     });
     config
         .env
-        .push(EnvVar::new("PYOXIDE_DEBUG_VAR", "set", true));
+        .push(EnvVar::new("OXSHIFT_DEBUG_VAR", "set", true));
     // `uv run` on: debugged with the environment's interpreter.
     let venv = py_env::paths::venv_root_of(&python()).is_some();
     let debugger = Debugger::open(root, provider(true));
@@ -360,13 +360,13 @@ fn a_module_with_arguments_and_environment() {
     assert_eq!(session.snapshot().exit_code, Some(0));
 }
 
-/// The demo project (`PYOXIDE_DEBUG_DEMO`): a breakpoint in the loop of
+/// The demo project (`OXSHIFT_DEBUG_DEMO`): a breakpoint in the loop of
 /// `describe`, its values, then the end.
 #[test]
-#[ignore = "needs a copy of the demo project (PYOXIDE_DEBUG_DEMO) and the debugpy helper"]
+#[ignore = "needs a copy of the demo project (OXSHIFT_DEBUG_DEMO) and the debugpy helper"]
 fn the_demo_project() {
-    let Some(root) = std::env::var_os("PYOXIDE_DEBUG_DEMO").map(PathBuf::from) else {
-        eprintln!("PYOXIDE_DEBUG_DEMO is not set: skipped");
+    let Some(root) = brand::var_os("DEBUG_DEMO").map(PathBuf::from) else {
+        eprintln!("OXSHIFT_DEBUG_DEMO is not set: skipped");
         return;
     };
     let main = root.join("main.py");
@@ -400,12 +400,11 @@ fn the_demo_project() {
 
 // ---- a web application: FastAPI under uvicorn ------------------------------
 
-/// An interpreter with FastAPI and uvicorn: `PYOXIDE_TEST_FASTAPI_PYTHON`,
+/// An interpreter with FastAPI and uvicorn: `OXSHIFT_TEST_FASTAPI_PYTHON`,
 /// else one of a virtual environment made with `uv` in `dir` (with
 /// `fastapi[standard]`: uvloop, watchfiles and the `fastapi` command).
 fn fastapi_python(dir: &Path) -> PathBuf {
-    if let Some(python) = std::env::var_os("PYOXIDE_TEST_FASTAPI_PYTHON").filter(|p| !p.is_empty())
-    {
+    if let Some(python) = brand::var_os("TEST_FASTAPI_PYTHON").filter(|p| !p.is_empty()) {
         return PathBuf::from(python);
     }
     let venv = dir.join(".venv");
@@ -414,7 +413,7 @@ fn fastapi_python(dir: &Path) -> PathBuf {
             .args(args)
             .env("VIRTUAL_ENV", &venv)
             .status()
-            .unwrap_or_else(|e| panic!("uv is needed without PYOXIDE_TEST_FASTAPI_PYTHON: {e}"));
+            .unwrap_or_else(|e| panic!("uv is needed without OXSHIFT_TEST_FASTAPI_PYTHON: {e}"));
         assert!(status.success(), "uv {args:?} failed");
     };
     uv(&["venv", "--quiet", &venv.to_string_lossy()]);
@@ -581,25 +580,25 @@ fn web_app(server: Server) {
 }
 
 #[test]
-#[ignore = "needs the debugpy helper and FastAPI (PYOXIDE_TEST_FASTAPI_PYTHON or uv)"]
+#[ignore = "needs the debugpy helper and FastAPI (OXSHIFT_TEST_FASTAPI_PYTHON or uv)"]
 fn a_breakpoint_in_an_async_endpoint_with_uvicorn_run() {
     web_app(Server::Run);
 }
 
 #[test]
-#[ignore = "needs the debugpy helper and FastAPI (PYOXIDE_TEST_FASTAPI_PYTHON or uv)"]
+#[ignore = "needs the debugpy helper and FastAPI (OXSHIFT_TEST_FASTAPI_PYTHON or uv)"]
 fn a_breakpoint_in_an_async_endpoint_with_uvicorn_run_reload() {
     web_app(Server::RunReload);
 }
 
 #[test]
-#[ignore = "needs the debugpy helper and FastAPI (PYOXIDE_TEST_FASTAPI_PYTHON or uv)"]
+#[ignore = "needs the debugpy helper and FastAPI (OXSHIFT_TEST_FASTAPI_PYTHON or uv)"]
 fn a_breakpoint_in_an_async_endpoint_with_python_m_uvicorn_reload() {
     web_app(Server::ModuleReload);
 }
 
 #[test]
-#[ignore = "needs the debugpy helper and FastAPI (PYOXIDE_TEST_FASTAPI_PYTHON or uv)"]
+#[ignore = "needs the debugpy helper and FastAPI (OXSHIFT_TEST_FASTAPI_PYTHON or uv)"]
 fn a_breakpoint_in_an_async_endpoint_with_fastapi_dev() {
     web_app(Server::FastapiDev);
 }
@@ -804,13 +803,13 @@ fn async_steps(server: Server) {
 }
 
 #[test]
-#[ignore = "needs the debugpy helper and FastAPI (PYOXIDE_TEST_FASTAPI_PYTHON or uv)"]
+#[ignore = "needs the debugpy helper and FastAPI (OXSHIFT_TEST_FASTAPI_PYTHON or uv)"]
 fn steps_in_an_async_endpoint_stay_in_its_coroutine() {
     async_steps(Server::Run);
 }
 
 #[test]
-#[ignore = "needs the debugpy helper and FastAPI (PYOXIDE_TEST_FASTAPI_PYTHON or uv)"]
+#[ignore = "needs the debugpy helper and FastAPI (OXSHIFT_TEST_FASTAPI_PYTHON or uv)"]
 fn steps_in_an_async_endpoint_of_a_reloading_server_stay_in_its_coroutine() {
     async_steps(Server::RunReload);
 }

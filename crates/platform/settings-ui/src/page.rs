@@ -17,9 +17,9 @@ use serde_json::Value as Json;
 pub enum Scope {
     /// `settings.toml` of the application.
     Application,
-    /// `.oxide/project.toml`, shared with the project.
+    /// `.oxshift/project.toml`, shared with the project.
     ProjectShared,
-    /// `.oxide/workspace.toml`, the person's own for the project.
+    /// `.oxshift/workspace.toml`, the person's own for the project.
     ProjectPersonal,
 }
 

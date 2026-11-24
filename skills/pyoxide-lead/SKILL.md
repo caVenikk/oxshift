@@ -16,7 +16,7 @@ The lead is the session that plans, delegates and reviews; sub-agents implement 
 
 ## Reviewing a checkpoint or PR
 1. Read the report (the `STATUS:` line, evidence). Look at the diff where it matters: hot files, file I/O or blocking calls on the UI thread, `unwrap` outside tests, layering (`python3 scripts/check-layers.py`).
-2. Visual check: the agent's release build, `PYOXIDE_BACKGROUND=1 PYOXIDE_SHOT=<png> [PYOXIDE_RUN=<json>]` on a small sample project of the area, compared with the reference screenshots. Missing references: ask the maintainer once, as one list with a file name and exact steps per shot. macOS has no `timeout`: `perl -e 'alarm 60; exec @ARGV' <cmd>`.
+2. Visual check: the agent's release build, `OXSHIFT_BACKGROUND=1 OXSHIFT_SHOT=<png> [OXSHIFT_RUN=<json>]` on a small sample project of the area, compared with the reference screenshots. Missing references: ask the maintainer once, as one list with a file name and exact steps per shot. macOS has no `timeout`: `perl -e 'alarm 60; exec @ARGV' <cmd>`.
 3. Settle reference details in the sources (tag `pycharm/2026.2.3`) yourself; ask the maintainer only what the sources cannot settle (pure rendering details, closed-source plugins).
 4. Differences: small ones -> a follow-up issue with exact items; real bugs -> back to the agent as a numbered must-fix list.
 
@@ -29,12 +29,12 @@ The lead is the session that plans, delegates and reviews; sub-agents implement 
 - Clean up after the merge: once the PR is merged and the maintainer has tried the build (see "Builds for the maintainer"), remove the agent's worktree and its branch (`git worktree remove --force <path>`, `git branch -D <branch>`; a squash-merged branch is not seen as merged). Each worktree holds a 10-27 GB `target/`; keep only work in progress.
 
 ## Builds for the maintainer
-- After a user-visible batch reaches main: update main, `cargo build --release -p pyoxide-ide`, a quick screenshot, then replace the maintainer's copy atomically (`cp` to `<name>.new`, then `mv -f`), so a running copy is not corrupted.
+- After a user-visible batch reaches main: update main, `cargo build --release -p oxshift-python`, a quick screenshot, then replace the maintainer's copy atomically (`cp` to `<name>.new`, then `mv -f`), so a running copy is not corrupted.
 - Give the launch command and 2-4 concrete things to try per issue, with the comparison to PyCharm. Keep agent worktrees until the maintainer has tried the build.
 
 ## Usage limits
 - Check the plan usage on every agent notification and with background timers: rarely when far from the maintainer's threshold, every 2-3 minutes near it. The maintainer sets the threshold per window; start the stop early enough for the agents' WIP commits.
-- Stop = "стоп" to every running agent (WIP commit, <= 5-line report), a fallback timer, stop stragglers, check for stray processes (`pgrep -fl 'target/release/pyoxide-ide|cargo'`).
+- Stop = "стоп" to every running agent (WIP commit, <= 5-line report), a fallback timer, stop stragglers, check for stray processes (`pgrep -fl 'target/release/oxshift-python|cargo'`).
 
 ## Status messages (in the maintainer's language, short)
 - **In progress**: `#N — what — who`, one line each, links on the numbers.

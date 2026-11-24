@@ -4,8 +4,8 @@
 - Date: 2026-10-13
 
 ## Context
-ADR 0008 gave Pyoxide a project folder, `.oxide/`, with shared settings in
-`.oxide/project.toml` that are meant to be committed. It left open where
+ADR 0008 gave Pyoxide a project folder, `.oxshift/`, with shared settings in
+`.oxshift/project.toml` that are meant to be committed. It left open where
 personal state goes: what belongs to one person on one machine, such as the
 chosen Python interpreter (an absolute or machine-specific path), and later
 the open tabs and the window layout. Committing such state makes every
@@ -47,19 +47,19 @@ and module/JpsModuleRootModelSerializer.java (where a project names its
 SDK and how the SDK table is written).
 
 ## Options considered
-1. Personal values in `.oxide/project.toml`. One file, but every choice
+1. Personal values in `.oxshift/project.toml`. One file, but every choice
    becomes a change to a committed file.
 2. Personal state in the application data folder, keyed by the project
    path. Never committed by accident, but lost or orphaned when the
    project moves, and invisible next to the project it belongs to.
-3. A second file in the project folder, `.oxide/workspace.toml`, ignored
-   by Git through `.oxide/.gitignore`, as the reference does with
+3. A second file in the project folder, `.oxshift/workspace.toml`, ignored
+   by Git through `.oxshift/.gitignore`, as the reference does with
    `workspace.xml`.
 
 ## Decision
 Option 3.
 
-- `.oxide/workspace.toml` holds personal project state. It follows the
+- `.oxshift/workspace.toml` holds personal project state. It follows the
   conventions of `project.toml`: TOML with a `version` (now 1), keys and
   comments Pyoxide does not know survive a rewrite, a file of a newer
   version is read as far as it is understood and never rewritten, writes
@@ -80,7 +80,7 @@ Option 3.
 
 - Paths inside the project are stored relative to the project root with
   `/` separators; paths outside it are stored as they are.
-- When Pyoxide creates `workspace.toml`, it also writes `.oxide/.gitignore`
+- When Pyoxide creates `workspace.toml`, it also writes `.oxshift/.gitignore`
   unless that file exists (an existing one, even an empty one, is never
   rewritten):
 
@@ -120,8 +120,8 @@ Option 3.
   ```
 
 ## Consequences
-- A project with personal state has a `.oxide/` folder with two files
-  that Git ignores and, if the team commits `.oxide/project.toml`, a
+- A project with personal state has a `.oxshift/` folder with two files
+  that Git ignores and, if the team commits `.oxshift/project.toml`, a
   third that it does not.
 - Personal state does not travel with a clone or between machines, as
   intended. Choosing the interpreter in one checkout does not change it

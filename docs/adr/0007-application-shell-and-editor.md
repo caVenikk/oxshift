@@ -59,7 +59,7 @@ Product crates (`crates/python/`):
 | crate | role |
 |---|---|
 | `py-syntax` | the Python grammar (`tree-sitter-python`) and highlight query, plus Python-specific refinements (`self`, dunder names, constants, built-ins) |
-| `pyoxide-ide` | the `pyoxide-ide` GUI binary: composes the workbench with Python file types and highlighting |
+| `oxshift-python` | the `oxshift-python` GUI binary: composes the workbench with Python file types and highlighting |
 
 Toolkit code stays in `ui`, `editor` and `workbench`; `text`, `syntax` and
 `project` have no GPUI dependency and are tested without it.
@@ -72,7 +72,7 @@ buttons, windows that open without focus, `TestAppContext`. A newer GPUI
 is adopted deliberately when a missing feature or fix needs it; the `ui`
 layer keeps the change contained. On macOS without Xcode the
 `runtime_shaders` feature compiles the Metal shaders at start-up: it is a
-default feature of the `pyoxide-ide` binary and is enabled for tests
+default feature of the `oxshift-python` binary and is enabled for tests
 through dev-dependencies; a release build with Xcode turns it off
 (`--no-default-features`) to precompile them.
 
@@ -240,7 +240,7 @@ syntax-aware selection without more code.
 - Keystrokes are tested as keystrokes (`simulate_keystrokes`), mouse input
   as simulated mouse events; behaviour that the reference IDE defines is
   written down first in `tests/scenarios/`.
-- Measurements run inside the release binary (`PYOXIDE_BENCH`, see
+- Measurements run inside the release binary (`OXSHIFT_BENCH`, see
   `crates/platform/workbench/src/bench.rs` and replica/perf.md): keys go
   through the window's key dispatch; frame start and end come from the
   workbench's own render and paint. The window stays above other windows
@@ -248,7 +248,7 @@ syntax-aware selection without more code.
   no frames from the display.
 
 ### Build and run
-The IDE runs with `cargo run --release -p pyoxide-ide [folder or files]`;
+The IDE runs with `cargo run --release -p oxshift-python [folder or files]`;
 measurements and manual checks use release builds. Debug builds compile
 the dependencies (GPUI, tree-sitter, ropey, ...) with `opt-level = 2`
 (`[profile.dev.package."*"]` in the workspace manifest): GPUI's layout and

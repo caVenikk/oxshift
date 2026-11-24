@@ -29,8 +29,8 @@ committed with it.
 
 People who use the reference IDE and Pyoxide on the same project already
 have configurations in `.idea`. ADR 0008 and ADR 0009 set the pattern:
-Pyoxide keeps its own settings in `.oxide/`, shared ones in a committed
-file and personal ones in `.oxide/workspace.toml`, imports the reference's
+Pyoxide keeps its own settings in `.oxshift/`, shared ones in a committed
+file and personal ones in `.oxshift/workspace.toml`, imports the reference's
 once and never writes `.idea`. Environment values may be secrets
 (tokens, passwords) and must not end up in a committed file by accident.
 
@@ -53,11 +53,11 @@ plugins/sh/core/src/com/intellij/sh/run/ShRunConfiguration.java.
    configurations, but the format belongs to the reference, which rewrites
    the files itself; two IDEs writing `workspace.xml` lose each other's
    changes.
-2. All configurations in `.oxide/project.toml` and `.oxide/workspace.toml`.
+2. All configurations in `.oxshift/project.toml` and `.oxshift/workspace.toml`.
    Few files, but every change to a shared configuration touches one file
    that the whole team edits, and merges conflict.
-3. One TOML file per shared configuration in `.oxide/run/`, everything
-   personal in the `[run]` table of `.oxide/workspace.toml`, environment
+3. One TOML file per shared configuration in `.oxshift/run/`, everything
+   personal in the `[run]` table of `.oxshift/workspace.toml`, environment
    values split by a per-variable flag, and a one-time import of the
    reference's configurations per storage class.
 
@@ -66,7 +66,7 @@ Option 3. The model, storage and import are the platform crate
 `run-config` (no UI toolkit); products register their types (ADR 0005).
 
 ### Shared configurations
-- One file per configuration in `.oxide/run/`, meant to be committed, as
+- One file per configuration in `.oxshift/run/`, meant to be committed, as
   the reference's `.run/` keeps merges small: `<name>.toml`, characters
   file names cannot hold replaced by `_`, ` (2)` and so on when the name
   is taken (case ignored).
@@ -96,7 +96,7 @@ Option 3. The model, storage and import are the platform crate
   content changed.
 
 ### Personal state
-- The `[run]` table of the personal project state (`.oxide/workspace.toml`,
+- The `[run]` table of the personal project state (`.oxshift/workspace.toml`,
   ADR 0009, ignored by Git) holds the personal configurations
   (`[[run.configurations]]`, everything imported from `workspace.xml`, the
   temporary ones), the personal values of shared configurations'
@@ -132,10 +132,10 @@ Option 3. The model, storage and import are the platform crate
 
 ### Import from the reference
 - Runs off the UI thread when a project opens, once per storage class,
-  with its own markers, because `.oxide/` may exist already from the
+  with its own markers, because `.oxshift/` may exist already from the
   exclusions import:
   - `imported-from-idea = true` in the `[run]` table of the shared
-    settings (`.oxide/project.toml`) after shared configurations were
+    settings (`.oxshift/project.toml`) after shared configurations were
     imported, so a teammate who clones the project does not import them
     again. The exclusions import of ADR 0008 runs first, since it happens
     only while `project.toml` does not exist;
@@ -143,7 +143,7 @@ Option 3. The model, storage and import are the platform crate
     configurations of `workspace.xml` were imported, so each person's are
     imported once on their machine.
   A marker is written only when the import brought something; until then
-  the next open looks again (`.oxide/` is not created for nothing).
+  the next open looks again (`.oxshift/` is not created for nothing).
 - Reads `RunManager` of `.idea/workspace.xml` (configurations, `selected`,
   `<list>`, `<recent_temporary>`), the executors of `PropertiesComponent`,
   `.idea/runConfigurations/*.xml` and the `*.run.xml` files in the
@@ -175,8 +175,8 @@ Option 3. The model, storage and import are the platform crate
   that are neither recently used nor pinned go first.
 
 ## Consequences
-- A project with shared configurations gets `.oxide/run/` and a `[run]`
-  table in `.oxide/project.toml`; personal ones live only in the ignored
+- A project with shared configurations gets `.oxshift/run/` and a `[run]`
+  table in `.oxshift/project.toml`; personal ones live only in the ignored
   `workspace.toml`, so a clone has the shared configurations and none of
   the personal values.
 - There is no two-way sync: configurations changed in the reference after

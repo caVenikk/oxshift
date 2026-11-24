@@ -6,7 +6,7 @@
 //! import.
 //!
 //! The theme in use is `[appearance] theme` of the settings, else the
-//! default; `PYOXIDE_THEME` pins one for the run until a theme is chosen.
+//! default; `OXSHIFT_THEME` pins one for the run until a theme is chosen.
 //! The editor colour scheme is the theme's own unless `[appearance]
 //! editor-scheme` names another; choosing a theme goes back to its own.
 
@@ -64,7 +64,7 @@ struct State {
     catalog: Catalog,
     /// The folder of imported themes.
     dir: Option<PathBuf>,
-    /// `PYOXIDE_THEME`: the theme of this run until one is chosen.
+    /// `OXSHIFT_THEME`: the theme of this run until one is chosen.
     pinned: Option<String>,
     shown: Option<Shown>,
     preview: Option<Preview>,
@@ -111,7 +111,7 @@ pub fn init(cx: &mut App) {
 }
 
 /// Reads the imported themes of `dir` (start-up, before the first window)
-/// and shows the stored theme, or `pinned` (`PYOXIDE_THEME`: `light`,
+/// and shows the stored theme, or `pinned` (`OXSHIFT_THEME`: `light`,
 /// `dark` or a theme id) for this run.
 pub fn load(cx: &mut App, dir: Option<PathBuf>, pinned: Option<String>) {
     let (catalog, problems) = match &dir {

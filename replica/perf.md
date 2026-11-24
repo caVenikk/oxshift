@@ -231,11 +231,13 @@ was taken separately from `/usr/bin/time` over ten loads.
 | 2026-10-25 | mac-1 | name search (`name-match`) over all schema objects | 4.5 ms | | speed search |
 
 ### Editor and shell
-Measured with `python3 scripts/perf/pyoxide_bench.py --work <dir> --runs 3` on
+Measured with `python3 scripts/perf/oxshift_bench.py --work <dir> --runs 3` on
 the files `pycharm_baseline.py` generates (the same as the reference runs). It
-runs the release binary (`cargo build --release -p pyoxide-ide`) with
-`PYOXIDE_BENCH`; the measurement itself runs inside the application
-(`crates/platform/workbench/src/bench.rs`):
+runs the release binary (`cargo build --release -p oxshift-python`) with
+`OXSHIFT_BENCH`; the measurement itself runs inside the application
+(`crates/platform/workbench/src/bench.rs`). Measurement lines start with
+`OXSHIFT `; the harness writes `oxshift-results.json` in its work directory:
+
 
 - Typing: the 100,000-line file opens, the caret goes to line 50,000,
   column 1, after 3 s the same 200 characters as the reference run are typed
@@ -257,7 +259,7 @@ runs the release binary (`cargo build --release -p pyoxide-ide`) with
   that paints its text, and to the first frame painted with its
   highlighting current. Then the view scrolls 3 lines every 8 ms for 5 s:
   frame work and the gaps between frames.
-- The window opens without taking the focus (`PYOXIDE_BACKGROUND=1`) and is
+- The window opens without taking the focus (`OXSHIFT_BACKGROUND=1`) and is
   kept above other windows while measuring, so it is not covered (a covered
   window gets no frames from the display; the measurement reports
   `"frames": "forced"` when it has to draw frames itself, and those runs do
@@ -280,7 +282,7 @@ running). The display refreshed at 60 Hz during these runs (median frame gap
 | 2026-10-11 | mac-1 | memory after opening and scrolling the 10 MB file | 265 MB RSS | 266 MB | |
 | 2026-10-12 | mac-1 | typing, 100k-line file, with the lexical highlighting layer: key to frame | p50 2.61 ms, p90 3.89 ms, p99 5.45 ms | max 5.88 ms | 2 runs x 600 keys; load average about 4.8 (other applications busy) |
 | 2026-10-12 | mac-1 | typing, same runs: app work | p50 0.81 ms, p90 0.91 ms, p99 1.34 ms | max 3.79 ms | per run p99 1.18 / 1.49 ms |
-| 2026-10-13 | mac-1 | typing, 100k-line file, key to frame, while a Python process floods the Run console | p50 3.25 / 3.47 ms, p90 4.51 / 4.76 ms, p99 6.09 / 6.17 ms | max 6.87 / 16.27 ms | 2 runs x 600 keys; the file itself runs (`PYOXIDE_RUN='[["run.run",{}]]'`) and prints coloured 90-character lines without pause for 40 s, about a million lines a second through the 1024 KB cycle buffer; the same session without the run: p50 2.84, p99 5.71, max 6.90 ms; load average about 6 |
+| 2026-10-13 | mac-1 | typing, 100k-line file, key to frame, while a Python process floods the Run console | p50 3.25 / 3.47 ms, p90 4.51 / 4.76 ms, p99 6.09 / 6.17 ms | max 6.87 / 16.27 ms | 2 runs x 600 keys; the file itself runs (`OXSHIFT_RUN='[["run.run",{}]]'`) and prints coloured 90-character lines without pause for 40 s, about a million lines a second through the 1024 KB cycle buffer; the same session without the run: p50 2.84, p99 5.71, max 6.90 ms; load average about 6 |
 | 2026-10-13 | mac-1 | typing while the console floods: app work | p50 1.21 / 1.23 ms, p99 2.54 / 2.53 ms | max 2.77 / 13.95 ms | the console takes output at most every 100 ms while it keeps coming; 599 MB RSS at the end of the flooded run (251 MB without the run) |
 
 Against the budgets of docs/performance.md: keystroke to paint p99 5.8 ms
@@ -298,7 +300,7 @@ ready for the next refresh; the table above is measured that way.
 
 ### Run console memory
 A process floods the Run console for 40 s, release build, window in the
-background (`PYOXIDE_BACKGROUND=1`) with `PYOXIDE_FORCE_FRAMES=4000` so that
+background (`OXSHIFT_BACKGROUND=1`) with `OXSHIFT_FORCE_FRAMES=4000` so that
 the window paints as an uncovered one (a covered window draws nothing and
 hides the cost of painting). The process writes coloured lines with
 `os.write` in 190 KB blocks, about 700 000 lines (64 MB) a second. RSS is
@@ -336,7 +338,7 @@ machine quiet). The remaining cost of short lines is the model's
 ### Find in file
 Engine: `cargo test --release -p search --test it perf:: -- --ignored --nocapture`
 on the generated 10 MB file (10,485,700 bytes, 108,100 lines), median of 5
-runs. In the application: `PYOXIDE_BACKGROUND=1 PYOXIDE_BENCH=find:<query>`
+runs. In the application: `OXSHIFT_BACKGROUND=1 OXSHIFT_BENCH=find:<query>`
 clears the find field and types the query one key every 150 ms, 5 runs; time
 from key dispatch to the end of the first painted frame that shows that
 prefix's matches (display frames). Files up to 256 KB are searched on the UI
@@ -352,7 +354,7 @@ thread; larger ones on a background snapshot, cancelled by the next key.
 | 2026-10-12 | mac-1 | key to highlight, 10 MB | p50 21.5 ms, p90 22.9 ms, p99 27.8 ms | query `x = 'aaa`; a query with no matches (`import`): p50 10.0 ms, p90 18.7 ms |
 
 ### Find in files
-In the application: `PYOXIDE_BACKGROUND=1 PYOXIDE_BENCH=find-in-files:<query>`
+In the application: `OXSHIFT_BACKGROUND=1 OXSHIFT_BENCH=find-in-files:<query>`
 opens the project, then runs the search five times through the
 `find-in-files.search` command (no typing delay); time from the command to
 the first rows on the UI thread and to the end of the search, and the
@@ -372,7 +374,7 @@ matches as the reference does.
 Engine: `FILE_INDEX_BENCH=<dir> cargo test --release -p file-index bench --
 --ignored --nocapture` builds the index of a folder (median of 10 builds) and
 types the words of `FILE_INDEX_BENCH_TYPE` one char at a time (median of 20
-searches with the final sort per prefix). In the application: `PYOXIDE_BACKGROUND=1 PYOXIDE_BENCH=go-to-file:<query>`
+searches with the final sort per prefix). In the application: `OXSHIFT_BACKGROUND=1 OXSHIFT_BENCH=go-to-file:<query>`
 opens the project, waits for its index, then 5 times opens Go to File with an
 empty field and types the query one key every 150 ms; time from key dispatch
 to the end of the first painted frame that shows that prefix's rows (display
@@ -439,9 +441,9 @@ thread's time for the copy (or taking it) and the plan.
 | 2026-10-17 | mac-1 | key to snapshot through the PTY (rerun) | p50 0.02 ms, p99 0.04 ms | 200 keys |
 
 ### Terminal view (window)
-`PYOXIDE_BENCH=terminal-typing|terminal-flood:64|terminal-scroll`, and the
-editor's `PYOXIDE_BENCH=typing` at line 50,000 of a 150,000-line file with and
-without `PYOXIDE_BENCH_FLOOD=1` (a terminal printing a 4 MiB file again and
+`OXSHIFT_BENCH=terminal-typing|terminal-flood:64|terminal-scroll`, and the
+editor's `OXSHIFT_BENCH=typing` at line 50,000 of a 150,000-line file with and
+without `OXSHIFT_BENCH_FLOOD=1` (a terminal printing a 4 MiB file again and
 again in the development terminal), release build, display frames, 600 keys
 (three runs of 200, one every 50-67 ms). Key to frame is the time from the
 key to the end of the first frame that shows it. These runs are of the view
@@ -626,8 +628,8 @@ caches, Windows.
 
 ### Scoped batches and keymap state queries (2026-11-12, #429)
 
-The [baseline PR run](https://github.com/caVenikk/pyoxide-ide/actions/runs/43157757907)
-and [baseline main run](https://github.com/caVenikk/pyoxide-ide/actions/runs/43158753173/attempts/1)
+The [baseline PR run](https://github.com/caVenikk/oxshift/actions/runs/43157757907)
+and [baseline main run](https://github.com/caVenikk/oxshift/actions/runs/43158753173/attempts/1)
 restored exact dependency-cache matches on all three operating systems. Check
 archives were approximately 1370 MiB on Linux, 1001 MiB on macOS and 1097 MiB
 on Windows. Workspace crates were rebuilt: the dependency cache deliberately
@@ -702,4 +704,4 @@ Production remained on `stable`, which had advanced to Rust 1.100.0 and thus
 needed a new cache. These measurements do not describe production 1.100
 performance. The prototype workflow is not part of the production gate.
 Raw logs, fingerprints, plans and matching selected/executed inventories are
-attached to [run 43381878961](https://github.com/caVenikk/pyoxide-ide/actions/runs/43381878961).
+attached to [run 43381878961](https://github.com/caVenikk/oxshift/actions/runs/43381878961).

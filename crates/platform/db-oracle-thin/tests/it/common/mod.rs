@@ -8,18 +8,16 @@ use db_core::{ConnectParams, Connection, Driver, ExecOptions, Outcome, ResultSet
 use db_oracle_thin::ThinDriver;
 
 pub fn env(key: &str, default: &str) -> String {
-    std::env::var(key).unwrap_or_else(|_| default.to_owned())
+    crate::product_env::var(key).unwrap_or_else(|_| default.to_owned())
 }
 
 pub fn params() -> ConnectParams {
     ConnectParams {
-        host: env("PYOXIDE_TEST_ORACLE_HOST", "localhost"),
-        port: env("PYOXIDE_TEST_ORACLE_PORT", "1521")
-            .parse()
-            .unwrap_or(1521),
-        database: env("PYOXIDE_TEST_ORACLE_SERVICE", "FREEPDB1"),
+        host: env("TEST_ORACLE_HOST", "localhost"),
+        port: env("TEST_ORACLE_PORT", "1521").parse().unwrap_or(1521),
+        database: env("TEST_ORACLE_SERVICE", "FREEPDB1"),
         user: "pyoxide".into(),
-        password: Secret::new(env("PYOXIDE_DB_PASSWORD", "pyoxide")),
+        password: Secret::new(env("DB_PASSWORD", "pyoxide")),
         ..Default::default()
     }
 }

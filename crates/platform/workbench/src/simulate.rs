@@ -2,7 +2,7 @@
 //! takes a mouse move or a click at a position as if the pointer were there
 //! (hover states, tooltips, clicks, drags), without moving the system pointer and
 //! without activating the window. A window run in the background
-//! (`PYOXIDE_BACKGROUND=1`) never sees the real pointer, so `PYOXIDE_RUN`
+//! (`OXSHIFT_BACKGROUND=1`) never sees the real pointer, so `OXSHIFT_RUN`
 //! reaches hover states this way.
 //!
 //! On macOS the events go straight to the window's view, as AppKit hands

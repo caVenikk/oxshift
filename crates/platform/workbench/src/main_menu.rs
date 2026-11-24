@@ -803,7 +803,7 @@ mod tests {
     #[test]
     fn macos_puts_settings_and_quit_into_the_application_menu() {
         let spec = MenuSpec {
-            product: "Pyoxide".into(),
+            product: "Oxshift Python".into(),
             macos: true,
             recent: vec![("demo".into(), PathBuf::from("/p/demo"))],
         };
@@ -812,8 +812,17 @@ mod tests {
         assert_eq!(
             names,
             [
-                "Pyoxide", "File", "Edit", "View", "Navigate", "Code", "Refactor", "Run", "Git",
-                "Window", "Help"
+                "Oxshift Python",
+                "File",
+                "Edit",
+                "View",
+                "Navigate",
+                "Code",
+                "Refactor",
+                "Run",
+                "Git",
+                "Window",
+                "Help"
             ]
         );
         let app = titles(&menus[0].rows);
@@ -824,11 +833,11 @@ mod tests {
                 "---",
                 "Services >",
                 "---",
-                "Hide Pyoxide",
+                "Hide Oxshift Python",
                 "Hide Others",
                 "Show All",
                 "---",
-                "Quit Pyoxide"
+                "Quit Oxshift Python"
             ]
         );
         let file = titles(&menus[1].rows);
@@ -850,7 +859,7 @@ mod tests {
     #[test]
     fn elsewhere_file_has_settings_and_exit_and_no_application_menu() {
         let spec = MenuSpec {
-            product: "Pyoxide".into(),
+            product: "Oxshift Python".into(),
             macos: false,
             recent: Vec::new(),
         };

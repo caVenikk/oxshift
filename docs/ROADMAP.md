@@ -3,7 +3,7 @@
 Status legend: [x] done, [ ] planned. Milestones are developed per feature area
 with the skill loop described in [agent-workflow.md](agent-workflow.md).
 
-- [x] **M0** Workspace, `db-core`, Oracle thin and ODPI-C backends, `pyoxide-db` CLI
+- [x] **M0** Workspace, `db-core`, Oracle thin and ODPI-C backends, `oxshift-db` CLI
 - [x] **M1 Database layer**: typed values, full schema introspection, connection
       profiles (TOML, secrets in keychain), TLS and wallets, timeouts and
       cancellation, pagination, `diagnose` command, integration tests against
@@ -22,7 +22,7 @@ with the skill loop described in [agent-workflow.md](agent-workflow.md).
       virtualenvs, `uv init/sync/lock`, Python version management, package manager
       panel (list, install, upgrade, remove, search) on top of uv with a pip
       fallback, `uv run` run configurations; poetry/conda/pipenv afterwards.
-      In progress: engine and `pyoxide env` command line done; panels need the
+      In progress: engine and `oxshift env` command line done; panels need the
       application shell (#15)
 - [ ] **MVP** (milestone "MVP", built first): the first version that is usable
       for daily Python work and is announced to the open-source community.

@@ -1,14 +1,14 @@
 //! Storage of run configurations (ADR 0012).
 //!
 //! - A shared configuration ("Store as project file") is one file in
-//!   `.oxide/run/`, meant to be committed: `<name>.toml` with a `version`.
+//!   `.oxshift/run/`, meant to be committed: `<name>.toml` with a `version`.
 //!   Environment variables are listed by name; a value is written only for
 //!   a variable marked shared, the others' values are personal.
 //! - Personal configurations (everything imported from the reference's
 //!   `workspace.xml`, temporary ones), the personal values of shared
 //!   configurations' variables, the selection, the custom order, the
 //!   recent, pinned and history lists and the last executors are the
-//!   `[run]` table of the personal project state (`.oxide/workspace.toml`,
+//!   `[run]` table of the personal project state (`.oxshift/workspace.toml`,
 //!   ADR 0009), never committed.
 //!
 //! Keys this version does not know survive a rewrite; a file of a newer
@@ -16,7 +16,7 @@
 //! replace a file at once.
 //!
 //! ```toml
-//! # .oxide/run/server.toml
+//! # .oxshift/run/server.toml
 //! version = 1
 //! name = "server"
 //! type = "python"
@@ -43,7 +43,7 @@ pub const SHARED_DIR: &str = "run";
 pub const PERSONAL_TABLE: &str = "run";
 /// Version of the configuration format this build reads and writes.
 pub const VERSION: i64 = 1;
-/// The key in the shared settings (`.oxide/project.toml`, table `[run]`)
+/// The key in the shared settings (`.oxshift/project.toml`, table `[run]`)
 /// and in the personal table that marks the import from the reference as
 /// done for the shared and the personal configurations.
 pub const IMPORTED_KEY: &str = "imported-from-idea";
@@ -101,7 +101,7 @@ pub enum StoreError {
 
 /// The shared folder of a project.
 pub fn shared_dir(root: &Path) -> PathBuf {
-    root.join(project::store_dir()).join(SHARED_DIR)
+    project::store::directory(root).join(SHARED_DIR)
 }
 
 /// What is stored for a project.

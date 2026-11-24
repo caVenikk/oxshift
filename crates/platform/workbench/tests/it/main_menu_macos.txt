@@ -1,13 +1,13 @@
-Pyoxide
+Oxshift Python
   Settings…  ⌘,
   ---
   Services >
   ---
-  Hide Pyoxide  ⌘H
+  Hide Oxshift Python  ⌘H
   Hide Others  ⌥⌘H
   Show All
   ---
-  Quit Pyoxide  ⌘Q
+  Quit Oxshift Python  ⌘Q
 File
   New…  ⌘N
   Open…

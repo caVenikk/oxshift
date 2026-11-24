@@ -1,26 +1,23 @@
-# Pyoxide IDE
+# Oxshift Python
 
-A fast, native IDE for Python, written in Rust.
+Oxshift Python is a native Python IDE built on the Oxshift platform in Rust.
 
 Editor, debugger, test runner, version control and a built-in **database client**
 in one lightweight app, with no JVM and no web view. Offline, open source, and
 scriptable: every action is a command, so the UI, the CLI and AI agents drive
 the same engine.
 
-> **Status: pre-alpha.** The first editor window exists: open a folder, browse
-> the project tree, edit Python with highlighting and the familiar keymap, save
-> (`cargo run --release -p pyoxide-ide -- <folder>`). No search, completion,
-> run or debug yet. The engines are usable from the command line: the database
-> client (`pyoxide-db`, Oracle, PostgreSQL, SQLite), Python environments on top
-> of uv (`pyoxide env`) and import of PyCharm colour schemes, UI themes and data
-> sources. See the [roadmap](docs/ROADMAP.md) for what is planned and how far
-> along it is.
+> **Pre-alpha.** Run the IDE with `cargo run --release -p oxshift-python -- <folder>`.
+> The commands are `oxshift-python` (IDE), `oxshift` (CLI), and `oxshift-db`
+> (database client). See the [feature matrix](replica/features/) for implemented features
+> and the [roadmap](docs/ROADMAP.md) for upcoming work.
 
 ## Goals
 
 - **Speed first.** Native Rust, GPU rendering, everything off the UI thread.
   Performance budgets are tracked in CI ([docs/performance.md](docs/performance.md)).
-- **Python only.** No attempt to be a universal IDE; fewer moving parts.
+- **Python-focused.** The Python product provides language tools and debugging.
+  The Oxshift platform provides the shared editor and workbench.
 - **Standing on good tools.** Python intelligence comes from existing Rust/LSP
   tooling (ruff, a type checker such as ty, basedpyright or pyrefly) and
   debugging from debugpy over DAP, instead of a hand-written analyzer.
@@ -33,10 +30,10 @@ the same engine.
 
 ## Progress
 
-[![Feature parity](https://img.shields.io/endpoint?url=https%3A%2F%2Fcavenikk.github.io%2Fpyoxide-ide%2Fparity.json)](https://cavenikk.github.io/pyoxide-ide/)
+[![Feature parity](https://img.shields.io/endpoint?url=https%3A%2F%2Fcavenikk.github.io%2Foxshift%2Fparity.json)](https://cavenikk.github.io/oxshift/)
 
 Feature parity with PyCharm, overall, per area and per feature, is published at
-[cavenikk.github.io/pyoxide-ide](https://cavenikk.github.io/pyoxide-ide/) after
+[cavenikk.github.io/oxshift](https://cavenikk.github.io/oxshift/) after
 every change on `main`. It is generated from the feature matrix in
 [`replica/features/`](replica/features/), one file per feature;
 `python3 scripts/progress.py` prints the same report locally.
@@ -66,10 +63,10 @@ Crates live in `crates/platform/` (language-agnostic) and `crates/python/`
 | `editor` | The code editor view: layout, carets, selections, input, editing commands |
 | `workbench` | Main window: toolbar, tool windows, tabs, status bar, keymaps |
 | `py-syntax` (python) | Python grammar, highlight query and editing rules |
-| `pyoxide-ide` (python) | `pyoxide-ide`, the Python product's application |
+| `oxshift-python` (python) | `oxshift-python`, the Python product's application |
 | `py-env` (python) | Interpreters, virtualenvs, uv and pip integration, `env.*` commands |
-| `pyoxide-cli` (python) | `pyoxide`, the Python product's command line (`env`, plus all `db.*` commands) |
-| `db-cli` | `pyoxide-db`, a command-line database client |
+| `oxshift-cli` (python) | `oxshift`, the Python product's command line (`env`, plus all `db.*` commands) |
+| `oxshift-db` | `oxshift-db`, a command-line database client |
 
 ## Getting started
 
@@ -77,32 +74,41 @@ The IDE window (the default keymaps and what works so far:
 [tests/scenarios/editor/keymap-and-editing-basics.md](tests/scenarios/editor/keymap-and-editing-basics.md)):
 
 ```bash
-git clone https://github.com/caVenikk/pyoxide-ide && cd pyoxide-ide
-cargo run --release -p pyoxide-ide -- path/to/project
+git clone https://github.com/caVenikk/oxshift && cd oxshift
+cargo run --release -p oxshift-python -- path/to/project
 ```
+
+Run `cargo build --release -p oxshift-python -p oxshift-cli -p oxshift-db` to
+build all three current programs.
+
+Project settings are stored in `.oxshift/`. Supported PyCharm project settings
+are imported from `.idea/`; personal PyCharm settings can be imported on first run.
+User settings and caches use the OS `oxshift-python/` locations. Existing Pyoxide
+profiles and project settings are not imported automatically.
+See [project storage and PyCharm import](docs/rebrand.md#project-storage-and-pycharm-import).
 
 The database client:
 
 ```bash
 docker compose up -d            # PostgreSQL 18 and Oracle Free 23 for development
-export PYOXIDE_DB_PASSWORD=pyoxide
-cargo run -p db-cli -- --service FREEPDB1 --user pyoxide test
-cargo run -p db-cli -- --backend postgres --port 55432 --database pyoxide --user pyoxide query "select now()"
-cargo run -p db-cli -- --path :memory: query "select sqlite_version()"
-cargo run -p db-cli -- --service FREEPDB1 --user pyoxide diagnose
+export OXSHIFT_DB_PASSWORD=pyoxide
+cargo run -p oxshift-db -- --service FREEPDB1 --user pyoxide test
+cargo run -p oxshift-db -- --backend postgres --port 55432 --database pyoxide --user pyoxide query "select now()"
+cargo run -p oxshift-db -- --path :memory: query "select sqlite_version()"
+cargo run -p oxshift-db -- --service FREEPDB1 --user pyoxide diagnose
 ```
 
 Passwords come from the environment, the OS credential store or a prompt,
 never from arguments. Profiles, secrets and diagnostics:
-[docs/pyoxide-db.md](docs/pyoxide-db.md).
+[docs/oxshift-db.md](docs/oxshift-db.md).
 
 Python environments (needs [uv](https://docs.astral.sh/uv/); details in
 [docs/python-environments.md](docs/python-environments.md)):
 
 ```bash
-cargo run -p pyoxide-cli -- env interpreters
-cargo run -p pyoxide-cli -- env info .
-cargo run -p pyoxide-cli -- commands
+cargo run -p oxshift-cli -- env interpreters
+cargo run -p oxshift-cli -- env info .
+cargo run -p oxshift-cli -- commands
 ```
 
 Import report for a PyCharm colour scheme, UI theme or theme plugin:
@@ -122,7 +128,7 @@ cargo test -p db-postgres -p db-oracle-thin -- --ignored   # needs docker compos
 ## Documentation
 
 - [Roadmap](docs/ROADMAP.md) · [Architecture](docs/architecture.md) · [Performance](docs/performance.md)
-- [pyoxide-db](docs/pyoxide-db.md) · [Testing against databases](docs/testing-databases.md) · [Decisions (ADR)](docs/adr/)
+- [oxshift-db](docs/oxshift-db.md) · [Testing against databases](docs/testing-databases.md) · [Decisions (ADR)](docs/adr/)
 - [Clean-room rules](docs/clean-room.md) · [Theme formats](docs/theme-formats.md)
 - [Contributing](CONTRIBUTING.md) · [Agent workflow](docs/agent-workflow.md) · [AGENTS.md](AGENTS.md)
 
@@ -153,7 +159,7 @@ same terms, without additional conditions. Third-party notices are in
 
 ## Trademarks
 
-Pyoxide IDE is an independent project, not affiliated with, sponsored by or
+Oxshift Python is an independent project, not affiliated with, sponsored by or
 endorsed by JetBrains s.r.o., the Python Software Foundation or Oracle
 Corporation. PyCharm, IntelliJ, JetBrains, Python and Oracle are trademarks of
 their respective owners and are used only to describe compatibility.

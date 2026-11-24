@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="8 11 280 280">
+  <title>Oxshift</title>
+  <defs>
+    <linearGradient id="frame" gradientUnits="userSpaceOnUse" x1="33" y1="37" x2="263" y2="264">
+      <stop stop-color="#1014FC" offset="0"/>
+      <stop stop-color="#391EFD" offset="0.28"/>
+      <stop stop-color="#8332FC" offset="0.61"/>
+      <stop stop-color="#E64FFD" offset="1"/>
+    </linearGradient>
+    <linearGradient id="face" gradientUnits="userSpaceOnUse" x1="140" y1="45" x2="140" y2="264">
+      <stop stop-color="#010C37" offset="0"/>
+      <stop stop-color="#010D3E" offset="0.55"/>
+      <stop stop-color="#040D36" offset="1"/>
+    </linearGradient>
+    <linearGradient id="northeast" gradientUnits="userSpaceOnUse" x1="0" y1="-89" x2="88" y2="0">
+      <stop stop-color="#CE80FC" offset="0"/>
+      <stop stop-color="#E9ACFE" offset="0.61"/>
+      <stop stop-color="#FDCEFE" offset="1"/>
+    </linearGradient>
+    <linearGradient id="southeast" gradientUnits="userSpaceOnUse" x1="0" y1="-86" x2="85" y2="-4">
+      <stop stop-color="#FC77FE" offset="0"/>
+      <stop stop-color="#E553FC" offset="0.43"/>
+      <stop stop-color="#F367FC" offset="1"/>
+    </linearGradient>
+    <linearGradient id="southwest" gradientUnits="userSpaceOnUse" x1="0" y1="-82" x2="85" y2="0">
+      <stop stop-color="#7420FA" offset="0"/>
+      <stop stop-color="#9130F9" offset="0.45"/>
+      <stop stop-color="#C74AFF" offset="1"/>
+    </linearGradient>
+    <linearGradient id="northwest" gradientUnits="userSpaceOnUse" x1="0" y1="-82" x2="85" y2="0">
+      <stop stop-color="#B94CFB" offset="0"/>
+      <stop stop-color="#6925FA" offset="0.53"/>
+      <stop stop-color="#A43FFB" offset="1"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="11" width="280" height="280" fill="url(#frame)"/>
+  <path d="M95 35 H201 C248 35 264 51 264 98 V204 C264 251 248 267 201 267 H95 C48 267 32 251 32 204 V98 C32 51 48 35 95 35 Z" fill="url(#face)"/>
+  <g transform="translate(149 152)">
+    <path fill-rule="evenodd" d="M0 -89 C11 -89 18 -83 22 -71 C29 -42 42 -29 71 -22 C83 -18 89 -11 89 0 C89 11 83 18 71 22 C42 29 29 42 22 71 C18 83 11 89 0 89 C-11 89 -18 83 -22 71 C-29 42 -42 29 -71 22 C-83 18 -89 11 -89 0 C-89 -11 -83 -18 -71 -22 C-42 -29 -29 -42 -22 -71 C-18 -83 -11 -89 0 -89 Z M0 -31 C5 -16 16 -5 31 0 C16 5 5 16 0 31 C-5 16 -16 5 -31 0 C-16 -5 -5 -16 0 -31 Z" fill="#AB42FA"/>
+    <path transform="rotate(0)" d="M0 -89 C11 -89 18 -83 22 -71 C29 -42 42 -29 71 -22 C83 -18 89 -11 89 0 C69 6 48 5 31 0 C16 -5 5 -16 0 -31 C5 -48 6 -69 0 -89 Z" fill="url(#northeast)"/>
+    <path transform="rotate(90)" d="M0 -89 C11 -89 18 -83 22 -71 C29 -42 42 -29 71 -22 C83 -18 89 -11 89 0 C69 6 48 5 31 0 C16 -5 5 -16 0 -31 C5 -48 6 -69 0 -89 Z" fill="url(#southeast)"/>
+    <path transform="rotate(180)" d="M0 -89 C11 -89 18 -83 22 -71 C29 -42 42 -29 71 -22 C83 -18 89 -11 89 0 C69 6 48 5 31 0 C16 -5 5 -16 0 -31 C5 -48 6 -69 0 -89 Z" fill="url(#southwest)"/>
+    <path transform="rotate(270)" d="M0 -89 C11 -89 18 -83 22 -71 C29 -42 42 -29 71 -22 C83 -18 89 -11 89 0 C69 6 48 5 31 0 C16 -5 5 -16 0 -31 C5 -48 6 -69 0 -89 Z" fill="url(#northwest)"/>
+  </g>
+</svg>

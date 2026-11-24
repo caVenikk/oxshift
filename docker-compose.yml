@@ -8,9 +8,9 @@ services:
     ports:
       - "1521:1521"
     environment:
-      ORACLE_PASSWORD: ${PYOXIDE_DB_PASSWORD:-pyoxide}
+      ORACLE_PASSWORD: ${OXSHIFT_DB_PASSWORD-pyoxide}
       APP_USER: pyoxide
-      APP_USER_PASSWORD: ${PYOXIDE_DB_PASSWORD:-pyoxide}
+      APP_USER_PASSWORD: ${OXSHIFT_DB_PASSWORD-pyoxide}
     healthcheck:
       test: ["CMD", "healthcheck.sh"]
       interval: 10s
@@ -23,7 +23,7 @@ services:
       - "55432:5432"
     environment:
       POSTGRES_USER: pyoxide
-      POSTGRES_PASSWORD: ${PYOXIDE_DB_PASSWORD:-pyoxide}
+      POSTGRES_PASSWORD: ${OXSHIFT_DB_PASSWORD-pyoxide}
       POSTGRES_DB: pyoxide
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U pyoxide -d pyoxide"]

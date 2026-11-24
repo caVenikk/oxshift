@@ -52,21 +52,21 @@ members = [
     "crates/database/sql-intel",
     "crates/database/db-ui",
     "crates/python/brand",
-    "crates/python/db-cli",
+    "crates/python/oxshift-db",
     "crates/python/py-debug",
     "crates/python/py-env",
     "crates/python/py-lsp",
     "crates/python/py-run",
     "crates/python/py-syntax",
-    "crates/python/pyoxide-cli",
-    "crates/python/pyoxide-ide",
+    "crates/python/oxshift-cli",
+    "crates/python/oxshift-python",
 ]
 
 [workspace.package]
 version = "0.0.1"
 edition = "2024"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/caVenikk/pyoxide-ide"
+repository = "https://github.com/caVenikk/oxshift"
 rust-version = "1.89"
 
 [workspace.dependencies]

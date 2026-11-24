@@ -299,9 +299,9 @@ impl Uv {
         }
     }
 
-    /// uv from `PYOXIDE_UV`, `PATH` or the places the installers use.
+    /// uv from `OXSHIFT_UV`, `PATH` or the places the installers use.
     pub fn locate(config: UvConfig) -> Option<Uv> {
-        let program = std::env::var_os(brand::env_name!("UV"))
+        let program = brand::var_os("UV")
             .map(PathBuf::from)
             .filter(|p| p.is_file())
             .or_else(|| find_tool("uv"))?;

@@ -94,7 +94,7 @@ impl SecretError {
 pub type Result<T> = std::result::Result<T, SecretError>;
 
 /// A place secrets are kept between runs. Keys are a `service` (namespace,
-/// e.g. `pyoxide-db`) and an `account` (e.g. a profile name).
+/// e.g. `database-passwords`) and an `account` (e.g. a profile name).
 pub trait SecretStore: Send + Sync {
     /// Human-readable name, e.g. "OS credential store".
     fn name(&self) -> &str;
@@ -405,35 +405,16 @@ impl SecretStore for LazyStore {
 /// Reads environment variables; replaceable in tests.
 pub type EnvLookup = Arc<dyn Fn(&str) -> Option<String> + Send + Sync>;
 
-/// Read a nonempty setting or credential. Select the spelling before checking
-/// its value, so an explicitly empty setting still masks its legacy alias.
-pub fn env_setting(
-    product: &app_info::AppInfo,
-    name: &str,
-    env: &EnvLookup,
-) -> Option<(String, String)> {
-    product
-        .lookup_env(name, |key| env(key))
-        .filter(|(_, value)| !value.is_empty())
+/// Read a nonempty setting or credential and report its variable name.
+pub fn env_setting(name: &str, env: &EnvLookup) -> Option<(String, String)> {
+    env(name)
+        .filter(|value| !value.is_empty())
+        .map(|value| (name.to_owned(), value))
 }
 
-/// The process environment. Product variables preserve empty values so a
-/// canonical empty value cannot expose a legacy secret. Other empty values
-/// continue to count as unset.
+/// The process environment; empty values count as unset.
 pub fn process_env() -> EnvLookup {
-    Arc::new(|name| {
-        let info = app_info::get();
-        let product = name.starts_with(&format!("{}_", info.env_prefix))
-            || info
-                .legacy_env_prefix
-                .is_some_and(|p| name.starts_with(&format!("{p}_")));
-        if product {
-            // Invalid Unicode still counts as present and must mask the alias.
-            std::env::var_os(name).map(|value| value.into_string().unwrap_or_default())
-        } else {
-            std::env::var(name).ok().filter(|value| !value.is_empty())
-        }
-    })
+    Arc::new(|name| std::env::var(name).ok().filter(|value| !value.is_empty()))
 }
 
 #[cfg(test)]

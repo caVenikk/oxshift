@@ -299,7 +299,7 @@ impl Uv {
         }
     }
 
-    /// uv from `PYOXIDE_UV`, `PATH` or the places the installers use.
+    /// uv from `OXSHIFT_UV`, `PATH` or the places the installers use.
     pub fn locate(config: UvConfig) -> Option<Uv> {
         let program = brand::var_os("UV")
             .map(PathBuf::from)

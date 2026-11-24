@@ -7,7 +7,7 @@
 //! cargo test -p oxshift-python --test it debug_sessions:: -- --ignored
 //! ```
 //!
-//! `PYOXIDE_TEST_PYTHON` names the interpreter that makes the project's
+//! `OXSHIFT_TEST_PYTHON` names the interpreter that makes the project's
 //! virtual environment (default `python3`, `python` on Windows).
 
 use std::path::{Path, PathBuf};

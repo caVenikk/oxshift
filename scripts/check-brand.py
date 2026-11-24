@@ -25,9 +25,9 @@ ROOT = Path(__file__).resolve().parent.parent
 CRATES = ROOT / "crates"
 
 NAME = re.compile(r"pyoxide|oxshift", re.IGNORECASE)
-# Rust paths of the product crates (`pyoxide_ide::product()`): a crate name,
+# Rust paths of the product crates (`oxshift_python::product()`): a crate name,
 # renamed with its package.
-CRATE_PATH = re.compile(r"\b(?:oxshift_(?:python|cli|db)|pyoxide_(?:ide|cli))(?=::)")
+CRATE_PATH = re.compile(r"\boxshift_(?:python|cli|db)(?=::)")
 
 # The brand module: the one place the name is spelled out.
 BRAND_DIR = "crates/python/brand/"
@@ -213,7 +213,7 @@ def self_test() -> None:
     assert [no for no, _ in data_findings("# Oxshift Python\nname = 'Oxshift Python'\n")] == [2]
     assert rs('let a = "x"; // pyoxide in a comment') == []
     assert rs("/// the Pyoxide docs\nfn f() {}") == []
-    assert rs("/* pyoxide\n pyoxide */ let a = 1;\nlet b = \"PYOXIDE_X\";") == [3]
+    assert rs("/* pyoxide\n pyoxide */ let a = 1;\nlet b = \"OXSHIFT_X\";") == [3]
     assert rs('let url = "https://github.com/x/pyoxide-ide";') == [1]
     assert rs('let s = r#"say "Pyoxide""#;') == [1]
     assert rs("let c = '\"'; let d = \"ok\";") == []

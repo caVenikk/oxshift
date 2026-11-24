@@ -18,7 +18,7 @@ pub struct AppInfo {
     pub name: &'static str,
     /// Full name where the short one is too vague (window titles, user agents).
     pub full_name: &'static str,
-    /// Stable, case-sensitive name for existing credential groups and shell identity.
+    /// Stable, case-sensitive name for existing credential groups.
     /// Independent of the display name; changing it requires a migration.
     pub identity_name: &'static str,
     /// Stable technical name for database sessions and thread names.
@@ -27,10 +27,6 @@ pub struct AppInfo {
     pub profile_dir: &'static str,
     /// Prefix of the environment variables, without the trailing `_`.
     pub env_prefix: &'static str,
-    /// Previous environment prefix, accepted only when the canonical variable is absent.
-    pub legacy_env_prefix: Option<&'static str>,
-    /// Stable prefix of machine-readable measurement output.
-    pub measurement_prefix: &'static str,
     /// Name of the product's folder in a project root, with the leading dot.
     pub project_dir: &'static str,
     /// Reverse-DNS identifier of the application bundle.
@@ -39,8 +35,8 @@ pub struct AppInfo {
     pub cli_name: &'static str,
     /// Name of the database command-line program.
     pub db_cli_name: &'static str,
-    /// Names of each program sharing credentials, preferred name first, then aliases.
-    pub binaries: &'static [&'static [&'static str]],
+    /// Names of the programs sharing credentials.
+    pub binaries: &'static [&'static str],
 }
 
 impl AppInfo {
@@ -52,13 +48,11 @@ impl AppInfo {
         slug: "app",
         profile_dir: "app",
         env_prefix: "APP",
-        legacy_env_prefix: None,
-        measurement_prefix: "APP",
         project_dir: ".app",
         bundle_id: "app.example.app",
         cli_name: "app",
         db_cli_name: "app-db",
-        binaries: &[&["app"], &["app-db"]],
+        binaries: &["app", "app-db"],
     };
 }
 
@@ -66,30 +60,6 @@ impl AppInfo {
     /// The project store path, without probing or creating directories.
     pub fn project_storage_dir(&self, root: &std::path::Path) -> PathBuf {
         root.join(self.project_dir)
-    }
-
-    /// Resolve a full variable name against an injected environment. Canonical
-    /// presence wins even for an empty value. Unrelated names are read verbatim.
-    /// Return the actual name for diagnostics; callers must never print values.
-    pub fn lookup_env<T>(
-        &self,
-        name: &str,
-        lookup: impl Fn(&str) -> Option<T>,
-    ) -> Option<(String, T)> {
-        let canonical_prefix = format!("{}_", self.env_prefix);
-        let legacy_prefix = self.legacy_env_prefix.map(|p| format!("{p}_"));
-        let suffix = name
-            .strip_prefix(&canonical_prefix)
-            .or_else(|| legacy_prefix.as_deref().and_then(|p| name.strip_prefix(p)));
-        let Some(suffix) = suffix else {
-            return lookup(name).map(|value| (name.to_owned(), value));
-        };
-        let canonical = format!("{canonical_prefix}{suffix}");
-        if let Some(value) = lookup(&canonical) {
-            return Some((canonical, value));
-        }
-        let legacy = format!("{}{suffix}", legacy_prefix?);
-        lookup(&legacy).map(|value| (legacy, value))
     }
 }
 
@@ -122,7 +92,7 @@ pub fn full_name() -> &'static str {
     get().full_name
 }
 
-/// The stable name used by credential groups and terminal identification.
+/// The stable name used by credential groups.
 pub fn identity_name() -> &'static str {
     get().identity_name
 }
@@ -158,7 +128,7 @@ pub fn db_cli_name() -> &'static str {
 }
 
 /// The programs the product ships.
-pub fn binaries() -> &'static [&'static [&'static str]] {
+pub fn binaries() -> &'static [&'static str] {
     get().binaries
 }
 
@@ -176,9 +146,7 @@ pub fn var(suffix: &str) -> Option<String> {
 
 /// Like [`var`], without requiring Unicode.
 pub fn var_os(suffix: &str) -> Option<OsString> {
-    get()
-        .lookup_env(&env_name(suffix), |name| std::env::var_os(name))
-        .map(|(_, value)| value)
+    std::env::var_os(env_name(suffix))
 }
 
 fn profile_in(base: &Path) -> PathBuf {

@@ -11,7 +11,7 @@
 //!   and screen copies shown meanwhile;
 //! - `terminal-scroll`: wheel events over a long scrollback, frame work and
 //!   gaps between frames;
-//! - `typing` with `PYOXIDE_BENCH_FLOOD=1`: the editor typing measurement
+//! - `typing` with `OXSHIFT_BENCH_FLOOD=1`: the editor typing measurement
 //!   while a terminal prints without pause.
 
 use std::path::PathBuf;
@@ -419,7 +419,7 @@ pub(super) async fn scroll(window: WindowHandle<Workbench>, cx: &mut AsyncApp) {
     ));
 }
 
-/// For `typing` with `PYOXIDE_BENCH_FLOOD=1`: a terminal that prints
+/// For `typing` with `OXSHIFT_BENCH_FLOOD=1`: a terminal that prints
 /// without pause (the file again and again) while the editor is typed in;
 /// the focus goes back to the editor.
 pub(super) async fn start_flood(window: WindowHandle<Workbench>, cx: &mut AsyncApp) -> bool {

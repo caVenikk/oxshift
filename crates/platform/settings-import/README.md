@@ -2,8 +2,8 @@
 
 Reads settings that users keep in other IDEs and returns them as plain data.
 Today: PyCharm database data sources and the passwords PyCharm saved for them.
-Turning the data into Pyoxide connection profiles and storing the passwords is
-done by the caller (`pyoxide-db`), see ADR 0004.
+Turning the data into Oxshift Python connection profiles and storing the passwords is
+done by the caller (`oxshift-db`), see ADR 0004.
 
 ## What is imported from PyCharm
 
@@ -44,7 +44,7 @@ colour scheme, keymap, editor font, terminal font (`terminal-font.xml`), soft wr
 autosave and file type associations, and the theme plugins' descriptors
 (`META-INF/plugin.xml` only). `snapshot` copies a configuration folder's
 data files (`options/*.xml`, `keymaps/`, `colors/`, `codestyles/`,
-`templates/`) into Pyoxide's configuration folder, never `security.xml`,
+`templates/`) into Oxshift Python's configuration folder, never `security.xml`,
 password stores, licences or token files, and reads values back from
 the copy (`Snapshot::option`) for features that take their settings
 later.

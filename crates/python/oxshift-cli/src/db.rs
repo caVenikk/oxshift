@@ -1,5 +1,5 @@
 //! The database service behind the `db.*` commands, set up the way
-//! `pyoxide-db` does it.
+//! `oxshift-db` does it.
 
 use std::path::PathBuf;
 use std::sync::Arc;

@@ -1,10 +1,10 @@
 //! The product with real language servers, headless (GPUI's test
 //! platform), driven through command ids. Ignored by default: it needs
-//! ruff and ty installed. The folder `PYOXIDE_PY_TOOLS` names is searched
+//! ruff and ty installed. The folder `OXSHIFT_PY_TOOLS` names is searched
 //! for the tools, else `PATH`:
 //!
 //! ```sh
-//! PYOXIDE_PY_TOOLS=/tmp/py-tools/bin cargo test -p oxshift-python --test it live_services:: -- --ignored
+//! OXSHIFT_PY_TOOLS=/tmp/py-tools/bin cargo test -p oxshift-python --test it live_services:: -- --ignored
 //! ```
 
 use std::path::PathBuf;

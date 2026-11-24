@@ -32,7 +32,7 @@ pub(super) fn init(cx: &mut App) {
 }
 
 /// The first-run window's start: the product's name, the reference's
-/// folders (`PYOXIDE_REFERENCE_CONFIG`, else the platform's).
+/// folders (`OXSHIFT_REFERENCE_CONFIG`, else the platform's).
 pub fn start(title: &str) -> Start {
     Start {
         title: title.to_owned().into(),

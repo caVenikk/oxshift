@@ -10,7 +10,7 @@
 #     python3 scripts/fetch-debugpy.py --print-dest     # where the app cache folder is
 #
 # The helper lives under helpers/debugpy-1.8.21 in the IDE cache.
-# OXSHIFT_CACHE_DIR overrides its location (legacy name: PYOXIDE_CACHE_DIR).
+# OXSHIFT_CACHE_DIR overrides its location.
 # In the system cache the IDE uses oxshift-python. The IDE checks its own
 # bundle before looking in the cache.
 #
@@ -48,7 +48,7 @@ MARKERS = (f"{DIST_INFO}/RECORD", "debugpy/adapter/__main__.py")
 
 def cache_dir() -> Path:
     """The application cache folder, as the IDE computes it."""
-    override = os.environ.get("OXSHIFT_CACHE_DIR", os.environ.get("PYOXIDE_CACHE_DIR"))
+    override = os.environ.get("OXSHIFT_CACHE_DIR")
     if override:
         return Path(override)
     if sys.platform == "win32":

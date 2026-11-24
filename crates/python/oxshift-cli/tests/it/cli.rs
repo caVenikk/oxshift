@@ -1,4 +1,4 @@
-//! Runs the `pyoxide` binary. Nothing here needs the network: uv runs
+//! Runs the `oxshift` binary. Nothing here needs the network: uv runs
 //! offline with a private cache and no Python downloads. Tests that need uv
 //! and an installed Python skip themselves where those are missing.
 
@@ -23,7 +23,7 @@ impl Sandbox {
         self.dir.path().join(name)
     }
 
-    fn pyoxide(&self, args: &[&str]) -> Output {
+    fn oxshift(&self, args: &[&str]) -> Output {
         let mut cmd = Command::new(env!("CARGO_BIN_EXE_oxshift"));
         // The developer's `UV_PYTHON`, `VIRTUAL_ENV` and the like must not
         // decide which Python uv picks for a test project.
@@ -42,10 +42,10 @@ impl Sandbox {
     }
 
     fn ok(&self, args: &[&str]) -> String {
-        let out = self.pyoxide(args);
+        let out = self.oxshift(args);
         assert!(
             out.status.success(),
-            "pyoxide {args:?} failed: {}\n{}",
+            "oxshift {args:?} failed: {}\n{}",
             String::from_utf8_lossy(&out.stdout),
             String::from_utf8_lossy(&out.stderr)
         );
@@ -140,17 +140,17 @@ fn call_reaches_platform_and_python_commands() {
 #[test]
 fn call_failures_are_json_with_stable_codes() {
     let sb = Sandbox::new();
-    let out = sb.pyoxide(&["call", "no.such.command", "{}"]);
+    let out = sb.oxshift(&["call", "no.such.command", "{}"]);
     assert!(!out.status.success());
     let err: Value = serde_json::from_slice(&out.stdout).unwrap();
     assert_eq!(err["code"], "not_found");
 
-    let out = sb.pyoxide(&["call", "env.package.search", "{}"]);
+    let out = sb.oxshift(&["call", "env.package.search", "{}"]);
     assert!(!out.status.success());
     let err: Value = serde_json::from_slice(&out.stdout).unwrap();
     assert_eq!(err["code"], "invalid_args");
 
-    let out = sb.pyoxide(&["call", "env.package.search", "not json"]);
+    let out = sb.oxshift(&["call", "env.package.search", "not json"]);
     assert!(!out.status.success());
     assert!(String::from_utf8_lossy(&out.stderr).contains("not JSON"));
 }
@@ -158,10 +158,10 @@ fn call_failures_are_json_with_stable_codes() {
 #[test]
 fn search_rejects_invalid_names_without_the_network() {
     let sb = Sandbox::new();
-    let out = sb.pyoxide(&["env", "search", "a/b"]);
+    let out = sb.oxshift(&["env", "search", "a/b"]);
     assert_eq!(out.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&out.stderr).contains("not a valid project name"));
-    let out = sb.pyoxide(&["--json", "env", "search", "../x"]);
+    let out = sb.oxshift(&["--json", "env", "search", "../x"]);
     let err: Value = serde_json::from_slice(&out.stdout).unwrap();
     assert_eq!(err["code"], "invalid_args");
 }
@@ -192,7 +192,7 @@ fn info_describes_a_project_directory() {
 #[test]
 fn info_of_a_missing_path_is_an_error() {
     let sb = Sandbox::new();
-    let out = sb.pyoxide(&["env", "info", "no-such-dir"]);
+    let out = sb.oxshift(&["env", "info", "no-such-dir"]);
     assert_eq!(out.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&out.stderr).starts_with("error: "));
 }
@@ -311,7 +311,7 @@ fn offline_project_workflow() {
     let venv = sb.path("other-venv");
     let created = sb.json(&["env", "venv", "--python", &python, path_str(&venv)]);
     assert_eq!(created["interpreter"]["is_venv"], true);
-    let again = sb.pyoxide(&["env", "venv", "--python", &python, path_str(&venv)]);
+    let again = sb.oxshift(&["env", "venv", "--python", &python, path_str(&venv)]);
     assert_eq!(again.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&again.stderr).contains("already exists"));
     sb.ok(&[
@@ -326,12 +326,12 @@ fn offline_project_workflow() {
     assert_eq!(list["packages"], serde_json::json!([]));
 
     // Progress goes to stderr, results to stdout.
-    let out = sb.pyoxide(&["env", "sync", "--project", project_arg]);
+    let out = sb.oxshift(&["env", "sync", "--project", project_arg]);
     assert!(out.status.success());
     assert!(String::from_utf8_lossy(&out.stderr).contains("Resolved 1 package"));
     assert!(String::from_utf8_lossy(&out.stdout).starts_with("ok: uv sync"));
     // --json keeps stderr quiet and puts the log in the result.
-    let out = sb.pyoxide(&["--json", "env", "sync", "--project", project_arg]);
+    let out = sb.oxshift(&["--json", "env", "sync", "--project", project_arg]);
     assert!(String::from_utf8_lossy(&out.stderr).is_empty());
     let result: Value = serde_json::from_slice(&out.stdout).unwrap();
     assert_eq!(result["backend"], "uv");
@@ -351,13 +351,13 @@ fn failures_exit_with_a_message_and_a_code() {
         return;
     }
     let sb = Sandbox::new();
-    let out = sb.pyoxide(&["--json", "env", "python-install", "3.99"]);
+    let out = sb.oxshift(&["--json", "env", "python-install", "3.99"]);
     assert_eq!(out.status.code(), Some(1));
     let err: Value = serde_json::from_slice(&out.stdout).unwrap();
     assert_eq!(err["code"], "env.no_interpreter");
     assert_eq!(err["tool"], "uv");
 
-    let out = sb.pyoxide(&["env", "packages", "--project", path_str(sb.dir.path())]);
+    let out = sb.oxshift(&["env", "packages", "--project", path_str(sb.dir.path())]);
     assert_eq!(out.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&out.stderr).contains("no virtual environment"));
 }

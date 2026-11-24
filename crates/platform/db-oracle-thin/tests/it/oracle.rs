@@ -37,7 +37,7 @@ async fn connects_and_reports_version() {
     assert_eq!(c.ping().await.unwrap_err().kind, ErrorKind::ConnectionLost);
 }
 
-/// The query `pyoxide-db diagnose` uses.
+/// The query `oxshift-db diagnose` uses.
 #[tokio::test]
 #[ignore]
 async fn diagnose_probe_types() {

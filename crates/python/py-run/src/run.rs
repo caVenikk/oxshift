@@ -21,7 +21,7 @@ pub struct UvRun {
 
 impl UvRun {
     /// uv for `environment`, found the way the IDE finds uv elsewhere
-    /// (`PYOXIDE_UV`, `PATH`, the installers' locations); `None` when uv is
+    /// (`OXSHIFT_UV`, `PATH`, the installers' locations); `None` when uv is
     /// not installed. Looks at the file system: call it off the UI thread.
     pub fn locate(environment: PathBuf) -> Option<UvRun> {
         let uv = py_env::Uv::locate(py_env::UvConfig::default())?;

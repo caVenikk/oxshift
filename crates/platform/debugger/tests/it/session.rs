@@ -204,7 +204,7 @@ fn a_session_stops_and_shows_frames_variables_and_values() {
     );
     script.extend([
         json!({"request": "runInTerminal", "arguments": {"kind": "integrated", "cwd": root,
-            "args": [program, "--list"], "env": {"PYOXIDE_DEBUG_TEST": "1"}}}),
+            "args": [program, "--list"], "env": {"OXSHIFT_DEBUG_TEST": "1"}}}),
         json!({"expect_response": "runInTerminal", "success": true, "body": {"processId": "$any"}}),
         json!({"event": "stopped", "body": {"reason": "breakpoint", "threadId": 1, "hitBreakpointIds": [11]}}),
         json!({"expect": "threads"}),

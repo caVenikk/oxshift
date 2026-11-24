@@ -99,10 +99,10 @@ mod tests {
         let mut r = Redactor::default();
         r.add("pg", "<profile>");
         r.add("pyoxide", "<user>");
-        let s = r.apply("profile pg uses PXTEST_PG_PW and PYOXIDE_DB_PASSWORD as pyoxide");
+        let s = r.apply("profile pg uses PXTEST_PG_PW and OXSHIFT_DB_PASSWORD as pyoxide");
         assert_eq!(
             s,
-            "profile <profile> uses PXTEST_PG_PW and PYOXIDE_DB_PASSWORD as <user>"
+            "profile <profile> uses PXTEST_PG_PW and OXSHIFT_DB_PASSWORD as <user>"
         );
         r.add("10.0.0.5", "<ip1>");
         assert_eq!(r.apply("[10.0.0.5]:1521"), "[<ip1>]:1521");

@@ -365,10 +365,7 @@ fn command() -> clap::Command {
     ] {
         let canonical = format!("{}_{suffix}", brand::ENV_PREFIX);
         command = command.mut_arg(argument, |arg| {
-            arg.help(format!(
-                "Connection {argument} (environment: {canonical}, fallback {}_{suffix})",
-                brand::LEGACY_ENV_PREFIX
-            ))
+            arg.help(format!("Connection {argument} (environment: {canonical})"))
         });
     }
     command
@@ -382,13 +379,12 @@ fn from_matches_with_env(
 ) -> Result<Cli, clap::Error> {
     let mut cli = Cli::from_arg_matches(matches)?;
     let lookup = |name| {
-        brand::INFO
-            .lookup_env(name, &env)
-            .map(|(source, value)| {
+        env(name)
+            .map(|value| {
                 value.into_string().map_err(|_| {
                     clap::Error::raw(
                         clap::error::ErrorKind::InvalidUtf8,
-                        format!("{source} must be valid UTF-8"),
+                        format!("{name} must be valid UTF-8"),
                     )
                 })
             })
@@ -1029,21 +1025,11 @@ mod tests {
     }
 
     #[test]
-    fn environment_aliases_and_cli_precedence() {
+    fn environment_values_and_cli_precedence() {
         let canonical_host = brand::env_name!("DB_HOST");
-        let legacy_host = format!("{}_DB_HOST", brand::LEGACY_ENV_PREFIX);
         let canonical_port = brand::env_name!("DB_PORT");
-        let legacy_port = format!("{}_DB_PORT", brand::LEGACY_ENV_PREFIX);
         let args = [brand::DB_CLI_NAME, "backends"];
-        let old = parse_with_env(&args, &[(&legacy_host, "old"), (&legacy_port, "5432")]).unwrap();
-        assert_eq!(old.conn.host.as_deref(), Some("old"));
-        assert_eq!(old.conn.port, Some(5432));
-        let vars = [
-            (canonical_host, ""),
-            (&legacy_host, "old"),
-            (canonical_port, "1234"),
-            (&legacy_port, "5432"),
-        ];
+        let vars = [(canonical_host, ""), (canonical_port, "1234")];
         let canonical = parse_with_env(&args, &vars).unwrap();
         assert_eq!(canonical.conn.host.as_deref(), Some(""));
         assert_eq!(canonical.conn.port, Some(1234));
@@ -1061,7 +1047,7 @@ mod tests {
         .unwrap();
         assert_eq!(flags.conn.host.as_deref(), Some("flag"));
         assert_eq!(flags.conn.port, Some(9999));
-        let invalid = [(canonical_port, ""), (&legacy_port, "5432")];
+        let invalid = [(canonical_port, "")];
         assert!(parse_with_env(&args, &invalid).is_err());
         assert_eq!(
             parse_with_env(
@@ -1100,7 +1086,7 @@ mod tests {
     }
 
     #[test]
-    fn legacy_flags_still_parse() {
+    fn documented_connection_flags_parse() {
         let cli = Cli::try_parse_from([
             brand::DB_CLI_NAME,
             "--service",

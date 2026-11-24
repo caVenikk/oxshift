@@ -43,7 +43,7 @@ impl ShellCustomizer for Activate {
             }
         } else {
             Customization {
-                env: vec![("PYOXIDE_ACTIVATED".into(), "merged".into())],
+                env: vec![("OXSHIFT_ACTIVATED".into(), "merged".into())],
                 source: None,
             }
         }
@@ -93,7 +93,7 @@ fn start(program: &str, files: &[(&str, &str)], activate_name: &str, activate_te
             ("ZDOTDIR".into(), home.to_string_lossy().into_owned()),
             // macOS bash 3.2 asks to switch to zsh otherwise.
             ("BASH_SILENCE_DEPRECATION_WARNING".into(), "1".into()),
-            ("PYOXIDE_ORDER".into(), String::new()),
+            ("OXSHIFT_ORDER".into(), String::new()),
         ],
         size: TerminalSize::new(200, 60),
         integration_dir: Some(scripts.path().to_owned()),
@@ -243,8 +243,8 @@ impl Drop for Shell {
 }
 
 #[cfg(unix)]
-const ACTIVATE_SH: &str = "PYOXIDE_ORDER=\"$PYOXIDE_ORDER activate\"\n\
-export PYOXIDE_ACTIVATED=yes\n\
+const ACTIVATE_SH: &str = "OXSHIFT_ORDER=\"$OXSHIFT_ORDER activate\"\n\
+export OXSHIFT_ACTIVATED=yes\n\
 PS1=\"(t) $PS1\"\n";
 
 #[cfg(unix)]
@@ -257,27 +257,27 @@ fn zsh() {
         &[
             (
                 ".zshenv",
-                "export PYOXIDE_ORDER=\"$PYOXIDE_ORDER zshenv\"\n",
+                "export OXSHIFT_ORDER=\"$OXSHIFT_ORDER zshenv\"\n",
             ),
-            (".zprofile", "PYOXIDE_ORDER=\"$PYOXIDE_ORDER zprofile\"\n"),
+            (".zprofile", "OXSHIFT_ORDER=\"$OXSHIFT_ORDER zprofile\"\n"),
             (
                 ".zshrc",
-                "PYOXIDE_ORDER=\"$PYOXIDE_ORDER zshrc\"\nPS1='zsh-prompt> '\n",
+                "OXSHIFT_ORDER=\"$OXSHIFT_ORDER zshrc\"\nPS1='zsh-prompt> '\n",
             ),
-            (".zlogin", "PYOXIDE_ORDER=\"$PYOXIDE_ORDER zlogin\"\n"),
+            (".zlogin", "OXSHIFT_ORDER=\"$OXSHIFT_ORDER zlogin\"\n"),
         ],
         "activate",
         ACTIVATE_SH,
     );
     sh.check_marks_and_directory("cd sub", "(exit 3)");
-    let order = sh.result("echo \"RESULT:${PYOXIDE_ORDER}:END\"");
+    let order = sh.result("echo \"RESULT:${OXSHIFT_ORDER}:END\"");
     let expected = if login {
         " zshenv zprofile zshrc zlogin activate"
     } else {
         " zshenv zshrc activate"
     };
     assert_eq!(order, expected);
-    assert_eq!(sh.result("echo \"RESULT:$PYOXIDE_ACTIVATED:END\""), "yes");
+    assert_eq!(sh.result("echo \"RESULT:$OXSHIFT_ACTIVATED:END\""), "yes");
     let home = sh.home.to_string_lossy().into_owned();
     assert_eq!(sh.result("echo \"RESULT:${ZDOTDIR-unset}:END\""), home);
     assert_eq!(
@@ -314,11 +314,11 @@ fn bash() {
         &[
             (
                 ".bash_profile",
-                "PYOXIDE_ORDER=\"$PYOXIDE_ORDER profile\"\nPS1='bash-prompt> '\n",
+                "OXSHIFT_ORDER=\"$OXSHIFT_ORDER profile\"\nPS1='bash-prompt> '\n",
             ),
             (
                 ".bashrc",
-                "PYOXIDE_ORDER=\"$PYOXIDE_ORDER bashrc\"\nPS1='bash-prompt> '\n",
+                "OXSHIFT_ORDER=\"$OXSHIFT_ORDER bashrc\"\nPS1='bash-prompt> '\n",
             ),
         ],
         "activate",
@@ -332,8 +332,8 @@ fn bash() {
     } else {
         " bashrc activate"
     };
-    assert_eq!(sh.result("echo \"RESULT:${PYOXIDE_ORDER}:END\""), expected);
-    assert_eq!(sh.result("echo \"RESULT:$PYOXIDE_ACTIVATED:END\""), "yes");
+    assert_eq!(sh.result("echo \"RESULT:${OXSHIFT_ORDER}:END\""), expected);
+    assert_eq!(sh.result("echo \"RESULT:$OXSHIFT_ACTIVATED:END\""), "yes");
     assert_eq!(
         sh.result("echo \"RESULT:${ALACRITTY_WINDOW_ID-unset}${WINDOWID-unset}:END\""),
         "unsetunset"
@@ -367,20 +367,20 @@ fn sh_on_macos() {
         &[
             (
                 ".profile",
-                "PYOXIDE_ORDER=\"$PYOXIDE_ORDER profile\"\nPS1='sh-prompt> '\n\
+                "OXSHIFT_ORDER=\"$OXSHIFT_ORDER profile\"\nPS1='sh-prompt> '\n\
                  ENV=$HOME/.shrc; export ENV\n",
             ),
-            (".shrc", "PYOXIDE_ORDER=\"$PYOXIDE_ORDER shrc\"\n"),
+            (".shrc", "OXSHIFT_ORDER=\"$OXSHIFT_ORDER shrc\"\n"),
         ],
         "activate",
         ACTIVATE_SH,
     );
     sh.check_marks_and_directory("cd sub", "/bin/sh -c 'exit 3'");
     assert_eq!(
-        sh.result("echo \"RESULT:${PYOXIDE_ORDER}:END\""),
+        sh.result("echo \"RESULT:${OXSHIFT_ORDER}:END\""),
         " profile shrc activate"
     );
-    assert_eq!(sh.result("echo \"RESULT:$PYOXIDE_ACTIVATED:END\""), "yes");
+    assert_eq!(sh.result("echo \"RESULT:$OXSHIFT_ACTIVATED:END\""), "yes");
     let shrc = sh.home.join(".shrc").to_string_lossy().into_owned();
     assert_eq!(sh.result("echo \"RESULT:${ENV-unset}:END\""), shrc);
     assert_eq!(
@@ -412,17 +412,17 @@ fn fish() {
         program,
         &[(
             ".config/fish/config.fish",
-            "set -gx PYOXIDE_ORDER \"$PYOXIDE_ORDER config\"\n",
+            "set -gx OXSHIFT_ORDER \"$OXSHIFT_ORDER config\"\n",
         )],
         "activate.fish",
-        "set -gx PYOXIDE_ORDER \"$PYOXIDE_ORDER activate\"\nset -gx PYOXIDE_ACTIVATED yes\n",
+        "set -gx OXSHIFT_ORDER \"$OXSHIFT_ORDER activate\"\nset -gx OXSHIFT_ACTIVATED yes\n",
     );
     sh.check_marks_and_directory("cd sub", "sh -c 'exit 3'");
     assert_eq!(
-        sh.result("echo \"RESULT:$PYOXIDE_ORDER:END\""),
+        sh.result("echo \"RESULT:$OXSHIFT_ORDER:END\""),
         " config activate"
     );
-    assert_eq!(sh.result("echo \"RESULT:$PYOXIDE_ACTIVATED:END\""), "yes");
+    assert_eq!(sh.result("echo \"RESULT:$OXSHIFT_ACTIVATED:END\""), "yes");
     sh.exit("exit");
 }
 
@@ -450,10 +450,10 @@ fn powershell() {
         program,
         &[(
             profile,
-            "$env:PYOXIDE_ORDER = \"$env:PYOXIDE_ORDER profile\"\n",
+            "$env:OXSHIFT_ORDER = \"$env:OXSHIFT_ORDER profile\"\n",
         )],
         "Activate.ps1",
-        "$env:PYOXIDE_ORDER = \"$env:PYOXIDE_ORDER activate\"\n$env:PYOXIDE_ACTIVATED = 'yes'\n",
+        "$env:OXSHIFT_ORDER = \"$env:OXSHIFT_ORDER activate\"\n$env:OXSHIFT_ACTIVATED = 'yes'\n",
     );
     let exit_3 = if cfg!(windows) {
         "cmd /c exit 3"
@@ -462,11 +462,11 @@ fn powershell() {
     };
     sh.check_marks_and_directory("cd sub", exit_3);
     assert_eq!(
-        sh.result("Write-Output \"RESULT:$($env:PYOXIDE_ORDER):END\""),
+        sh.result("Write-Output \"RESULT:$($env:OXSHIFT_ORDER):END\""),
         " profile activate"
     );
     assert_eq!(
-        sh.result("Write-Output \"RESULT:$($env:PYOXIDE_ACTIVATED):END\""),
+        sh.result("Write-Output \"RESULT:$($env:OXSHIFT_ACTIVATED):END\""),
         "yes"
     );
     sh.exit("exit");

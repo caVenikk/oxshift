@@ -105,7 +105,7 @@ impl SecretResolver<'_> {
             .map(String::as_str)
             .chain([generic.as_str()])
         {
-            if let Some((source, v)) = secrets::env_setting(app_info::get(), var, self.env) {
+            if let Some((source, v)) = secrets::env_setting(var, self.env) {
                 return (Secret::new(v), SecretSource::Env(source), None);
             }
         }

@@ -19,7 +19,7 @@
    Open it again, change something, Cancel.
 7. Select the pytest configuration; give a Python configuration an
    interpreter name that does not exist and run it.
-8. Reopen the project; delete `.oxide/workspace.toml` and reopen it.
+8. Reopen the project; delete `.oxshift/workspace.toml` and reopen it.
 9. Show the Run tool window before any run (Cmd+4 / Alt+4): hover the
    "run configuration" link of its last line and click it, with a
    configuration selected and then with Current File selected.
@@ -29,9 +29,9 @@
   read-only)", naming the renamed per-user configuration
   (`name (1)`). The widget shows the configuration the reference had
   selected, with its type's icon (a temporary one at 45 % opacity).
-  `.idea` and the `*.run.xml` files are unchanged; `.oxide/run/` holds a
-  file per shared configuration, `.oxide/project.toml` marks the shared
-  import, `.oxide/workspace.toml` (ignored by Git) holds the personal
+  `.idea` and the `*.run.xml` files are unchanged; `.oxshift/run/` holds a
+  file per shared configuration, `.oxshift/project.toml` marks the shared
+  import, `.oxshift/workspace.toml` (ignored by Git) holds the personal
   configurations and every personal variable value.
 - Step 2: with fewer than 5 configurations or no start history, every
   configuration by type, in the reference's order (type name, folders

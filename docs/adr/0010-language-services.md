@@ -49,7 +49,7 @@ Option 2, split into a model, a client, a UI layer and the product.
 | `ui` (module `markdown`) | platform | yes | Markdown to GPUI elements (`pulldown-cmark`, MIT), code blocks coloured by a lexer the caller passes. |
 | `editor` (extended) | platform | yes | the diagnostics of an editor (moved through edits), their painting, the error stripe and inspection widget, next and previous problem, hover and modifier events, a link highlight, geometry queries for popups. |
 | `py-lsp` | python | no | Python language services: server specs for ruff (`ruff server`), ty (`ty server`) and basedpyright (`basedpyright-langserver --stdio`), executable lookup, settings, initialization options and `workspace/configuration` answers, ruff rule names, the one-time import of the reference's tool settings. |
-| `pyoxide-ide` (extended) | python | yes | the product's `CodeIntelProvider`, the type engine widget, ruff's extra intentions (disable a rule for a file or the project), interpreter changes forwarded to the services. |
+| `oxshift-python` (extended) | python | yes | the product's `CodeIntelProvider`, the type engine widget, ruff's extra intentions (disable a rule for a file or the project), interpreter changes forwarded to the services. |
 
 Dependencies: `lsp-client` -> `code-intel`, `process`, `text`;
 `code-intel-ui` -> `code-intel`, `editor`, `ui`, `name-match`;
@@ -119,8 +119,8 @@ them (ruff: rule names, Disable for this line as a sub-action) and adds
 its own intentions. `FileType` gets a language id (`"python"`).
 
 ### Settings
-Shared settings in `.oxide/project.toml`, personal executable paths in
-`.oxide/workspace.toml` (ADR 0008, 0009):
+Shared settings in `.oxshift/project.toml`, personal executable paths in
+`.oxshift/workspace.toml` (ADR 0008, 0009):
 
 ```toml
 [python.tools.ruff]
@@ -135,7 +135,7 @@ name = "ty"             # ty | basedpyright (ADR 0011)
 ```
 
 ```toml
-# .oxide/workspace.toml
+# .oxshift/workspace.toml
 [python.tools.ruff]
 path = "/opt/tools/ruff"   # optional custom executable
 ```

@@ -5,7 +5,7 @@
 
 ## Context
 Settings exist only in code and in a few files today: project settings in
-`.oxide/project.toml` (shared, ADR 0008) and `.oxide/workspace.toml`
+`.oxshift/project.toml` (shared, ADR 0008) and `.oxshift/workspace.toml`
 (personal, ADR 0009), and per-feature files in the user's configuration
 folder (`find.toml`, `search-everywhere.toml`, `secrets.toml`), each
 written by its own module. The theme comes from an environment variable and
@@ -46,7 +46,7 @@ configuration folder (data files).
    load and save (today). Simple, but every module re-implements versions,
    atomic writes and unknown keys, and nothing ties them to a window.
 2. One `settings.toml` for scalar options, dedicated files for growing
-   data, one store with the rules of `.oxide/project.toml`.
+   data, one store with the rules of `.oxshift/project.toml`.
 3. A database (SQLite). Not readable or mergeable by people; nothing needs
    queries.
 
@@ -65,8 +65,8 @@ below the workbench that every UI crate can add pages to.
 Storage option 2, window option 2, a `settings-ui` crate.
 
 ### Application store
-- `<config dir>/pyoxide/settings.toml` (the configuration folder of
-  `dirs::config_dir()`, overridden by `PYOXIDE_CONFIG_DIR` as today),
+- `<config dir>/oxshift-python/settings.toml` (the configuration folder of
+  `dirs::config_dir()`, overridden by `OXSHIFT_CONFIG_DIR` as today),
   `version = 1`, tables by area (`[appearance]`, `[keymap]`,
   `[editor.font]`, `[editor.soft-wraps]`, `[system.files]`, `[terminal]`,
   `[git]`, `[debugger]`, `[import]`). The conventions of ADR 0008 hold:
@@ -84,7 +84,7 @@ Storage option 2, window option 2, a `settings-ui` crate.
   (two windows, or a second instance, do not lose each other's changes).
   Existing per-feature settings move into it when their page is built.
 - Scopes: **application** (`settings.toml`), **project shared**
-  (`.oxide/project.toml`), **project personal** (`.oxide/workspace.toml`).
+  (`.oxshift/project.toml`), **project personal** (`.oxshift/workspace.toml`).
   Every option belongs to one scope; pages with project options get the
   reference's project mark.
 - Every option is reachable as a command: `settings.get` and

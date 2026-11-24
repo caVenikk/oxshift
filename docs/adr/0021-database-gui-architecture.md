@@ -87,7 +87,7 @@ depend on it; the platform never does.
 | `db-session` (new) | database | no | the asynchronous layer: runtime, data source handles, sessions, query jobs, the pager, refresh jobs, export and import jobs, console files and history. Depends on `db-core`, `db-model`, `sql-syntax`, `tokio`. |
 | `db-ui` (new) | database | GPUI | explorer tool window, data source dialog, console tab, results panel, grid element, value panel, export and import dialogs, settings pages, the SQL editor glue (file type, highlighter, dialect widget). Depends on `db-session`, `db-model`, `sql-syntax`, `sql-intel`, `db-core` (types only), `editor`, `ui`, `commands`. Never on a driver crate, `db-service` or `tokio`. |
 
-The product composes (ADR 0022, "Module layer"): `pyoxide-ide` builds the
+The product composes (ADR 0022, "Module layer"): `oxshift-python` builds the
 `ConnectionSource` from `db-service`, starts the `DbRuntime` and hands both
 to `db_ui::module(..)`, a `workbench::Module` that registers the Database
 tool window, the commands, the settings pages, the keymap files, the SQL
@@ -214,7 +214,7 @@ checked already.
   all, a list, patterns; system schemas light and hidden by default) decides
   what a pass reads.
 - **Disk cache**: one file per data source in the user cache directory
-  (`<cache dir>/pyoxide/db/<data source id>/model.json`, source texts beside it),
+  (`<cache dir>/oxshift-python/db/<data source id>/model.json`, source texts beside it),
   with a format version, written to a temporary file and renamed, never in the
   project folder, never containing secrets. A cache with another version or a
   failing parse is ignored and rebuilt. The tree and completion read it before

@@ -2,7 +2,7 @@
 
 ## Steps
 1. Start Pyoxide with an empty configuration directory
-   (`PYOXIDE_CONFIG_DIR=<empty dir>`) on a machine where the reference
+   (`OXSHIFT_CONFIG_DIR=<empty dir>`) on a machine where the reference
    IDE's configuration has a non-default theme and scheme (a theme
    plugin), editor font size 14 with ligatures on, soft wraps off, a
    custom keymap based on macOS and two interpreters (one of them deleted

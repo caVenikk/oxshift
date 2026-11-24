@@ -192,13 +192,13 @@ First match wins:
    `oracle-thin` and `oracle-odpi` -> `Oracle`, `sqlite` -> `Sqlite`).
 2. A file bound to a data source (personal state, ADR 0009): the same.
 3. A mapping of the file or a folder above it to a dialect, the closest
-   path wins. Shared mappings are in `.oxide/project.toml`, personal ones in
+   path wins. Shared mappings are in `.oxshift/project.toml`, personal ones in
    the personal project state.
 4. The project default dialect (`[sql] dialect`).
 5. `Generic`.
 
 ```toml
-# .oxide/project.toml
+# .oxshift/project.toml
 [sql]
 dialect = "postgres"             # project default; "generic" when absent
 
@@ -434,7 +434,7 @@ statements of a range (whole statements only in the first version), as the
   an `Opaque` node is left as it is; so is a query with a `WITH` clause
   whose text already has line breaks (the reference keeps such a statement
   as written).
-- Code style settings, shared (`.oxide/project.toml`) with per-dialect
+- Code style settings, shared (`.oxshift/project.toml`) with per-dialect
   overrides, edited on *Editor > Code Style > SQL*:
 
 ```toml
@@ -606,7 +606,7 @@ text from the tree-sitter tree of `py-syntax`:
   overrides the dialect. Without a scope the fragment still gets syntax
   colouring, keyword completion and (strict) syntax errors.
 - the injection list and name patterns are settings (`[python.sql-injection]`
-  in `.oxide/project.toml`) and a Settings page.
+  in `.oxshift/project.toml`) and a Settings page.
 
 Placeholders of database drivers (`%s`, `%(name)s`, `?`, `:name`, `$1`) are
 lexed as SQL parameters in injected Python fragments: they are not holes

@@ -21,14 +21,13 @@ names and compatibility identifiers are defined in the `brand` crate
 
 | Constant | Today | Where it shows up |
 |---|---|---|
-| `PRODUCT_NAME` | `Oxshift Python` | window title, menus, messages |
-| `IDENTITY_NAME` | `Pyoxide` | existing KeePass group and the shell-visible `TERMINAL_EMULATOR` value |
+| `PRODUCT_NAME` | `Oxshift Python` | window title, menus, messages and `TERMINAL_EMULATOR` |
+| `IDENTITY_NAME` | `Pyoxide` | existing KeePass group |
 | `PRODUCT_FULL_NAME` | `Oxshift Python IDE` | LSP and DAP client name, Oracle session module, `--help` |
 | `SLUG` | `pyoxide` | Linux window app ID, database `application_name`, thread names, temporary files, base theme ids (`pyoxide-dark`, `pyoxide-light`), keychain service prefix, save-file marker |
-| `ENV_PREFIX`, `LEGACY_ENV_PREFIX` | `OXSHIFT`, `PYOXIDE` | environment variables, including `OXSHIFT_CONFIG_DIR` and `OXSHIFT_DB_PASSWORD` |
-| `MEASUREMENT_PREFIX` | `PYOXIDE` | measurement lines consumed by existing automation |
-| `PROFILE_DIR` | `oxshift-python` | new profile in the OS configuration and cache locations |
-| `PROJECT_DIR`, `LEGACY_PROJECT_DIR` | `.oxshift`, `.oxide` | shared and personal project settings, run configurations and project data sources |
+| `ENV_PREFIX` | `OXSHIFT` | environment variables, including `OXSHIFT_CONFIG_DIR` and `OXSHIFT_DB_PASSWORD`, and the `OXSHIFT ` measurement-line prefix |
+| `PROFILE_DIR` | `oxshift-python` | profile in the OS configuration and cache locations |
+| `PROJECT_DIR` | `.oxshift` | shared and personal project settings, run configurations and project data sources |
 | `BUNDLE_ID` | `dev.pyoxide.ide` | technical product identifier used before the packaging migration |
 | `CLI_NAME`, `DB_CLI_NAME`, `IDE_NAME` | `oxshift`, `oxshift-db`, `oxshift-python` | commands and help text. The credential service remains `pyoxide-db`. |
 
@@ -37,25 +36,30 @@ Third-party notices that record a source or icon under
 describe files now under `crates/python/oxshift-python/src/` and
 `crates/python/oxshift-python/assets/`, respectively.
 
-## Opening an existing installation
+## Project storage and PyCharm import
 
-For each OS location (configuration or cache), Oxshift Python uses
-`oxshift-python/` for a fresh installation. If only `pyoxide/` exists, the
-IDE and both command-line tools continue reading and writing there. Project
-settings follow the same rule with `.oxshift/` and `.oxide/`. When both names
-exist, the new directory is authoritative for the whole location. No files
-are copied or removed. A file or dangling link at the selected directory name stays selected.
-A failed write is reported at that location.
+The IDE and both command-line tools use `oxshift-python/` in the OS
+configuration and cache locations. Existing Pyoxide profiles and caches are
+not selected or imported automatically. Explicit configuration and cache path
+overrides select the requested location instead of the default.
 
-The selected project directory holds `project.toml`, `workspace.toml`, shared
-run configurations and project data sources together. Both directory names
-are hidden from the project tree and index. Explicit settings and cache paths
+Project settings always use `.oxshift/`, which holds `project.toml`,
+`workspace.toml`, shared run configurations and project data sources together.
+This directory is hidden from the project tree and index. There is no fallback
+to the former project directory and no automatic migration of it. Supported
+PyCharm project settings are imported from `.idea/` and shared `*.run.xml`
+files by their respective importers. The first-run import of personal PyCharm
+settings keeps a snapshot of supported configuration data; credentials,
+password stores and tokens are excluded. Explicit settings and cache paths
 still override the default. CLI database profiles and the secret-store
 configuration retain their own overrides, `OXSHIFT_DB_PROFILES` and
 `OXSHIFT_SECRETS_CONFIG`.
 
-Existing theme IDs, the KeePass group, keychain service and signing identities
-are stable. A saved connection continues to use its original credential entry.
+Existing theme IDs, the KeePass group, keychain services and signing identities
+are stable. A connection configured with the same profile name and secret store
+can read its existing credential entry (`pyoxide-db`, account = profile name).
+This preserves access to saved passwords; it does not select an old settings
+folder or enable old command or environment names.
 
 ## Rollout
 
@@ -63,14 +67,14 @@ are stable. A saved connection continues to use its original credential entry.
    Oxshift Python for the IDE. The application menu, welcome screen, CLI help,
    README, and feature progress page take the new name. Examples use the current package names, repository URL, and environment variables.
 2. **Commands and packages.** The primary packages are `oxshift-python`
-   (IDE), `oxshift-cli` (the `oxshift` executable), and `oxshift-db`. Existing
-   scripts can still launch `pyoxide-ide`, `pyoxide`, or `pyoxide-db` and use
-   the former Cargo package selectors for `cargo run`. Use the new package
-   names for tests. CLI flags take precedence over environment defaults. A set
-   `OXSHIFT_*` variable wins over its `PYOXIDE_*` counterpart, including when
-   empty. The applications retain the existing settings and credential locations.
-3. **Settings, projects, and credentials.** Use the storage selection rules
-   above for an existing install, a fresh install, and a second launch.
+   (IDE), `oxshift-cli` (the `oxshift` executable), and `oxshift-db`. Use these
+   package names for builds, runs and tests. Commands and environment variables
+   use only the Oxshift names: `oxshift-python`, `oxshift`, `oxshift-db`, and
+   `OXSHIFT_*`. There are no old command wrappers or environment aliases.
+   CLI flags take precedence over environment defaults. The applications use
+   the Oxshift settings locations; existing credential identities remain stable.
+3. **Settings, projects, and credentials.** Use the product storage paths
+   and import supported PyCharm settings as described above.
    Distribution signing and packaged Keychain acceptance are release checks.
 4. **Repository and documentation.** The canonical repository is
    [caVenikk/oxshift](https://github.com/caVenikk/oxshift). Existing clones can

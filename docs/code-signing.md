@@ -23,7 +23,7 @@ the command line alike.
 (`SecAccessCreate` and `SecKeychainItemCreateFromContent`, module
 `secrets::macos_acl`) naming the running binary and its siblings
 `oxshift-python`, `oxshift-db` and `oxshift` in the same directory. Each
-program occupies one slot even when both command names are installed. An item
+program occupies one slot. An item
 stored by the CLI is then trusted by the IDE and the other way round, with no
 prompt for either. Setting a secret again replaces the item, so its list is
 refreshed with it. The `keyring` crate cannot do this: it uses the default
@@ -37,7 +37,7 @@ another program, keeps its old list until it is stored again
 (`oxshift-db secret set <profile>`, or save the data source in the IDE).
 
 PyCharm creates its items with the default list and is the only reader, so it
-is not prompted once its signature is stable. Oxshift Python has two binaries that
+is not prompted once its signature is stable. Oxshift Python has three programs that
 share items, hence the explicit list.
 
 The local signing helper retains the signing identifiers `pyoxide-ide`,
@@ -70,7 +70,7 @@ file of its own, never in the login keychain.
    `~/Library/Keychains/pyoxide-signing.keychain-db` and the certificate
    "Pyoxide Local Dev" in it. Run them once.
 2. After each build: `scripts/sign-local.sh` (signs `target/release/oxshift-python`,
-   `oxshift-db`, `oxshift` and any installed legacy commands; pass other paths to sign those). A rebuild
+   `oxshift-db` and `oxshift`; pass other paths to sign those). A rebuild
    replaces the signature, so sign again after every build you run.
 3. `scripts/sign-local.sh --check target/release/oxshift-python` shows the
    designated requirement; it must show `certificate leaf`, not `cdhash`.

@@ -18,7 +18,7 @@
 ## Expected
 - Step 2: "Type engine:" with a segmented button (ty, Basedpyright) and
   the chosen engine's description under it; Apply writes
-  `[python.type-engine] name = "basedpyright"` to `.oxide/project.toml`
+  `[python.type-engine] name = "basedpyright"` to `.oxshift/project.toml`
   and the type server restarts.
 - Step 3: the description, then a framed table without a header row of
   its own (a strip with Tool, Lookup, Executable Path): Basedpyright, Ruff,
@@ -29,7 +29,7 @@
   under the table the warning that uv is not installed.
 - Step 4: the switch writes `enabled` (a tool turned on or off is
   explicit, ADR 0010), the lookup `lookup`; the custom executable goes to
-  `.oxide/workspace.toml`; the servers are prepared again and ruff stops.
+  `.oxshift/workspace.toml`; the servers are prepared again and ruff stops.
 - Step 5: Settings opens on Python > Type Engine.
 - Step 6: both choices survive Apply and reopening the project. Applying
   External Tools does not restore the type engine from when its page opened;

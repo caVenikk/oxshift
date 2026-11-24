@@ -29,7 +29,7 @@
   pydevd are drawn dim and take no clicks (not supported yet).
 - Step 2: the spinner shows 60500. PyQt6 and PySide6 are listed dim in
   the combo's list (debugpy has no Qt 6 support). Apply writes
-  `[python.debugger]` to `.oxide/workspace.toml`: `attach-to-subprocess =
+  `[python.debugger]` to `.oxshift/workspace.toml`: `attach-to-subprocess =
   false`, `gevent = true`, `pyqt-backend = "pyqt5"`, `evaluation-timeout =
   60500`, and `imported-from-idea = true`; options at their defaults are
   not written. A text that is no number from 0 to 2147483647 in the

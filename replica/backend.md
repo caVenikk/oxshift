@@ -19,7 +19,7 @@ checklist from the skill pack, adapted to a desktop IDE.
 ## External tools
 Detected and version-checked at runtime; the IDE degrades gracefully when one
 is missing. Database: Oracle Instant Client is optional (only the
-`oracle-odpi` backend needs it; `pyoxide-db backends` and `diagnose` report
+`oracle-odpi` backend needs it; `oxshift-db backends` and `diagnose` report
 it).
 
 Python language services (M3):

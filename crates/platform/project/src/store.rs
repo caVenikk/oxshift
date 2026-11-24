@@ -51,6 +51,18 @@ use crate::roots::{DetectRoots, Roots, detected_roots};
 pub fn store_dir() -> &'static str {
     app_info::project_dir()
 }
+/// The complete project store selected for this root. Reading never creates it.
+/// The current folder wins; an existing legacy folder is used in place.
+pub fn directory(root: &Path) -> PathBuf {
+    app_info::get().project_storage_dir(root)
+}
+
+/// Whether a name is either generation of the internal project folder.
+/// Purely lexical so tree walks and file watcher batches perform no extra I/O.
+pub fn is_store_dir(name: &str) -> bool {
+    name == store_dir() || app_info::get().legacy_project_dir == Some(name)
+}
+
 /// The shared project settings in [`store_dir`].
 pub const SETTINGS_FILE: &str = "project.toml";
 /// Version of the settings format this build reads and writes.
@@ -169,7 +181,7 @@ pub enum StoreError {
 
 /// The settings file of a project.
 pub fn settings_file(root: &Path) -> PathBuf {
-    root.join(store_dir()).join(SETTINGS_FILE)
+    directory(root).join(SETTINGS_FILE)
 }
 
 /// Whether the project has shared settings yet. Only the shared settings

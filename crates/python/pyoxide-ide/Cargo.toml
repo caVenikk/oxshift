@@ -1,63 +1,21 @@
 [package]
 name = "pyoxide-ide"
-description = "pyoxide-ide: the Pyoxide Python IDE application, composing the platform workbench with Python support"
+description = "Compatibility entry point for oxshift-python"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
+publish = false
 
 [[bin]]
 name = "pyoxide-ide"
 path = "src/main.rs"
+test = false
+bench = false
 
 [features]
 default = ["runtime-shaders"]
-# Compile the Metal shaders at start-up instead of at build time (no Xcode
-# needed). Release builds made with Xcode turn it off (ADR 0007).
-runtime-shaders = ["gpui/runtime_shaders"]
+runtime-shaders = ["product/runtime-shaders"]
 
 [dependencies]
-brand.workspace = true
-async-trait.workspace = true
-code-intel.workspace = true
-code-intel-ui.workspace = true
-db-core.workspace = true
-db-model.workspace = true
-db-service.workspace = true
-db-ui.workspace = true
-debugger.workspace = true
-dirs = "7"
-editor.workspace = true
-gpui.workspace = true
-lsp-client.workspace = true
-native-path.workspace = true
-process.workspace = true
-project.workspace = true
-py-debug.workspace = true
-py-env.workspace = true
-py-lsp.workspace = true
-py-run.workspace = true
-py-syntax.workspace = true
-run-config.workspace = true
-secrets.workspace = true
-serde_json.workspace = true
-settings.workspace = true
-settings-ui.workspace = true
-terminal.workspace = true
-text.workspace = true
-themes.workspace = true
-tokio.workspace = true
-toml_edit = "0.25"
-ui.workspace = true
-workbench.workspace = true
-
-[dev-dependencies]
-ui = { workspace = true, features = ["test-support"] }
-code-intel = { workspace = true, features = ["fake"] }
-# The events of terminal sessions (tests/it/terminal_venv.rs).
-flume.workspace = true
-gpui = { workspace = true, features = ["test-support"] }
-tempfile = "3"
-
-[target.'cfg(target_os = "macos")'.dev-dependencies]
-gpui = { workspace = true, features = ["runtime_shaders", "test-support"] }
+product = { package = "oxshift-python", path = "../oxshift-python", default-features = false }

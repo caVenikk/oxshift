@@ -182,8 +182,8 @@ fn sqlite_loads_the_whole_value_of_a_truncated_cell_by_key() {
 
 fn pg() -> Harness {
     let params = ConnectParams {
-        host: env("PYOXIDE_TEST_PG_HOST", "localhost"),
-        port: env("PYOXIDE_TEST_PG_PORT", "55432").parse().expect("port"),
+        host: env("TEST_PG_HOST", "localhost"),
+        port: env("TEST_PG_PORT", "55432").parse().expect("port"),
         database: "pyoxide".into(),
         user: "pyoxide".into(),
         password: password(),
@@ -305,11 +305,9 @@ fn postgres_reads_one_cell_by_the_rows_key() {
 #[ignore = "needs the oracle container"]
 fn oracle_reads_one_cell_by_the_rows_key() {
     let params = ConnectParams {
-        host: env("PYOXIDE_TEST_ORACLE_HOST", "localhost"),
-        port: env("PYOXIDE_TEST_ORACLE_PORT", "1521")
-            .parse()
-            .unwrap_or(1521),
-        database: env("PYOXIDE_TEST_ORACLE_SERVICE", "FREEPDB1"),
+        host: env("TEST_ORACLE_HOST", "localhost"),
+        port: env("TEST_ORACLE_PORT", "1521").parse().unwrap_or(1521),
+        database: env("TEST_ORACLE_SERVICE", "FREEPDB1"),
         user: "pyoxide".into(),
         password: password(),
         ..ConnectParams::default()
@@ -344,11 +342,9 @@ fn oracle_reads_one_cell_by_the_rows_key() {
 #[ignore = "needs the oracle container"]
 fn oracle_pages_with_offset_and_fetch() {
     let params = ConnectParams {
-        host: env("PYOXIDE_TEST_ORACLE_HOST", "localhost"),
-        port: env("PYOXIDE_TEST_ORACLE_PORT", "1521")
-            .parse()
-            .unwrap_or(1521),
-        database: env("PYOXIDE_TEST_ORACLE_SERVICE", "FREEPDB1"),
+        host: env("TEST_ORACLE_HOST", "localhost"),
+        port: env("TEST_ORACLE_PORT", "1521").parse().unwrap_or(1521),
+        database: env("TEST_ORACLE_SERVICE", "FREEPDB1"),
         user: "pyoxide".into(),
         password: password(),
         ..ConnectParams::default()

@@ -251,7 +251,7 @@ jobs:
           --health-cmd healthcheck.sh
           --health-interval 10s --health-timeout 5s --health-retries 30
     env:
-      PYOXIDE_DB_PASSWORD: pyoxide
+      OXSHIFT_DB_PASSWORD: pyoxide
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -282,8 +282,8 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-  # Downloadable pyoxide-db builds (workflow artifacts), e.g. to run
-  # `pyoxide-db diagnose` on a machine without a Rust toolchain.
+  # Downloadable oxshift-db builds (workflow artifacts), e.g. to run
+  # `oxshift-db diagnose` on a machine without a Rust toolchain.
   binaries:
     name: binaries (${{ matrix.os }})
     if: github.event_name != 'pull_request'
@@ -292,30 +292,38 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            name: pyoxide-db-windows-x86_64
-            file: pyoxide-db.exe
+            suffix: windows-x86_64
+            extension: ".exe"
           - os: macos-latest
-            name: pyoxide-db-macos-aarch64
-            file: pyoxide-db
+            suffix: macos-aarch64
+            extension: ''
           - os: ubuntu-latest
-            name: pyoxide-db-linux-x86_64
-            file: pyoxide-db
+            suffix: linux-x86_64
+            extension: ''
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - run: cargo build --release -p db-cli
+      - run: cargo build --release -p oxshift-db -p db-cli
       - name: CLI smoke
         shell: bash
         run: |
-          target/release/${{ matrix.file }} --json --backend sqlite --path :memory: query "select 42 as answer" > cli-smoke.json
-          python3 -c 'import json; from pathlib import Path; result = json.loads(Path("cli-smoke.json").read_text()); assert result["result"]["rows"] == [[{"type": "int", "value": 42}]], result'
+          for command in oxshift-db pyoxide-db; do
+            "target/release/$command${{ matrix.extension }}" --json --backend sqlite --path :memory: query "select 42 as answer" > cli-smoke.json
+            python3 -c 'import json; from pathlib import Path; result = json.loads(Path("cli-smoke.json").read_text()); assert result["result"]["rows"] == [[{"type": "int", "value": 42}]], result'
+          done
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}
+          name: oxshift-db-${{ matrix.suffix }}
           overwrite: true
-          path: target/release/${{ matrix.file }}
+          path: target/release/oxshift-db${{ matrix.extension }}
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pyoxide-db-${{ matrix.suffix }}
+          overwrite: true
+          path: target/release/pyoxide-db${{ matrix.extension }}
           if-no-files-found: error
 
   required:

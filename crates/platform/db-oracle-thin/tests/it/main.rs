@@ -3,6 +3,9 @@
 //! (issue #246), so a new area is a new module here, not a new file in
 //! `tests/`.
 
+#[path = "../../../../../tests/support/product_env.rs"]
+mod product_env;
+
 mod common;
 
 mod bench;

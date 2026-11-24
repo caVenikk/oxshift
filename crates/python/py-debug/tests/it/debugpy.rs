@@ -33,7 +33,7 @@ use run_config::{EnvVar, RunConfiguration, Storage};
 const WAIT: Duration = Duration::from_secs(60);
 
 fn python() -> PathBuf {
-    std::env::var_os("PYOXIDE_TEST_PYTHON")
+    brand::var_os("TEST_PYTHON")
         .filter(|p| !p.is_empty())
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from(if cfg!(windows) { "python" } else { "python3" }))
@@ -365,8 +365,8 @@ fn a_module_with_arguments_and_environment() {
 #[test]
 #[ignore = "needs a copy of the demo project (PYOXIDE_DEBUG_DEMO) and the debugpy helper"]
 fn the_demo_project() {
-    let Some(root) = std::env::var_os("PYOXIDE_DEBUG_DEMO").map(PathBuf::from) else {
-        eprintln!("PYOXIDE_DEBUG_DEMO is not set: skipped");
+    let Some(root) = brand::var_os("DEBUG_DEMO").map(PathBuf::from) else {
+        eprintln!("OXSHIFT_DEBUG_DEMO is not set: skipped");
         return;
     };
     let main = root.join("main.py");
@@ -404,8 +404,7 @@ fn the_demo_project() {
 /// else one of a virtual environment made with `uv` in `dir` (with
 /// `fastapi[standard]`: uvloop, watchfiles and the `fastapi` command).
 fn fastapi_python(dir: &Path) -> PathBuf {
-    if let Some(python) = std::env::var_os("PYOXIDE_TEST_FASTAPI_PYTHON").filter(|p| !p.is_empty())
-    {
+    if let Some(python) = brand::var_os("TEST_FASTAPI_PYTHON").filter(|p| !p.is_empty()) {
         return PathBuf::from(python);
     }
     let venv = dir.join(".venv");

@@ -19,7 +19,9 @@ use std::path::{Component, Path, PathBuf};
 use std::sync::{Arc, RwLock};
 
 use crate::roots::{FolderKind, FolderRules, Roots};
-use crate::store::{self, Exclusions, store_dir};
+#[cfg(test)]
+use crate::store::store_dir;
+use crate::store::{self, Exclusions};
 
 /// The reference IDE's default "Ignored Files and Folders" list: exact
 /// names, `*.ext` extensions and `*`/`?` wildcards, matched against a file
@@ -305,7 +307,7 @@ impl Filter {
     /// Never shown and never searched: the ignored names, the settings
     /// folder and the temporary files of a save a session left behind.
     pub fn is_hidden(&self, name: &str) -> bool {
-        name == store_dir() || default_ignored().matches(name) || crate::is_save_temp(name)
+        store::is_store_dir(name) || default_ignored().matches(name) || crate::is_save_temp(name)
     }
 
     /// Shown but excluded: the path or one of its folders is excluded.

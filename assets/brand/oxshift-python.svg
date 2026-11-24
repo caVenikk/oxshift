@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="8 11 280 280">
+  <title>Oxshift Python</title>
+  <defs>
+    <linearGradient id="frame" gradientUnits="userSpaceOnUse" x1="33" y1="37" x2="263" y2="264">
+      <stop stop-color="#1815FE" offset="0"/>
+      <stop stop-color="#0048FC" offset="0.3"/>
+      <stop stop-color="#00BDF6" offset="0.69"/>
+      <stop stop-color="#02F7CC" offset="1"/>
+    </linearGradient>
+    <linearGradient id="face" gradientUnits="userSpaceOnUse" x1="140" y1="45" x2="140" y2="264">
+      <stop stop-color="#010C37" offset="0"/>
+      <stop stop-color="#010D3E" offset="0.55"/>
+      <stop stop-color="#040D36" offset="1"/>
+    </linearGradient>
+    <linearGradient id="ribbon" gradientUnits="userSpaceOnUse" x1="81" y1="228" x2="207" y2="158">
+      <stop stop-color="#03F7C8" offset="0"/>
+      <stop stop-color="#00EEE0" offset="0.45"/>
+      <stop stop-color="#00D5F6" offset="0.8"/>
+      <stop stop-color="#00BDFF" offset="1"/>
+    </linearGradient>
+    <linearGradient id="return" gradientUnits="userSpaceOnUse" x1="100" y1="131" x2="196" y2="171">
+      <stop stop-color="#003FF2" offset="0"/>
+      <stop stop-color="#006DFF" offset="0.55"/>
+      <stop stop-color="#009FFF" offset="1"/>
+    </linearGradient>
+    <linearGradient id="under" gradientUnits="userSpaceOnUse" x1="86" y1="123" x2="115" y2="165">
+      <stop stop-color="#008BDD" offset="0"/>
+      <stop stop-color="#00BDF9" offset="1"/>
+    </linearGradient>
+    <linearGradient id="head" gradientUnits="userSpaceOnUse" x1="78" y1="143" x2="194" y2="83">
+      <stop stop-color="#35EEDE" offset="0"/>
+      <stop stop-color="#8EFBE7" offset="0.36"/>
+      <stop stop-color="#BDFCED" offset="0.7"/>
+      <stop stop-color="#D1FAF0" offset="1"/>
+    </linearGradient>
+    <clipPath id="snake">
+      <path d="M74 132 C74 105 98 84 132 73 C162 63 193 65 213 79 C223 86 227 94 222 102 C216 112 197 115 177 112 C162 110 148 108 137 115 C129 119 126 123 130 127 C136 134 160 139 178 146 C204 155 222 166 222 187 C222 213 195 231 159 237 C129 242 102 241 89 236 C79 233 74 226 75 218 C76 206 87 197 104 195 C128 193 149 191 160 188 Q164 187 164 186 Q164 185 161 185 C129 175 102 169 89 155 C80 149 74 142 74 132 Z" fill="#fff"/>
+    </clipPath>
+  </defs>
+  <rect x="8" y="11" width="280" height="280" fill="url(#frame)"/>
+  <path d="M95 35 H201 C248 35 264 51 264 98 V204 C264 251 248 267 201 267 H95 C48 267 32 251 32 204 V98 C32 51 48 35 95 35 Z" fill="url(#face)"/>
+  <path d="M74 132 C74 105 98 84 132 73 C162 63 193 65 213 79 C223 86 227 94 222 102 C216 112 197 115 177 112 C162 110 148 108 137 115 C129 119 126 123 130 127 C136 134 160 139 178 146 C204 155 222 166 222 187 C222 213 195 231 159 237 C129 242 102 241 89 236 C79 233 74 226 75 218 C76 206 87 197 104 195 C128 193 149 191 160 188 Q164 187 164 186 Q164 185 161 185 C129 175 102 169 89 155 C80 149 74 142 74 132 Z" fill="url(#ribbon)"/>
+  <g clip-path="url(#snake)">
+    <path d="M100 107 H156 C140 114 125 121 130 127 C140 137 161 140 179 146 C197 151 204 158 204 165 C204 175 188 181 164 187 C138 178 113 174 103 164 C95 153 93 134 100 107 Z" fill="url(#return)"/>
+    <path d="M73 132 C88 119 107 112 133 109 C112 118 102 131 101 145 C100 156 104 165 118 173 C94 169 79 160 71 148 Z" fill="url(#under)"/>
+    <path d="M63 55 H236 V117 H191 C172 116 158 109 147 112 C128 112 110 117 99 125 C88 133 82 142 81 149 C69 143 66 137 63 127 Z" fill="url(#head)"/>
+  </g>
+  <circle cx="193" cy="90" r="6.7" fill="#02103D"/>
+</svg>

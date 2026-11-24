@@ -11,7 +11,7 @@ OS = ['ubuntu-latest', 'macos-latest', 'windows-latest']
 COMMON = {'ui', 'editor', 'workbench', 'process', 'terminal', 'terminal-ui',
           'native-path', 'file-watcher', 'project', 'settings', 'app-info', 'py-env'}
 DB = {'db-core', 'db-service', 'db-testkit', 'db-postgres', 'db-sqlite',
-      'db-oracle-thin', 'db-oracle-odpi', 'secrets', 'settings-import'}
+      'db-oracle-thin', 'db-oracle-odpi', 'oxshift-db', 'db-cli', 'secrets', 'settings-import'}
 
 
 def command(args, root=ROOT):
@@ -96,7 +96,7 @@ def make_plan(files, meta, base_ref, force_full=False, root=ROOT):
     # Native behavior can be hidden in macros, external libraries or removed
     # code. Only explicitly portable leaf areas may use Linux alone.
     portable = {'name-match', 'stream-framing', 'sql-syntax'}
-    native_consumers = COMMON | {'pyoxide-ide'} | {name for name in affected if name.endswith('-ui')}
+    native_consumers = COMMON | {'oxshift-python'} | {name for name in affected if name.endswith('-ui')}
     systems = [OS[0]] if changed <= portable and not affected & native_consumers else OS
     return result('fast', sorted(affected), sorted(affected & libs), systems,
                   bool(affected & DB), ['Affected packages and all reverse dependencies',

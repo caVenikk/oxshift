@@ -101,7 +101,7 @@ pub enum StoreError {
 
 /// The shared folder of a project.
 pub fn shared_dir(root: &Path) -> PathBuf {
-    root.join(project::store_dir()).join(SHARED_DIR)
+    project::store::directory(root).join(SHARED_DIR)
 }
 
 /// What is stored for a project.

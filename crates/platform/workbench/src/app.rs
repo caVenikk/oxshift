@@ -393,7 +393,7 @@ pub fn window_options(cx: &App, product: &Product) -> WindowOptions {
         focus: !env::background(),
         show: true,
         window_min_size: Some(min_size),
-        app_id: Some(product.name.to_lowercase()),
+        app_id: Some(product.app_info.slug.to_owned()),
         ..Default::default()
     }
 }

@@ -11,7 +11,6 @@ app-info.workspace = true
 # The emulator and the pseudo-terminal; its types stay inside this crate.
 alacritty_terminal = { workspace = true }
 # The cache folder the shell integration scripts are written to.
-dirs = "7"
 flume = { workspace = true }
 # The guards of the terminal's lock (`alacritty_terminal::sync::FairMutex`),
 # released fairly by the reader.

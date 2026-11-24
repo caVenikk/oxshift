@@ -1,4 +1,4 @@
-# Contributing to Pyoxide IDE
+# Contributing to Oxshift
 
 Thanks for helping. This project aims to be fast, small and legally clean, so a
 few rules matter more than usual.

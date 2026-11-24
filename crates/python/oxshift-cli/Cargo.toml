@@ -1,0 +1,27 @@
+[package]
+name = "oxshift-cli"
+description = "Command-line tools for Oxshift Python"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "oxshift"
+path = "src/main.rs"
+
+[dependencies]
+brand.workspace = true
+clap = { version = "4", features = ["derive", "env"] }
+commands.workspace = true
+db-service.workspace = true
+git.workspace = true
+py-env.workspace = true
+secrets.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true, features = ["signal"] }
+
+[dev-dependencies]
+tempfile = "3"

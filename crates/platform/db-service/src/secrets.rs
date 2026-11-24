@@ -16,7 +16,7 @@ pub fn wallet_password_env() -> String {
 }
 /// Service under which database secrets are stored in a secret store.
 pub fn secret_service() -> String {
-    app_info::db_cli_name().to_owned()
+    format!("{}-db", app_info::slug())
 }
 
 /// Which secret of a profile.
@@ -105,8 +105,8 @@ impl SecretResolver<'_> {
             .map(String::as_str)
             .chain([generic.as_str()])
         {
-            if let Some(v) = (self.env)(var) {
-                return (Secret::new(v), SecretSource::Env(var.to_owned()), None);
+            if let Some((source, v)) = secrets::env_setting(app_info::get(), var, self.env) {
+                return (Secret::new(v), SecretSource::Env(source), None);
             }
         }
         if kind == SecretKind::Password

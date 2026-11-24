@@ -20,18 +20,16 @@ use db_postgres::PostgresDriver;
 use db_testkit::{assert_load_matches_per_object, load_statements};
 
 fn env_or(name: &str, default: &str) -> String {
-    std::env::var(name).unwrap_or_else(|_| default.to_owned())
+    crate::product_env::var(name).unwrap_or_else(|_| default.to_owned())
 }
 
 async fn connect() -> Box<dyn Connection> {
     let params = ConnectParams {
-        host: env_or("PYOXIDE_TEST_PG_HOST", "localhost"),
-        port: env_or("PYOXIDE_TEST_PG_PORT", "55432")
-            .parse()
-            .expect("port"),
+        host: env_or("TEST_PG_HOST", "localhost"),
+        port: env_or("TEST_PG_PORT", "55432").parse().expect("port"),
         database: "pyoxide".into(),
         user: "pyoxide".into(),
-        password: Secret::new(env_or("PYOXIDE_DB_PASSWORD", "pyoxide")),
+        password: Secret::new(env_or("DB_PASSWORD", "pyoxide")),
         ..ConnectParams::default()
     };
     PostgresDriver

@@ -496,7 +496,7 @@ mod tests {
     fn unreadable_settings_are_reported() {
         brand::install();
         let p = Project::new();
-        std::fs::create_dir_all(p.root().join(".oxide")).unwrap();
+        std::fs::create_dir_all(p.root().join(".oxshift")).unwrap();
         std::fs::write(project::store::settings_file(p.root()), "python = 3\n").unwrap();
         let state = p.prepare(false);
         assert_eq!(state.errors.len(), 1, "{:?}", state.errors);

@@ -41,7 +41,7 @@ const SAMPLE: &str = "import os\n\nimport samplepkg\n\n\ndef greet(name: str) ->
 /// Where the tools are searched: `PYOXIDE_PY_TOOLS` first.
 fn search() -> SearchPaths {
     let mut search = SearchPaths::from_env();
-    if let Some(dir) = std::env::var_os("PYOXIDE_PY_TOOLS") {
+    if let Some(dir) = brand::var_os("PY_TOOLS") {
         search.path.insert(0, PathBuf::from(dir));
     }
     search

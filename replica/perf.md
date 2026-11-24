@@ -626,8 +626,8 @@ caches, Windows.
 
 ### Scoped batches and keymap state queries (2026-11-12, #429)
 
-The [baseline PR run](https://github.com/caVenikk/pyoxide-ide/actions/runs/43157757907)
-and [baseline main run](https://github.com/caVenikk/pyoxide-ide/actions/runs/43158753173/attempts/1)
+The [baseline PR run](https://github.com/caVenikk/oxshift/actions/runs/43157757907)
+and [baseline main run](https://github.com/caVenikk/oxshift/actions/runs/43158753173/attempts/1)
 restored exact dependency-cache matches on all three operating systems. Check
 archives were approximately 1370 MiB on Linux, 1001 MiB on macOS and 1097 MiB
 on Windows. Workspace crates were rebuilt: the dependency cache deliberately
@@ -702,4 +702,4 @@ Production remained on `stable`, which had advanced to Rust 1.100.0 and thus
 needed a new cache. These measurements do not describe production 1.100
 performance. The prototype workflow is not part of the production gate.
 Raw logs, fingerprints, plans and matching selected/executed inventories are
-attached to [run 43381878961](https://github.com/caVenikk/pyoxide-ide/actions/runs/43381878961).
+attached to [run 43381878961](https://github.com/caVenikk/oxshift/actions/runs/43381878961).

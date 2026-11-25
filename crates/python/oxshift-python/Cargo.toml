@@ -3,6 +3,7 @@ name = "oxshift-python"
 description = "Oxshift Python IDE"
 version.workspace = true
 edition.workspace = true
+build = "../../../scripts/windows-desktop-resource.rs"
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
@@ -63,3 +64,6 @@ tempfile = "3"
 
 [target.'cfg(target_os = "macos")'.dev-dependencies]
 gpui = { workspace = true, features = ["runtime_shaders", "test-support"] }
+
+[build-dependencies]
+embed-resource = "3"

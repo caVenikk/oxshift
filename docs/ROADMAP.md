@@ -9,6 +9,8 @@ A maintenance release appends a patch number, such as `YYYY.1.1`.
 Cargo and machine-readable build metadata use three numeric components,
 including patch zero for the initial release of a line.
 
+## Milestones
+
 Status legend: [x] done, [ ] planned. Milestones are developed per feature area
 with the skill loop described in [agent-workflow.md](agent-workflow.md).
 

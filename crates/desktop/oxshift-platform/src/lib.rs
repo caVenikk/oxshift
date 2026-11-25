@@ -5,14 +5,19 @@ use workbench::Product;
 
 /// A desktop workbench with the platform's editor, project tree, Git and terminal.
 pub fn product() -> Product {
+    let mut icons = syntax_pack::icons();
+    icons.push(IconSvg {
+        name: "product/platform",
+        light: brand::ICON,
+        dark: None,
+    });
+    let mut file_types = syntax_pack::file_types();
+    file_types.push(sql_highlight::file_type());
     Product {
         name: brand::INFO.name,
         app_info: brand::INFO,
-        icons: vec![IconSvg {
-            name: "product/platform",
-            light: brand::ICON,
-            dark: None,
-        }],
+        icons,
+        file_types,
         welcome: workbench::welcome::WelcomeHook {
             icon: Some(IconName("product/platform")),
             ..Default::default()

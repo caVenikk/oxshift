@@ -5005,10 +5005,13 @@ dependencies = [
 
 [[package]]
 name = "oxshift-platform"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
+ "embed-resource",
  "gpui",
+ "sql-highlight",
+ "syntax-pack",
  "ui",
  "workbench",
 ]
@@ -5028,6 +5031,7 @@ dependencies = [
  "debugger",
  "dirs 7.0.0",
  "editor",
+ "embed-resource",
  "flume",
  "gpui",
  "lsp-client",
@@ -6957,7 +6961,7 @@ dependencies = [
 
 [[package]]
 name = "sql-highlight"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "editor",
  "gpui",
@@ -7329,7 +7333,7 @@ dependencies = [
 
 [[package]]
 name = "syntax-pack"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "editor",
  "gpui",

@@ -3,6 +3,7 @@ name = "oxshift-platform"
 description = "Oxshift standalone desktop workbench"
 version.workspace = true
 edition.workspace = true
+build = "../../../scripts/windows-desktop-resource.rs"
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
@@ -15,4 +16,9 @@ runtime-shaders = ["gpui/runtime_shaders"]
 app-info.workspace = true
 gpui.workspace = true
 ui.workspace = true
+syntax-pack.workspace = true
+sql-highlight.workspace = true
 workbench.workspace = true
+
+[build-dependencies]
+embed-resource = "3"

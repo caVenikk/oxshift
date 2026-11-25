@@ -96,7 +96,7 @@ fn start(window: &mut Window, cx: &mut App) {
     let metadata = json!({
         "schema_version": 1,
         "product": app_info::full_name(),
-        "version": env!("CARGO_PKG_VERSION"),
+        "version": app_info::release_version(),
         "platform": std::env::consts::OS,
         "architecture": std::env::consts::ARCH,
         "timestamp_utc": chrono::Utc::now().to_rfc3339(),

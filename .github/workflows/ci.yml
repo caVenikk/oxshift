@@ -190,7 +190,7 @@ jobs:
       - name: doctests
         run: bash scripts/check.sh --plan .ci-plan.json doc
       - uses: actions/upload-artifact@v4
-        if: always() && (github.event_name != 'workflow_dispatch' || !inputs.desktop_preview)
+        if: always()
         with:
           name: junit-${{ matrix.os }}
           overwrite: true
@@ -339,7 +339,7 @@ jobs:
 
   required:
     name: CI required
-    if: always()
+    if: always() && (github.event_name != 'workflow_dispatch' || !inputs.desktop_preview)
     needs: [scope, check, progress, integration, binaries]
     runs-on: ubuntu-latest
     permissions:

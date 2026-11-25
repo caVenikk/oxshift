@@ -4,6 +4,7 @@ import argparse
 import contextlib
 import importlib.util
 import io
+import os
 from pathlib import Path
 import plistlib
 import re
@@ -230,6 +231,120 @@ class PackagingTests(unittest.TestCase):
             if product == 'platform':
                 package.cmd_formula(args)
                 self.assertIn('%w[oxshift-platform]', args.out.read_text())
+
+
+@unittest.skipUnless(os.name == 'posix', 'shell installer targets macOS and Linux')
+class ShellInstallerTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory(prefix='installer-test-')
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.names = package.Names('platform')
+        self.prefix = self.root / "apps with ' and $ dollars"
+        self.bin = self.root / 'bin'
+        self.bin.mkdir()
+        self.script = self.root / 'install.sh'
+        self.script.write_text(package.render(package.INSTALL_SCRIPT, self.names.table()))
+        self.env = {**os.environ, 'OXSHIFT_VERSION': '2026.1', 'OXSHIFT_OS': 'linux',
+                    'OXSHIFT_ARCH': 'x86_64', 'OXSHIFT_BASE_URL': self.root.as_uri()}
+        self.stage = self.root / 'stage'
+        self.stage.mkdir()
+        self.binary = b'#!/bin/sh\nprintf "fixture output\\n"\n'
+        executable = self.stage / self.names.ide
+        executable.write_bytes(self.binary)
+        executable.chmod(0o755)
+        self.archive('linux')
+
+    def archive(self, os_name):
+        name = package.archive_name(self.names, '2026.1', os_name, 'x86_64')
+        package.write_archive(self.stage, self.names.app if os_name == 'macos' else name[:-7], self.root / name)
+        (self.root / 'SHA256SUMS').write_text(package.sha256_of(self.root / name) + '  ' + name + '\n')
+
+    def run_installer(self, *args, success=True):
+        result = subprocess.run(['sh', str(self.script), '--prefix', str(self.prefix),
+                                 '--bin-dir', str(self.bin), *args], env=self.env,
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode == 0, success, result.stdout + result.stderr)
+        return result
+
+    def test_install_reinstall_symlink_and_literal_launcher_path(self):
+        self.run_installer()
+        installed = self.prefix / self.names.slug / self.names.ide
+        launcher = self.bin / self.names.ide
+        launcher.unlink()
+        launcher.symlink_to(installed)
+        self.run_installer()
+        self.assertFalse(launcher.is_symlink())
+        self.assertEqual(installed.read_bytes(), self.binary)
+        self.assertEqual(subprocess.check_output([str(launcher)], text=True), 'fixture output\n')
+        self.run_installer('--uninstall')
+        self.assertFalse(installed.exists())
+        self.assertFalse(launcher.exists())
+
+    def test_foreign_destination_and_launcher_are_preserved(self):
+        app = self.prefix / self.names.slug
+        app.mkdir(parents=True)
+        personal = app / 'keep.txt'
+        personal.write_text('keep')
+        self.run_installer(success=False)
+        self.run_installer('--uninstall', success=False)
+        self.assertEqual(personal.read_text(), 'keep')
+        personal.unlink()
+        app.rmdir()
+        outside = self.root / 'foreign-program'
+        outside.write_text('keep foreign program')
+        launcher = self.bin / self.names.ide
+        launcher.symlink_to(outside)
+        self.run_installer(success=False)
+        self.assertTrue(launcher.is_symlink())
+        self.assertEqual(outside.read_text(), 'keep foreign program')
+
+    def test_uninstall_preserves_replaced_launcher_even_with_matching_path(self):
+        self.run_installer()
+        launcher = self.bin / self.names.ide
+        custom = '#!/bin/sh\n# custom: ' + str(self.prefix / self.names.slug) + '\n'
+        launcher.write_text(custom)
+        self.run_installer('--uninstall')
+        self.assertEqual(launcher.read_text(), custom)
+
+    def test_uninstall_preserves_foreign_symlink_and_rejects_unowned_app_link(self):
+        self.run_installer()
+        launcher = self.bin / self.names.ide
+        outside = self.root / 'foreign-launcher'
+        outside.write_text('keep')
+        launcher.unlink()
+        launcher.symlink_to(outside)
+        self.run_installer('--uninstall')
+        self.assertTrue(launcher.is_symlink())
+        self.assertEqual(outside.read_text(), 'keep')
+        app = self.prefix / self.names.slug
+        other = self.root / 'foreign-directory'
+        other.mkdir()
+        app.symlink_to(other, target_is_directory=True)
+        self.run_installer('--uninstall', success=False)
+        self.assertTrue(app.is_symlink())
+        self.assertTrue(other.is_dir())
+
+    def test_macos_never_calls_xattr_and_keeps_receipt_outside_bundle(self):
+        executable = self.stage / self.names.ide
+        programs = self.stage / 'Contents/MacOS'
+        programs.mkdir(parents=True)
+        executable.rename(programs / self.names.ide)
+        self.archive('macos')
+        self.env['OXSHIFT_OS'] = 'macos'
+        tools = self.root / 'tools'
+        tools.mkdir()
+        xattr = tools / 'xattr'
+        called = self.root / 'xattr-called'
+        xattr.write_text('#!/bin/sh\ntouch "' + str(called) + '"\nexit 1\n')
+        xattr.chmod(0o755)
+        self.env['PATH'] = str(tools) + os.pathsep + self.env['PATH']
+        self.run_installer()
+        self.assertFalse(called.exists())
+        bundle = self.prefix / self.names.app
+        self.assertEqual(sorted(str(p.relative_to(bundle)) for p in bundle.rglob('*')),
+                         ['Contents', 'Contents/MacOS', 'Contents/MacOS/' + self.names.ide])
+        self.run_installer('--uninstall')
 
 
 class ReleaseGateTests(unittest.TestCase):

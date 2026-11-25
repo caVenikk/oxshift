@@ -12,18 +12,9 @@
 #                   Linux  <prefix>/<slug>/          (default prefix ~/.local/share)
 #      and puts launchers for the command-line programs in --bin-dir
 #      (default ~/.local/bin),
-#   5. macOS only: removes the quarantine attribute from the installed app if
-#      the download carried one (see below).
 # It writes nowhere else and never asks for administrator rights.
-#
-# Why the quarantine step: macOS marks files that a browser or another
-# "quarantining" program downloaded, and Gatekeeper then refuses to open an
-# app that is not notarized by Apple. These builds are not notarized (that
-# needs a paid Apple Developer account), they are signed with a fixed
-# identifier only. Files downloaded by curl are not marked, so normally there
-# is nothing to remove; if the mark is there (the archive came through a
-# browser, or a file:// copy of one), the script clears it from the installed
-# app only, after the checksum matched. You can read every command below.
+# macOS quarantine is preserved. For an app you trust, use System Settings >
+# Privacy & Security > Open Anyway as described in docs/release.md.
 #
 # For testing, the environment overrides the source:
 #   OXSHIFT_VERSION      the version to install (same as --version)
@@ -116,27 +107,57 @@ case "$os" in
 esac
 program_dir="$app_dir$program_rel"
 
+# Keep the ownership receipt outside the signed macOS bundle.
+receipt="$app_dir.oxshift-install"
+receipt_text() { printf 'Oxshift shell installer v1\n%s\n%s\n' "$SLUG" "$app_dir"; }
+owned_install() {
+    [ ! -L "$app_dir" ] && [ -d "$app_dir" ] &&
+        [ ! -L "$receipt" ] && [ -f "$receipt" ] && receipt_text | cmp -s - "$receipt"
+}
+launcher_text() {
+    # Quote paths as literal shell strings, including apostrophes and dollars.
+    quoted=$(printf '%s' "$program_dir/$1" | sed "s/'/'\\\\''/g")
+    printf '#!/bin/sh\n# Managed by the Oxshift shell installer.\nexec '\''%s'\'' "$@"\n' "$quoted"
+}
+owned_launcher() {
+    [ ! -L "$bin_dir/$1" ] && [ -f "$bin_dir/$1" ] &&
+        launcher_text "$1" | cmp -s - "$bin_dir/$1"
+}
 launcher() {
-    # A small script instead of a symlink: the program finds its own files
-    # (the debugger helper) from the path it was started by.
-    name="$1"
-    target="$program_dir/$name"
-    printf '#!/bin/sh\nexec "%s" "$@"\n' "$target" >"$bin_dir/$name"
-    chmod 755 "$bin_dir/$name"
+    # Rename replaces a symlink itself; redirection must never follow its target.
+    temporary_launcher=$(mktemp "$bin_dir/.oxshift-launcher.XXXXXX")
+    launcher_text "$1" >"$temporary_launcher"
+    chmod 755 "$temporary_launcher"
+    mv -f "$temporary_launcher" "$bin_dir/$1"
 }
 
 if [ "$uninstall" -eq 1 ]; then
+    owned_install || die "refusing to remove an installation without its ownership receipt: $app_dir"
     rm -rf "$app_dir"
+    rm -f "$receipt"
     for name in @BINARIES@; do
-        # Only launchers this script wrote.
-        if [ -f "$bin_dir/$name" ] && grep -qF "$program_dir" "$bin_dir/$name" 2>/dev/null; then
+        if owned_launcher "$name"; then
             rm -f "$bin_dir/$name"
         fi
     done
-    say "Removed $app_dir and its launchers in $bin_dir."
+    say "Removed $app_dir and its owned launchers in $bin_dir."
     say "Settings and caches stay; they are in the folders named $SLUG under your configuration and cache folders."
     exit 0
 fi
+
+# Check all destinations before replacing any installed files.
+if [ -e "$app_dir" ] || [ -L "$app_dir" ] || [ -e "$receipt" ] || [ -L "$receipt" ]; then
+    owned_install || die "refusing to replace an installation without its ownership receipt: $app_dir"
+fi
+for name in @BINARIES@; do
+    if [ -e "$bin_dir/$name" ] || [ -L "$bin_dir/$name" ]; then
+        if [ -L "$bin_dir/$name" ] && [ "$(readlink "$bin_dir/$name")" = "$program_dir/$name" ]; then
+            : # An existing link to this installation can be replaced safely.
+        else
+            owned_launcher "$name" || die "refusing to replace an unrelated launcher: $bin_dir/$name"
+        fi
+    fi
+done
 
 command -v curl >/dev/null 2>&1 || die "curl is needed"
 command -v tar >/dev/null 2>&1 || die "tar is needed"
@@ -192,7 +213,8 @@ esac
 mkdir -p "$prefix" "$bin_dir"
 if [ -e "$app_dir" ]; then
     # Replace in two renames, so a failure leaves the old copy in place.
-    old="$app_dir.old.$$"
+    old=$(mktemp -d "$prefix/.oxshift-old.XXXXXX")
+    rmdir "$old"
     mv "$app_dir" "$old"
     if mv "$unpacked" "$app_dir"; then
         rm -rf "$old"
@@ -204,16 +226,9 @@ else
     mv "$unpacked" "$app_dir"
 fi
 
-if [ "$os" = macos ]; then
-    if xattr -r "$app_dir" 2>/dev/null | grep -q 'com.apple.quarantine'; then
-        say "The app carries macOS's quarantine mark. It is not notarized by Apple (that needs a paid"
-        say "developer account), so Gatekeeper would refuse to open it. The checksum matched, so the"
-        say "mark is removed from $app_dir:  xattr -dr com.apple.quarantine"
-        xattr -dr com.apple.quarantine "$app_dir"
-    else
-        say "No quarantine mark on $app_dir (curl does not set one): nothing to remove."
-    fi
-fi
+temporary_receipt=$(mktemp "$prefix/.oxshift-install.XXXXXX")
+receipt_text >"$temporary_receipt"
+mv -f "$temporary_receipt" "$receipt"
 
 for name in @BINARIES@; do
     launcher "$name"
@@ -227,6 +242,7 @@ case ":$PATH:" in
     *) say "Add $bin_dir to your PATH to run them by name." ;;
 esac
 if [ "$os" = macos ]; then
+    say "If macOS blocks this trusted app, use System Settings > Privacy & Security > Open Anyway. Quarantine is preserved."
     say "Start the IDE from $prefix (Finder, Launchpad, Spotlight) or with:  open \"$app_dir\""
 fi
 say "Uninstall:  sh install-@SLUG@.sh --uninstall"

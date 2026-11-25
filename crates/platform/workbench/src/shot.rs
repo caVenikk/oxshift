@@ -1,4 +1,5 @@
-//! Native window helpers (macOS; no-ops elsewhere): drawing a frame now,
+//! Native window helpers for app-owned capture on macOS and Windows.
+//! macOS also supports drawing a frame now,
 //! keeping a window visible during measurements, and `OXSHIFT_SHOT=<path>`,
 //! a PNG of the application's own window. To show a state in the image,
 //! `OXSHIFT_RUN` runs UI commands first (see `env.rs`), for example
@@ -388,7 +389,13 @@ pub fn save(window: &gpui::Window, path: &Path) -> Result<(u32, u32), String> {
     capture_target(window)?.save(path)
 }
 
+#[cfg(windows)]
+mod windows;
+#[cfg(windows)]
+pub(crate) use windows::{CaptureTarget, capture_target};
+
 /// An identifier obtained only from one of this application's live windows.
+#[cfg(not(windows))]
 #[derive(Clone, Copy)]
 pub(crate) struct CaptureTarget(u32);
 
@@ -422,11 +429,12 @@ pub(crate) fn capture_target(window: &gpui::Window) -> Result<CaptureTarget, Str
     Ok(CaptureTarget(number))
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(any(target_os = "macos", windows)))]
 pub(crate) fn capture_target(_: &gpui::Window) -> Result<CaptureTarget, String> {
     Err("Window screenshots are not supported on this platform".into())
 }
 
+#[cfg(not(windows))]
 impl CaptureTarget {
     /// Native capture and PNG encoding can run on a background worker.
     #[cfg(target_os = "macos")]

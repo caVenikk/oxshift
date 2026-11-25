@@ -62,6 +62,11 @@ image = { version = "0.25", default-features = false, features = ["png"] }
 objc = "0.2"
 raw-window-handle = "0.6"
 
+[target.'cfg(windows)'.dependencies]
+raw-window-handle = "0.6"
+windows = { version = "0.61.3", features = ["Graphics_Capture"] }
+windows-capture = "1.5"
+
 [dev-dependencies]
 code-intel = { workspace = true, features = ["fake"] }
 dap-client = { workspace = true, features = ["fake"] }

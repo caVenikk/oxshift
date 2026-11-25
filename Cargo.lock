@@ -9323,6 +9323,8 @@ dependencies = [
  "ui",
  "vcs",
  "vcs-ui",
+ "windows 0.61.3",
+ "windows-capture",
  "workbench-fixture-module",
  "zip",
 ]

@@ -1,5 +1,8 @@
 # Documentation
 
+[Install a desktop release](release.md) · [Oxshift Python](oxshift-python.md)
+
+
 - [ROADMAP.md](ROADMAP.md): milestones and status
 - [architecture.md](architecture.md): crates, layering, command registry, external processes
 - [Rebranding and compatibility](rebrand.md) covers the Oxshift naming rollout.

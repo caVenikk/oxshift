@@ -479,6 +479,13 @@ def cmd_notes(args):
     table = names.table()
     table["VERSION"] = requested_version(names, args.version)
     table["TAG"] = "v" + table["VERSION"]
+    table["PRODUCT_SUMMARY"] = (
+        "The standalone desktop includes the editor, project tree, Git, terminal, "
+        "Shell run configurations and shared Python and SQL syntax highlighting."
+        if names.kind == "platform" else
+        "The Python IDE adds interpreter selection, Python code intelligence, "
+        "run and debug configurations, test execution and database tools."
+    )
     args.out.write_text(render(NOTES_TEMPLATE, table), encoding="utf-8")
     print(f"{args.out}: release notes header for {args.version}")
     return 0

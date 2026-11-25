@@ -18,6 +18,17 @@ workflows. It is **pre-alpha**: check the [feature matrix](replica/features/) an
 [roadmap](docs/ROADMAP.md) for the current implementation and planned work.
 Other language IDEs are not currently available.
 
+### Install
+
+Download the package for your product and operating system from
+[GitHub Releases](https://github.com/caVenikk/oxshift/releases).
+On macOS, open the DMG and drag the application into Applications. On Windows
+x64, use the installer or extract the ZIP and run the product executable.
+Linux packages are available for x86_64 and arm64. See the
+[release guide](docs/release.md) for package formats, checksums and signing.
+
+To run either product from source:
+
 ```bash
 git clone https://github.com/caVenikk/oxshift && cd oxshift
 cargo run --release -p oxshift-platform -- path/to/project

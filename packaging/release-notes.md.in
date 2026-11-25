@@ -1,6 +1,10 @@
 ## @PRODUCT_NAME@ @VERSION@
 
-This is a pre-alpha build. See the [release guide](https://github.com/@REPOSITORY@/blob/@TAG@/docs/release.md)
+@PRODUCT_SUMMARY@
+
+This pre-alpha build includes **Help → Create Local Bug Report**. The IDE
+saves a ZIP locally with diagnostic information and images of its own windows.
+You choose whether to share it. See the [release guide](https://github.com/@REPOSITORY@/blob/@TAG@/docs/release.md)
 for supported systems, installation and known limitations. Check downloaded files
 against `SHA256SUMS` before installing.
 

@@ -215,3 +215,29 @@ fn close_project_shows_the_welcome_tab_in_a_window_without_a_project(cx: &mut Te
         .unwrap();
     assert!(available.is_err(), "{available:?}");
 }
+
+#[gpui::test]
+fn local_bug_report_is_a_discoverable_action_without_collecting_on_the_test_platform(
+    cx: &mut TestAppContext,
+) {
+    let mut h = open(cx);
+    let actions =
+        h.cx.update_window(h.window.into(), |_, window, cx| {
+            workbench::search_everywhere::actions::collect(None, window, cx)
+        })
+        .unwrap();
+    let report = actions
+        .iter()
+        .find(|a| a.id == "help.create-local-bug-report")
+        .unwrap();
+    assert!(report.available);
+    assert!(
+        !actions
+            .iter()
+            .any(|a| a.id == "help.local-bug-report-state")
+    );
+    assert_eq!(
+        h.invoke("help.create-local-bug-report", json!(null))["status"],
+        "unavailable"
+    );
+}

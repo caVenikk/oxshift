@@ -178,6 +178,7 @@ pub fn init(cx: &mut App, product: &Product) {
     ui::command::register(cx, commands::GO_TO_LINE_COMMANDS);
     ui::command::register(cx, crate::notifications::COMMANDS);
     crate::background_tasks::init(cx);
+    crate::bug_report::init(cx);
     ui::command::register(cx, project_panel::COMMANDS);
     ui::command::register(cx, project_panel::FILE_COMMANDS);
     ui::command::register(cx, project_panel::NEW_ITEM_COMMANDS);

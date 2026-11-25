@@ -5,3 +5,9 @@ id = "GotoAction"
 text = "Find Action…"
 groups = ["Main Menu > Help"]
 command = "search-everywhere.go-to-action"
+
+[[action]]
+id = "CreateLocalBugReport"
+text = "Create Local Bug Report"
+groups = ["Main Menu > Help"]
+command = "help.create-local-bug-report"

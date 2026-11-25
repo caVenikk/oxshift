@@ -385,15 +385,19 @@ pub fn frame_view_mouse_moved(_: &gpui::Window, _: gpui::Point<gpui::Pixels>) {}
 #[cfg(target_os = "macos")]
 #[allow(unexpected_cfgs)] // objc's msg_send! checks a cfg of its own
 pub fn save(window: &gpui::Window, path: &Path) -> Result<(u32, u32), String> {
-    use core_graphics::display::CGRectNull;
-    use core_graphics::window::{
-        create_image, kCGWindowImageBestResolution, kCGWindowImageBoundsIgnoreFraming,
-        kCGWindowListOptionIncludingWindow,
-    };
+    capture_target(window)?.save(path)
+}
+
+/// An identifier obtained only from one of this application's live windows.
+#[derive(Clone, Copy)]
+pub(crate) struct CaptureTarget(u32);
+
+#[cfg(target_os = "macos")]
+#[allow(unexpected_cfgs)]
+pub(crate) fn capture_target(window: &gpui::Window) -> Result<CaptureTarget, String> {
     use objc::runtime::Object;
     use objc::{msg_send, sel, sel_impl};
     use raw_window_handle::{HasWindowHandle, RawWindowHandle};
-
     let handle = HasWindowHandle::window_handle(window).map_err(|e| e.to_string())?;
     let RawWindowHandle::AppKit(appkit) = handle.as_raw() else {
         return Err("not an AppKit window".into());
@@ -402,41 +406,76 @@ pub fn save(window: &gpui::Window, path: &Path) -> Result<(u32, u32), String> {
     // SAFETY: `view` is the live NSView of this window, on the main thread.
     let number: isize = unsafe {
         let ns_window: *mut Object = msg_send![view, window];
+        if ns_window.is_null() {
+            return Err("Window is no longer available".into());
+        }
+        let visible: bool = msg_send![ns_window, isVisible];
+        if !visible {
+            return Err("Window is not visible".into());
+        }
         msg_send![ns_window, windowNumber]
     };
-    let image = create_image(
-        // SAFETY: a constant exported by CoreGraphics.
-        unsafe { CGRectNull },
-        kCGWindowListOptionIncludingWindow,
-        number as u32,
-        kCGWindowImageBoundsIgnoreFraming | kCGWindowImageBestResolution,
-    )
-    .ok_or("CGWindowListCreateImage returned no image")?;
-    if image.bits_per_pixel() != 32 {
-        return Err(format!(
-            "unexpected {} bits per pixel",
-            image.bits_per_pixel()
-        ));
-    }
-    let (w, h, stride) = (image.width(), image.height(), image.bytes_per_row());
-    let data = image.data();
-    // 32-bit little-endian BGRA, premultiplied, in the display's colour
-    // space: Display P3 on Apple displays (GPUI's sRGB colours are colour
-    // matched by the compositor). Convert back to sRGB with the exact
-    // matrix, so neutral greys keep their values.
-    let mut rgba = Vec::with_capacity(w * h * 4);
-    for row in data.bytes().chunks(stride).take(h) {
-        for &[b, g, r, a] in row[..w * 4].as_chunks::<4>().0 {
-            let [r, g, b] = p3_to_srgb(unpremultiply([r, g, b], a));
-            rgba.extend_from_slice(&[r, g, b, a]);
+    let number = u32::try_from(number)
+        .ok()
+        .filter(|n| *n != 0)
+        .ok_or("Window has no valid capture identifier")?;
+    Ok(CaptureTarget(number))
+}
+
+#[cfg(not(target_os = "macos"))]
+pub(crate) fn capture_target(_: &gpui::Window) -> Result<CaptureTarget, String> {
+    Err("Window screenshots are not supported on this platform".into())
+}
+
+impl CaptureTarget {
+    /// Native capture and PNG encoding can run on a background worker.
+    #[cfg(target_os = "macos")]
+    pub(crate) fn save(self, path: &Path) -> Result<(u32, u32), String> {
+        use core_graphics::display::CGRectNull;
+        use core_graphics::window::{
+            create_image, kCGWindowImageBestResolution, kCGWindowImageBoundsIgnoreFraming,
+            kCGWindowListOptionIncludingWindow,
+        };
+        let image = create_image(
+            // SAFETY: a constant exported by CoreGraphics.
+            unsafe { CGRectNull },
+            kCGWindowListOptionIncludingWindow,
+            self.0,
+            kCGWindowImageBoundsIgnoreFraming | kCGWindowImageBestResolution,
+        )
+        .ok_or("CGWindowListCreateImage returned no image")?;
+        if image.bits_per_pixel() != 32 {
+            return Err(format!(
+                "unexpected {} bits per pixel",
+                image.bits_per_pixel()
+            ));
         }
+        let (w, h, stride) = (image.width(), image.height(), image.bytes_per_row());
+        let data = image.data();
+        // 32-bit little-endian BGRA, premultiplied, in the display's colour
+        // space: Display P3 on Apple displays (GPUI's sRGB colours are colour
+        // matched by the compositor). Convert back to sRGB with the exact
+        // matrix, so neutral greys keep their values.
+        let mut rgba = Vec::with_capacity(w * h * 4);
+        for row in data.bytes().chunks(stride).take(h) {
+            for &[b, g, r, a] in row[..w * 4].as_chunks::<4>().0 {
+                let [r, g, b] = p3_to_srgb(unpremultiply([r, g, b], a));
+                rgba.extend_from_slice(&[r, g, b, a]);
+            }
+        }
+        let (w, h) = (w as u32, h as u32);
+        image::RgbaImage::from_raw(w, h, rgba)
+            .ok_or("pixel buffer size")?
+            .save(path)
+            .map_err(|e| e.to_string())?;
+        Ok((w, h))
     }
-    let (w, h) = (w as u32, h as u32);
-    image::RgbaImage::from_raw(w, h, rgba)
-        .ok_or("pixel buffer size")?
-        .save(path)
-        .map_err(|e| e.to_string())?;
-    Ok((w, h))
+
+    #[cfg(not(target_os = "macos"))]
+    pub(crate) fn save(self, _: &Path) -> Result<(u32, u32), String> {
+        let _ = self.0;
+        Err("Window screenshots are not supported on this platform".into())
+    }
 }
 
 #[cfg(not(target_os = "macos"))]

@@ -44,6 +44,7 @@ search.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 terminal.workspace = true
+tempfile = "3"
 text.workspace = true
 themes.workspace = true
 toml.workspace = true
@@ -51,6 +52,7 @@ toml_edit = { version = "0.25", features = ["serde"] }
 ui.workspace = true
 vcs.workspace = true
 vcs-ui.workspace = true
+zip.workspace = true
 
 # Window screenshots (OXSHIFT_SHOT) ask the window server for an image of
 # the app's own window; these crates are already in GPUI's dependency tree.
@@ -67,9 +69,6 @@ debugger.workspace = true
 gpui = { workspace = true, features = ["test-support"] }
 # The list type of GPUI's `ExternalPaths` (tests/it/drop.rs).
 smallvec = "1"
-tempfile = "3"
-# Theme plugins of the reference in tests/it/first_run.rs.
-zip.workspace = true
 # A module for tests/it/modules.rs, a crate built as a module's crate is;
 # it turns on this crate's `test-support` for the tests.
 workbench-fixture-module = { path = "tests/fixture-module" }

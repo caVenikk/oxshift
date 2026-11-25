@@ -7,7 +7,7 @@
 //! for the command index. Components handle their actions with GPUI's
 //! `on_action`; [`invoke`] runs a command by id with JSON arguments.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, VecDeque};
 use std::rc::Rc;
 
 use gpui::{App, Global, Window};
@@ -31,6 +31,8 @@ pub type QueryFn = Rc<dyn Fn(Json, &mut Window, &mut App) -> Result<Json, Comman
 #[derive(Default)]
 pub struct CommandIndex {
     commands: BTreeMap<&'static str, UiCommand>,
+    recent_ids: VecDeque<&'static str>,
+    handlers: BTreeMap<&'static str, QueryFn>,
     queries: BTreeMap<&'static str, QueryFn>,
 }
 
@@ -70,6 +72,14 @@ pub fn register_query(cx: &mut App, id: &'static str, query: QueryFn) {
         .insert(id, query);
 }
 
+/// Registers a window-aware command handler that also remains discoverable
+/// as an action. Native menus and shortcuts use the declared GPUI action.
+pub fn register_handler(cx: &mut App, id: &'static str, handler: QueryFn) {
+    cx.default_global::<CommandIndex>()
+        .handlers
+        .insert(id, handler);
+}
+
 /// The command answers from the state instead of changing it (a query).
 pub fn is_query(cx: &App, id: &str) -> bool {
     cx.try_global::<CommandIndex>()
@@ -80,6 +90,14 @@ pub fn is_query(cx: &App, id: &str) -> bool {
 pub fn list(cx: &App) -> Vec<UiCommand> {
     cx.try_global::<CommandIndex>()
         .map(|index| index.list().cloned().collect())
+        .unwrap_or_default()
+}
+
+/// Bounded static identifiers of registry invocations, never arguments or text.
+/// Direct keyboard and native action dispatch are not represented.
+pub fn recent_ids(cx: &App) -> Vec<&'static str> {
+    cx.try_global::<CommandIndex>()
+        .map(|index| index.recent_ids.iter().copied().collect())
         .unwrap_or_default()
 }
 
@@ -102,6 +120,15 @@ pub fn invoke(
         .ok_or_else(|| CommandError::not_found(format!("unknown command {id}")))?;
     if index.get(id).is_none() {
         return Err(CommandError::not_found(format!("unknown command {id}")));
+    }
+    let static_id = index.get(id).expect("checked above").meta.id;
+    let index = cx.global_mut::<CommandIndex>();
+    if index.recent_ids.len() == 20 {
+        index.recent_ids.pop_front();
+    }
+    index.recent_ids.push_back(static_id);
+    if let Some(handler) = index.handlers.get(id).cloned() {
+        return handler(args, window, cx);
     }
     if let Some(query) = index.queries.get(id).cloned() {
         return query(args, window, cx);

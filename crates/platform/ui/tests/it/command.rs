@@ -172,3 +172,32 @@ impl Render for Empty {
         div()
     }
 }
+
+#[gpui::test]
+fn recent_identifiers_are_bounded_and_exclude_arguments_and_unknown_ids(cx: &mut TestAppContext) {
+    let window = cx.update(|cx| {
+        ui::command::register(cx, COMMANDS);
+        ui::command::register_query(
+            cx,
+            "counter.state",
+            std::rc::Rc::new(|_, _, _| Ok(json!(null))),
+        );
+        cx.open_window(Default::default(), |_, cx| cx.new(|_| Empty))
+            .unwrap()
+    });
+    for _ in 0..30 {
+        cx.update_window(window.into(), |_, window, cx| {
+            ui::command::invoke(
+                "counter.state",
+                json!({"secret": "private input"}),
+                window,
+                cx,
+            )
+            .unwrap();
+            assert!(ui::command::invoke("private/path/unknown", json!(null), window, cx).is_err());
+        })
+        .unwrap();
+    }
+    let ids = cx.read(ui::command::recent_ids);
+    assert_eq!(ids, vec!["counter.state"; 20]);
+}

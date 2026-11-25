@@ -1,4 +1,4 @@
-//! Terminal view of Pyoxide IDE (ADR 0014), on GPUI.
+//! Terminal view of Oxshift Python IDE (ADR 0014), on GPUI.
 //!
 //! - [`SessionView`]: one session of the `terminal` crate in a focusable
 //!   view: keys, typed and composed text, pastes, mouse selection and

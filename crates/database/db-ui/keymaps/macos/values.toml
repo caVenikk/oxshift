@@ -1,4 +1,4 @@
-# Pyoxide keymap for macOS. Database: values in the data grid, joined
+# Oxshift keymap for macOS. Database: values in the data grid, joined
 # after the grid's keys (the database module, ADR 0021).
 
 # The cells with the focus: the side panel on the current cell, the current

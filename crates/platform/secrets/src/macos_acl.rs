@@ -1,4 +1,4 @@
-//! macOS keychain items that name the Pyoxide binaries in their access list.
+//! macOS keychain items that name the Oxshift binaries in their access list.
 //!
 //! An item is trusted by the code that created it and by the applications in
 //! its access list; anything else makes the system ask for the login
@@ -368,7 +368,7 @@ mod tests {
 
     fn scratch() -> Scratch {
         let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("pyoxide-test.keychain-db");
+        let path = dir.path().join("oxshift-test.keychain-db");
         let keychain = CreateOptions::new().password("x").create(&path).unwrap();
         Scratch {
             _dir: dir,
@@ -397,7 +397,7 @@ mod tests {
         let ide = PathBuf::from("/usr/bin/true");
         let cli = PathBuf::from("/usr/bin/false");
 
-        let access = access_for("pyoxide-test", &[exe.clone(), ide.clone(), cli.clone()]).unwrap();
+        let access = access_for("oxshift-test", &[exe.clone(), ide.clone(), cli.clone()]).unwrap();
         // Only the scratch fixture trusts this test executable to change ACLs.
         // Default owner ACLs require a password dialog even when optional
         // keychain interaction has been disabled.
@@ -409,7 +409,7 @@ mod tests {
         .unwrap();
         create_item(
             Some(&k.keychain),
-            "pyoxide-test",
+            "oxshift-test",
             "acct",
             b"secret-1",
             access,
@@ -426,7 +426,7 @@ mod tests {
         }
         let (password, _) = k
             .keychain
-            .find_generic_password("pyoxide-test", "acct")
+            .find_generic_password("oxshift-test", "acct")
             .unwrap();
         assert_eq!(&*password, b"secret-1");
         drop(password);
@@ -434,7 +434,7 @@ mod tests {
         // Setting again replaces the value and the list.
         set_trusted(
             Some(&k.keychain),
-            "pyoxide-test",
+            "oxshift-test",
             "acct",
             b"secret-2",
             &[exe, ide.clone()],
@@ -445,7 +445,7 @@ mod tests {
         assert!(!dump.contains(&cli.display().to_string()), "{dump}");
         let (password, _) = k
             .keychain
-            .find_generic_password("pyoxide-test", "acct")
+            .find_generic_password("oxshift-test", "acct")
             .unwrap();
         assert_eq!(&*password, b"secret-2");
         assert_eq!(
@@ -462,7 +462,7 @@ mod tests {
         let binaries = [std::env::current_exe().unwrap()];
         set_trusted(
             Some(&k.keychain),
-            "pyoxide-test",
+            "oxshift-test",
             "acct",
             b"original",
             &binaries,
@@ -477,7 +477,7 @@ mod tests {
 
         let result = set_trusted(
             Some(&k.keychain),
-            "pyoxide-test",
+            "oxshift-test",
             "acct",
             b"replacement",
             &binaries,
@@ -486,7 +486,7 @@ mod tests {
         k.keychain.unlock(Some("x")).unwrap();
         let (password, _) = k
             .keychain
-            .find_generic_password("pyoxide-test", "acct")
+            .find_generic_password("oxshift-test", "acct")
             .unwrap();
         assert_eq!(&*password, b"original");
         assert_eq!(k.acl_dump().matches("class: \"genp\"").count(), 1);

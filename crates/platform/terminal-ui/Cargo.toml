@@ -1,6 +1,6 @@
 [package]
 name = "terminal-ui"
-description = "Terminal view of Pyoxide IDE on GPUI (ADR 0014): the grid element that paints a session's snapshot, the terminal colours of the theme, and the session view with keys, input methods, mouse selection and reporting, scrolling, clipboard and the Terminal commands"
+description = "Terminal view of Oxshift Python IDE on GPUI (ADR 0014): the grid element that paints a session's snapshot, the terminal colours of the theme, and the session view with keys, input methods, mouse selection and reporting, scrolling, clipboard and the Terminal commands"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

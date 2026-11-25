@@ -1,4 +1,4 @@
-//! The syntax layer of Pyoxide IDE (ADR 0007): tree-sitter parsing of a rope,
+//! The syntax layer of Oxshift Python IDE (ADR 0007): tree-sitter parsing of a rope,
 //! incremental after edits and cancellable, and highlight spans for a range
 //! of lines with capture names resolved to the text roles of the `themes`
 //! crate (docs/theme-mapping.md, "tree-sitter captures").

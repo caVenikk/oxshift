@@ -1,4 +1,4 @@
-//! Debug sessions of the Pyoxide window with the real debugpy helper and a
+//! Debug sessions of the Oxshift window with the real debugpy helper and a
 //! real Python (tests/scenarios/run-debug/debugger-*.md). Ignored by
 //! default: they need Python 3.8 or later and the helper.
 //!

@@ -1,6 +1,6 @@
 [package]
 name = "sql-intel"
-description = "SQL language services of Pyoxide IDE over the metadata model: resolution scopes, reference resolution, inspections and quick fixes, and SqlCodeIntel implementing CodeIntel. No toolkit"
+description = "SQL language services of Oxshift Python IDE over the metadata model: resolution scopes, reference resolution, inspections and quick fixes, and SqlCodeIntel implementing CodeIntel. No toolkit"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

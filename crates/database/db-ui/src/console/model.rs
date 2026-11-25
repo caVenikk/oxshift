@@ -949,7 +949,7 @@ fn char_to_byte(text: &str, chars: usize) -> usize {
 }
 
 /// The name of a result tab: the table a plain query reads, with its
-/// database (`pyoxide.demo.customers`), else the first column and its
+/// database (`oxshift.demo.customers`), else the first column and its
 /// type (`a:integer`).
 pub(crate) fn tab_title(
     text: &str,

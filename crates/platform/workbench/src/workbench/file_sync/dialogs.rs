@@ -5,7 +5,7 @@
 //!   Changes reloads it (one undo step, so the editor's text can be had
 //!   back); Keep Memory Changes (also Escape) keeps the editor's text,
 //!   which the next save writes over the file. The reference's Show
-//!   Difference needs a diff viewer, which Pyoxide does not have yet.
+//!   Difference needs a diff viewer, which Oxshift does not have yet.
 //! - "Undo Reload from Disk?" (the reference's `UndoRedo.askUser` for a
 //!   step that asks for confirmation).
 //! - Close Document (the reference's prompt for an editor that is not

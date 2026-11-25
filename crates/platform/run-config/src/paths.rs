@@ -141,7 +141,7 @@ pub fn expand_in_text(text: &str, root: &Path) -> String {
 }
 
 /// The path variable a stored path starts with, when it is one the editor
-/// flags: `$USER_HOME$` (machine-specific) or a variable Pyoxide does not
+/// flags: `$USER_HOME$` (machine-specific) or a variable Oxshift does not
 /// know.
 pub fn flagged_variable(stored: &str) -> Option<&str> {
     let rest = stored.strip_prefix('$')?;

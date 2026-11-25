@@ -1,4 +1,4 @@
-//! The Language Server Protocol client of Pyoxide IDE (ADR 0010).
+//! The Language Server Protocol client of Oxshift Python IDE (ADR 0010).
 //!
 //! A product describes its servers with [`ServerSpec`]s (command line,
 //! root, languages, the features each serves, settings, a

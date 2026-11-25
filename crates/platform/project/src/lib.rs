@@ -1,7 +1,7 @@
-//! The project model of Pyoxide IDE (ADR 0007, 0008, 0013): a folder opened
+//! The project model of Oxshift Python IDE (ADR 0007, 0008, 0013): a folder opened
 //! as a project, its file tree loaded one directory at a time, the rules
 //! that hide or exclude entries, its source roots and the folders a product
-//! sees as packages or modules, Pyoxide's own project folder with the shared
+//! sees as packages or modules, Oxshift's own project folder with the shared
 //! project settings and the personal project state, reading and writing
 //! documents, what reported paths are now on disk (for a file watcher),
 //! and the file operations of the project tool window.

@@ -1,6 +1,6 @@
 [package]
 name = "ui"
-description = "Component layer of Pyoxide IDE on GPUI: theme tokens, fonts, icons, common components and the UI command index"
+description = "Component layer of Oxshift Python IDE on GPUI: theme tokens, fonts, icons, common components and the UI command index"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

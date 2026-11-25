@@ -60,12 +60,12 @@ fn the_url_and_the_fields_follow_each_other(cx: &mut TestAppContext) {
         json!({"backend": "postgres"}),
     );
     set(&mut h, "port", "55432");
-    set(&mut h, "database", "pyoxide");
+    set(&mut h, "database", "oxshift");
     set(&mut h, "user", "app");
     let s = state(&mut h);
     assert_eq!(
         s["dialog"]["selected"]["url"],
-        "postgresql://localhost:55432/pyoxide"
+        "postgresql://localhost:55432/oxshift"
     );
 
     set(&mut h, "url", "postgresql://db.example.com:6543/sales");
@@ -93,7 +93,7 @@ fn test_connection_reports_the_reason_and_the_version(cx: &mut TestAppContext) {
         "db.explorer.add-data-source",
         json!({"backend": "postgres"}),
     );
-    set(&mut h, "user", "pyoxide");
+    set(&mut h, "user", "oxshift");
     set(&mut h, "password", "wrong-password");
     dialog(&mut h, "db.data-sources.test-connection", Value::Null);
     let s = state(&mut h);
@@ -150,7 +150,7 @@ fn a_hanging_test_is_cancelled(cx: &mut TestAppContext) {
         "db.explorer.add-data-source",
         json!({"backend": "postgres"}),
     );
-    set(&mut h, "user", "pyoxide");
+    set(&mut h, "user", "oxshift");
     set(&mut h, "password", "x");
     dialog(&mut h, "db.data-sources.test-connection", Value::Null);
     assert_eq!(state(&mut h)["dialog"]["test"]["state"], "running");
@@ -175,23 +175,23 @@ fn ok_saves_and_remove_deletes_the_secrets(cx: &mut TestAppContext) {
         "db.explorer.add-data-source",
         json!({"backend": "postgres"}),
     );
-    set(&mut h, "name", "pyoxide-local");
-    set(&mut h, "user", "pyoxide");
+    set(&mut h, "name", "oxshift-local");
+    set(&mut h, "user", "oxshift");
     set(&mut h, "password", SECRET);
     dialog(&mut h, "db.data-sources.ok", Value::Null);
     let s = state(&mut h);
     assert!(s["dialog"].is_null(), "OK closes the dialog: {s}");
-    assert_eq!(store.password("pyoxide-local").as_deref(), Some(SECRET));
+    assert_eq!(store.password("oxshift-local").as_deref(), Some(SECRET));
     let saved = store.sources(&root);
     assert_eq!(saved.len(), 1);
     let toml = format!("{:?}", saved[0].profile);
     assert!(!toml.contains(SECRET));
-    assert_eq!(s["explorer"]["sources"][0]["name"], "pyoxide-local");
+    assert_eq!(s["explorer"]["sources"][0]["name"], "oxshift-local");
 
     // Properties: the saved one, its password kept and not shown.
     h.invoke("db.explorer.properties", Value::Null);
     let s = state(&mut h);
-    assert_eq!(s["dialog"]["selected"]["name"], "pyoxide-local");
+    assert_eq!(s["dialog"]["selected"]["name"], "oxshift-local");
     assert_eq!(s["dialog"]["selected"]["has_kept_password"], true);
     assert_eq!(s["dialog"]["selected"]["password"]["edited"], false);
     // Nothing differs from what is kept: Apply is disabled and does
@@ -204,19 +204,19 @@ fn ok_saves_and_remove_deletes_the_secrets(cx: &mut TestAppContext) {
     set(&mut h, "save", "never");
     assert_eq!(state(&mut h)["dialog"]["modified"], true);
     dialog(&mut h, "db.data-sources.apply", Value::Null);
-    assert_eq!(store.password("pyoxide-local"), None);
+    assert_eq!(store.password("oxshift-local"), None);
     assert_eq!(state(&mut h)["dialog"]["modified"], false, "applied");
     set(&mut h, "save", "forever");
     set(&mut h, "password", SECRET);
     dialog(&mut h, "db.data-sources.apply", Value::Null);
-    assert_eq!(store.password("pyoxide-local").as_deref(), Some(SECRET));
+    assert_eq!(store.password("oxshift-local").as_deref(), Some(SECRET));
 
     // Remove: the data source and its password go.
     dialog(&mut h, "db.data-sources.remove", Value::Null);
-    assert_eq!(state(&mut h)["dialog"]["removed"], json!(["pyoxide-local"]));
+    assert_eq!(state(&mut h)["dialog"]["removed"], json!(["oxshift-local"]));
     dialog(&mut h, "db.data-sources.ok", Value::Null);
     assert!(store.sources(&root).is_empty());
-    assert_eq!(store.password("pyoxide-local"), None);
+    assert_eq!(store.password("oxshift-local"), None);
     assert_eq!(state(&mut h)["explorer"]["sources"], json!([]));
 }
 
@@ -231,11 +231,11 @@ fn never_asks_for_the_password(cx: &mut TestAppContext) {
         "db.explorer.add-data-source",
         json!({"backend": "postgres"}),
     );
-    set(&mut h, "user", "pyoxide");
+    set(&mut h, "user", "oxshift");
     set(&mut h, "save", "never");
     dialog(&mut h, "db.data-sources.test-connection", Value::Null);
     let s = state(&mut h);
-    assert_eq!(s["prompt"]["user"], "pyoxide", "{s}");
+    assert_eq!(s["prompt"]["user"], "oxshift", "{s}");
     h.invoke("db.password-prompt.set", json!({"value": SECRET}));
     h.invoke("db.password-prompt.ok", Value::Null);
     let s = state(&mut h);
@@ -393,7 +393,7 @@ fn databases_color_and_the_expanded_editor(cx: &mut TestAppContext) {
     let s = state(&mut h);
     assert_eq!(
         s["dialog"]["databases"],
-        json!(["postgres", "pyoxide"]),
+        json!(["postgres", "oxshift"]),
         "{s}"
     );
     dialog(
@@ -587,8 +587,8 @@ fn space_presses_the_focused_button_and_enter_the_default(cx: &mut TestAppContex
         "db.explorer.add-data-source",
         json!({"backend": "postgres"}),
     );
-    set(&mut h, "name", "pyoxide-local");
-    set(&mut h, "user", "pyoxide");
+    set(&mut h, "name", "oxshift-local");
+    set(&mut h, "user", "oxshift");
     assert_eq!(state(&mut h)["dialog"]["modified"], true);
 
     press_and_leave(&mut h, "data-sources-apply");

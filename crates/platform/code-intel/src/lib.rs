@@ -1,4 +1,4 @@
-//! Code intelligence of Pyoxide IDE (ADR 0010): the language-agnostic
+//! Code intelligence of Oxshift Python IDE (ADR 0010): the language-agnostic
 //! model of what language services answer, and the [`CodeIntel`] trait the
 //! editor UI talks to. It is to language servers what `db-core` is to
 //! database drivers: `lsp-client` implements the trait over LSP servers,

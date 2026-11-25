@@ -389,26 +389,26 @@ mod tests {
     #[test]
     fn session_names() {
         assert_eq!(
-            session_name("pyoxide", "reporting", Purpose::Meta, 63),
-            "pyoxide:reporting:meta"
+            session_name("oxshift", "reporting", Purpose::Meta, 63),
+            "oxshift:reporting:meta"
         );
         // Non-ASCII and spaces are replaced.
         assert_eq!(
-            session_name("pyoxide", "my db\u{e9}", Purpose::Data, 63),
-            "pyoxide:my_db_:data"
+            session_name("oxshift", "my db\u{e9}", Purpose::Data, 63),
+            "oxshift:my_db_:data"
         );
         // The data source is cut, not the purpose.
         let long = "x".repeat(100);
         for (limit, expected_len) in [(63, 63), (48, 48)] {
-            let name = session_name("pyoxide", &long, Purpose::Console, limit);
+            let name = session_name("oxshift", &long, Purpose::Console, limit);
             assert_eq!(name.len(), expected_len, "{name}");
             assert!(
-                name.starts_with("pyoxide:x") && name.ends_with(":console"),
+                name.starts_with("oxshift:x") && name.ends_with(":console"),
                 "{name}"
             );
         }
         // Nothing fits: still never longer than the limit.
-        assert!(session_name("pyoxide", "a", Purpose::Console, 5).len() <= 5);
+        assert!(session_name("oxshift", "a", Purpose::Console, 5).len() <= 5);
     }
 
     #[tokio::test]

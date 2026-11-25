@@ -1,4 +1,4 @@
-//! Text search of Pyoxide IDE. Find and Replace in the editor and Find in
+//! Text search of Oxshift Python IDE. Find and Replace in the editor and Find in
 //! Files use the same engine.
 //!
 //! A [`Query`] (text and [`SearchOptions`]) compiles into a [`Matcher`],

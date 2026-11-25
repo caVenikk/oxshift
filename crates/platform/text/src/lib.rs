@@ -1,4 +1,4 @@
-//! The text model of Pyoxide IDE (ADR 0007): a rope buffer (`ropey`) with
+//! The text model of Oxshift Python IDE (ADR 0007): a rope buffer (`ropey`) with
 //! line and offset conversions, selections ready for multiple carets, edits
 //! grouped into undoable transactions, and the encoding and line separator
 //! of the file. Positions are char offsets; conversions to bytes

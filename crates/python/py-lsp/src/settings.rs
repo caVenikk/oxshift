@@ -15,7 +15,7 @@
 //! ```
 //!
 //! Every key is optional; a missing key, or one this build cannot read,
-//! means Pyoxide's default. Defaults are not written. The `enabled` key
+//! means Oxshift's default. Defaults are not written. The `enabled` key
 //! also says that a person (or the import of the reference's settings)
 //! turned the tool on: such a tool may run through `uvx` without asking
 //! (ADR 0010), so it is written even when it equals the default.
@@ -43,7 +43,7 @@ pub const TOOLS_TABLE: &str = "python.tools";
 /// The table of the type engine choice.
 pub const TYPE_ENGINE_TABLE: &str = "python.type-engine";
 
-/// The oldest ty Pyoxide is tested with (the version ADR 0011 measured);
+/// The oldest ty Oxshift is tested with (the version ADR 0011 measured);
 /// an older one still starts, with a warning (ADR 0011).
 pub const MINIMUM_TY_VERSION: &str = "0.0.86";
 
@@ -135,7 +135,7 @@ impl Tool {
         self != Tool::Ruff
     }
 
-    /// The oldest version Pyoxide is tested with, if it checks one.
+    /// The oldest version Oxshift is tested with, if it checks one.
     pub fn minimum_version(self) -> Option<&'static str> {
         match self {
             Tool::Ty => Some(MINIMUM_TY_VERSION),
@@ -199,13 +199,13 @@ pub struct ToolSettings {
     pub formatting: bool,
     /// Optimize Imports goes to it (ruff).
     pub import_optimizer: bool,
-    /// The settings were written by a person or imported, not Pyoxide's
+    /// The settings were written by a person or imported, not Oxshift's
     /// defaults: lookup may end at `uvx` without asking (ADR 0010).
     pub explicit: bool,
 }
 
 impl ToolSettings {
-    /// Pyoxide's defaults with ty as the type engine: ruff and ty are on
+    /// Oxshift's defaults with ty as the type engine: ruff and ty are on
     /// (ADR 0011).
     pub fn default_for(tool: Tool) -> Self {
         Settings::default_tool(tool, TypeEngine::default())
@@ -234,7 +234,7 @@ impl Default for Settings {
 }
 
 impl Settings {
-    /// Pyoxide's defaults with `engine` as the type engine.
+    /// Oxshift's defaults with `engine` as the type engine.
     pub fn with_type_engine(engine: TypeEngine) -> Self {
         Self {
             ruff: Self::default_tool(Tool::Ruff, engine),

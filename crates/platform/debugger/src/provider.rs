@@ -356,7 +356,7 @@ pub trait DebugAdapterProvider: Send + Sync + 'static {
         Vec::new()
     }
 
-    /// Actions of the context menu of the product's values that Pyoxide
+    /// Actions of the context menu of the product's values that Oxshift
     /// does not offer yet: the menu shows them disabled where the
     /// reference shows them.
     fn extra_value_actions(&self) -> Vec<ExtraValueAction> {

@@ -35,11 +35,11 @@
 //! `.idea/pyTypeEngine.xml` holds `PyTypeEngineProjectSettings` with the
 //! option `typeEngine` (`PYCHARM`, `PYREFLY`, `TY`).
 //!
-//! How the reference's settings become Pyoxide's:
+//! How the reference's settings become Oxshift's:
 //!
 //! - A tool enabled in the reference is enabled explicitly (it may run
 //!   through `uvx` without asking). A tool off in the reference (its
-//!   default) keeps Pyoxide's default: Pyoxide has no engine of its own.
+//!   default) keeps Oxshift's default: Oxshift has no engine of its own.
 //! - Lookup modes and features are taken as they are; custom executables
 //!   become personal paths in `.oxshift/workspace.toml`.
 //! - Pyright enabled (without basedpyright) becomes basedpyright, its fork
@@ -47,7 +47,7 @@
 //! - The type engine: ty when the reference's type engine is ty or
 //!   Pyrefly (not supported yet), or ty is enabled; basedpyright when it
 //!   (or Pyright) is enabled; ty otherwise.
-//! - What Pyoxide does differently is listed in [`Imported::notes`].
+//! - What Oxshift does differently is listed in [`Imported::notes`].
 //! - Once imported, `[python.tools]` exists (empty if nothing else went
 //!   there), so the import does not repeat.
 
@@ -77,15 +77,15 @@ pub const NOTE_PYRIGHT: &str =
 /// The note of an import that found Pyrefly enabled or as the type engine.
 pub const NOTE_PYREFLY: &str = "Pyrefly is not supported yet: ty runs as the type server instead";
 
-/// The reference's tool settings of a project, as Pyoxide's.
+/// The reference's tool settings of a project, as Oxshift's.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Imported {
-    /// The shared settings, Pyoxide's defaults where the reference sets
+    /// The shared settings, Oxshift's defaults where the reference sets
     /// nothing.
     pub settings: Settings,
-    /// Custom executables, personal in Pyoxide.
+    /// Custom executables, personal in Oxshift.
     pub paths: BTreeMap<Tool, PathBuf>,
-    /// What Pyoxide does differently from the reference's settings, for
+    /// What Oxshift does differently from the reference's settings, for
     /// the log.
     pub notes: Vec<String>,
 }
@@ -121,7 +121,7 @@ pub fn import_tool_settings(root: &Path) -> Result<Option<Imported>, StoreError>
     let Some(mut imported) = read_tool_settings(root) else {
         return Ok(None);
     };
-    // A type engine chosen in Pyoxide already stays.
+    // A type engine chosen in Oxshift already stays.
     if store::load_table(root, settings::TYPE_ENGINE_TABLE)?.is_some() {
         let engine = settings::load(root)?.type_engine;
         imported.settings.set_type_engine(engine);
@@ -238,7 +238,7 @@ fn expand(path: &str, root: &Path) -> PathBuf {
     PathBuf::from(out)
 }
 
-/// The reference's settings as Pyoxide's; `None` when they say nothing
+/// The reference's settings as Oxshift's; `None` when they say nothing
 /// about ruff, ty, basedpyright, Pyright or Pyrefly.
 fn convert(tools: &ToolsFile, engine: Option<&str>, root: &Path) -> Option<Imported> {
     let mut entries = tools.entries();
@@ -748,7 +748,7 @@ mod tests {
     }
 
     #[test]
-    fn a_type_engine_chosen_in_pyoxide_stays() {
+    fn a_type_engine_chosen_in_oxshift_stays() {
         let dir = project(&[(TOOLS_FILE, MIGRATED), (TYPE_ENGINE_FILE, TY_ENGINE)]);
         let root = dir.path();
         store::save_values(

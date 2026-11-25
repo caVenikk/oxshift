@@ -1,4 +1,4 @@
-//! Debugging Python in Pyoxide IDE with debugpy over DAP (ADR 0015), the
+//! Debugging Python in Oxshift Python IDE with debugpy over DAP (ADR 0015), the
 //! Python product's part of the debugger (no UI toolkit):
 //!
 //! - [`helper`]: the debugpy 1.8.21 helper folder, looked up in the

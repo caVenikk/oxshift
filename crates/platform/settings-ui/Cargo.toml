@@ -1,6 +1,6 @@
 [package]
 name = "settings-ui"
-description = "The Settings window of Pyoxide IDE (ADR 0017): page tree, banner, bottom bar, the page trait and registry, and the application's settings store with its change events"
+description = "The Settings window of Oxshift Python IDE (ADR 0017): page tree, banner, bottom bar, the page trait and registry, and the application's settings store with its change events"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

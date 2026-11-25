@@ -571,11 +571,11 @@ mod tests {
     fn keyring_round_trip() {
         let s = KeyringStore;
         let account = format!("test-{}", std::process::id());
-        s.set("pyoxide-test", &account, &Secret::new("x")).unwrap();
+        s.set("oxshift-test", &account, &Secret::new("x")).unwrap();
         assert_eq!(
-            s.get("pyoxide-test", &account).unwrap().unwrap().expose(),
+            s.get("oxshift-test", &account).unwrap().unwrap().expose(),
             "x"
         );
-        assert!(s.delete("pyoxide-test", &account).unwrap());
+        assert!(s.delete("oxshift-test", &account).unwrap());
     }
 }

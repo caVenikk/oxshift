@@ -62,7 +62,7 @@ const REFERENCE_TOP: [&str; 7] = [
     "tests/test_apps/blueprintapp/apps/",
 ];
 
-/// The rest of the first page by Pyoxide's rule: word starts, then
+/// The rest of the first page by Oxshift's rule: word starts, then
 /// matches inside a word, each by degree and name.
 const FIRST_PAGE_REST: [&str; 8] = [
     "examples/celery/src/task_app/",

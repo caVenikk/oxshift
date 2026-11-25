@@ -37,7 +37,7 @@ use toml_edit::{Array, ArrayOfTables, DocumentMut, InlineTable, Item};
 use crate::list::RunConfigurations;
 use crate::model::{BeforeLaunchTask, ConfigKey, EnvVar, Reference, RunConfiguration, Storage};
 
-/// The folder of shared configurations in Pyoxide's project folder.
+/// The folder of shared configurations in Oxshift's project folder.
 pub const SHARED_DIR: &str = "run";
 /// The table of the personal project state.
 pub const PERSONAL_TABLE: &str = "run";

@@ -1,4 +1,4 @@
-//! The code intelligence UI of Pyoxide IDE (ADR 0010): one
+//! The code intelligence UI of Oxshift Python IDE (ADR 0010): one
 //! [`CodeIntelView`] per main window connects the editors of its tabs to
 //! the project's language services (a [`code_intel::CodeIntel`] the
 //! product builds through its [`CodeIntelProvider`]), and owns the popups

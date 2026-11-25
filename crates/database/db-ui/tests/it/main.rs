@@ -56,8 +56,8 @@ pub fn pg() -> Profile {
     let mut p = Profile::new(Backend::Postgres);
     p.host = "localhost".into();
     p.port = Some(55432);
-    p.database = Some("pyoxide".into());
-    p.user = "pyoxide".into();
+    p.database = Some("oxshift".into());
+    p.user = "oxshift".into();
     p
 }
 

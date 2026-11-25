@@ -46,7 +46,7 @@ const PYTHON_DESCRIPTION: &str = "Configure key Python development settings to c
 const TOOLS_DESCRIPTION: &str = "Configure external Python tool settings.";
 const ENGINE_LABEL: &str = "Type engine:";
 const TY_DESCRIPTION: &str = "Currently in Beta, ty provides fast and accurate type checking designed to work well with untyped code. Supports advanced type analysis features.";
-/// Pyoxide's own: the reference does not offer basedpyright.
+/// Oxshift's own: the reference does not offer basedpyright.
 const BASEDPYRIGHT_DESCRIPTION: &str = "Basedpyright, a fork of Pyright with stricter checks and features of Pylance, provides type checking, completion and navigation through its language server.";
 const TOOLS_TEXT: &str = "Enable and configure tools, choose a lookup method, and optionally override the path. The tool can be detected from sdk and path, or you can run it manually without installation via the 'uvx \u{2039}tool\u{203A}' command.";
 const COLUMN_TOOL: &str = "Tool";

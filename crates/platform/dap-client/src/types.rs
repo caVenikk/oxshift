@@ -368,7 +368,7 @@ pub enum TerminalKind {
 }
 
 /// The adapter asks the client to start a process (the debuggee with its
-/// launcher) in a terminal: in Pyoxide, the Debug console.
+/// launcher) in a terminal: in Oxshift, the Debug console.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct RunInTerminal {
     pub kind: TerminalKind,

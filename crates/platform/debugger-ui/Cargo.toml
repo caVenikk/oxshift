@@ -1,6 +1,6 @@
 [package]
 name = "debugger-ui"
-description = "Debugger UI of Pyoxide IDE on GPUI: debug sessions and the Debug tool window, the execution point, breakpoints in the editor gutter, the breakpoint properties popup, the Breakpoints dialog and the debug.* commands"
+description = "Debugger UI of Oxshift Python IDE on GPUI: debug sessions and the Debug tool window, the execution point, breakpoints in the editor gutter, the breakpoint properties popup, the Breakpoints dialog and the debug.* commands"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

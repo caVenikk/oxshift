@@ -1,4 +1,4 @@
-; Highlight query of Pyoxide for Python (tree-sitter-python grammar).
+; Highlight query of Oxshift for Python (tree-sitter-python grammar).
 ;
 ; Capture names map to theme text roles (docs/theme-mapping.md). For the
 ; same node the first pattern in this file wins; an inner node wins over the

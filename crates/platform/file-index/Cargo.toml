@@ -1,6 +1,6 @@
 [package]
 name = "file-index"
-description = "File name index of Pyoxide IDE: the project's files and folders by name, built in the background with the project tree's rules and kept current, and Go to File's matching and ranking"
+description = "File name index of Oxshift Python IDE: the project's files and folders by name, built in the background with the project tree's rules and kept current, and Go to File's matching and ranking"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

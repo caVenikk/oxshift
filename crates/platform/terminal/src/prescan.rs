@@ -1,14 +1,14 @@
 //! The pre-scan of the PTY output for the sequences the emulator ignores
 //! (ADR 0014): OSC 1 (the icon name, a title as the reference's emulator
 //! takes it), OSC 7 (working directory), OSC 133 (prompt and command
-//! marks, FinalTerm / iTerm2 style) and Pyoxide's own integration events.
+//! marks, FinalTerm / iTerm2 style) and Oxshift's own integration events.
 //! The bytes still go to the emulator unchanged; the scanner only reports
 //! where a recognised sequence ends, so the session can note the cursor
 //! position at that point.
 
 use std::path::PathBuf;
 
-/// The OSC number of Pyoxide's own shell integration events:
+/// The OSC number of Oxshift's own shell integration events:
 /// `ESC ] 7701 ; <payload> BEL`. The payload is up to the integration
 /// scripts.
 pub const OWN_OSC: &str = "7701";
@@ -27,7 +27,7 @@ pub enum Sequence {
     WorkingDirectory(PathBuf),
     /// OSC 133.
     Mark(MarkKind),
-    /// Pyoxide's own event ([`OWN_OSC`]) with its payload.
+    /// Oxshift's own event ([`OWN_OSC`]) with its payload.
     Own(String),
 }
 

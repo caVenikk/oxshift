@@ -32,7 +32,7 @@ pub enum Shortcut {
     /// Keystrokes in GPUI's syntax (`ctrl-shift-d`, `ctrl-k ctrl-c`,
     /// `shift shift`, `button4`).
     Keys(String),
-    /// A shortcut Pyoxide cannot bind (a mouse click with modifiers, a
+    /// A shortcut Oxshift cannot bind (a mouse click with modifiers, a
     /// key it does not know), as the file writes it.
     Unsupported(String),
 }
@@ -170,7 +170,7 @@ impl ReferenceKeymap {
 
 /// A Java `KeyStroke` text of the reference (`shift ctrl D`,
 /// `meta BACK_QUOTE`, `alt pressed F7`) in GPUI's syntax (`ctrl-shift-d`,
-/// `cmd-\``, `alt-f7`); `None` for a key Pyoxide cannot bind. Shift with a
+/// `cmd-\``, `alt-f7`); `None` for a key Oxshift cannot bind. Shift with a
 /// symbol or digit is the shifted character of a US layout, as GPUI
 /// reports it (`shift ctrl CLOSE_BRACKET` is `ctrl-}`).
 pub fn java_keystroke(text: &str) -> Option<String> {
@@ -273,9 +273,9 @@ fn us_shifted(key: &str) -> Option<&'static str> {
     })
 }
 
-/// The Pyoxide keymap a keymap of the reference names as its parent, and
+/// The Oxshift keymap a keymap of the reference names as its parent, and
 /// whether it only approximates it (the Linux keymaps and the classic
-/// macOS keymap, which Pyoxide does not have).
+/// macOS keymap, which Oxshift does not have).
 pub fn builtin_parent(reference: &str) -> Option<(&'static str, bool)> {
     Some(match reference {
         "$default" => (WINDOWS_NAME, false),
@@ -288,7 +288,7 @@ pub fn builtin_parent(reference: &str) -> Option<(&'static str, bool)> {
     })
 }
 
-/// The shortcuts of an action Pyoxide does not have.
+/// The shortcuts of an action Oxshift does not have.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Unmapped {
     pub action: String,
@@ -300,9 +300,9 @@ pub struct Unmapped {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Converted {
     pub derived: Derived,
-    /// Actions with shortcuts that Pyoxide does not have.
+    /// Actions with shortcuts that Oxshift does not have.
     pub unmapped: Vec<Unmapped>,
-    /// Shortcuts of mapped actions that Pyoxide cannot bind: `id: text`.
+    /// Shortcuts of mapped actions that Oxshift cannot bind: `id: text`.
     pub unsupported: Vec<String>,
 }
 
@@ -334,7 +334,7 @@ pub fn display_keys(keys: &str) -> String {
 }
 
 /// Converts `keymap` into a derived keymap named `name` on top of the
-/// Pyoxide keymap `parent`: each mapped action's shortcuts become the
+/// Oxshift keymap `parent`: each mapped action's shortcuts become the
 /// bindings of its commands, in their contexts.
 pub fn convert(
     keymap: &ReferenceKeymap,
@@ -446,7 +446,7 @@ mod tests {
     <keyboard-gesture-shortcut keystroke="shift SHIFT" modifier="dblClick"/>
   </action>
   <action id="EditorDeleteLine"/>
-  <action id="NotInPyoxide">
+  <action id="NotInOxshift">
     <keyboard-shortcut first-keystroke="meta alt J"/>
   </action>
   <action id="EditorDuplicate">
@@ -506,7 +506,7 @@ mod tests {
         assert_eq!(
             converted.unmapped,
             vec![Unmapped {
-                action: "NotInPyoxide".into(),
+                action: "NotInOxshift".into(),
                 shortcuts: vec![if mac { "⌥⌘J" } else { "Alt+Win+J" }.into()]
             }]
         );

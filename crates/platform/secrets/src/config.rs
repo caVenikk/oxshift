@@ -6,9 +6,9 @@
 //! ```toml
 //! store = "keepass"              # keychain (default) | keepass | memory
 //! [keepass]
-//! path = "~/secrets/pyoxide.kdbx"
+//! path = "~/secrets/oxshift.kdbx"
 //! master_password = "keychain"   # keychain (default) | env | prompt
-//! key_file = "~/secrets/pyoxide.key"   # optional
+//! key_file = "~/secrets/oxshift.key"   # optional
 //! create = true                  # create the database if it is missing
 //! ```
 //!
@@ -339,9 +339,9 @@ mod tests {
     const SAMPLE: &str = r#"
 store = "keepass"
 [keepass]
-path = "/srv/secrets/pyoxide.kdbx"
+path = "/srv/secrets/oxshift.kdbx"
 master_password = "env"
-key_file = "~/pyoxide.key"
+key_file = "~/oxshift.key"
 create = true
 "#;
 
@@ -351,10 +351,10 @@ create = true
         assert_eq!(c.store, StoreKind::KeePass);
         let kp = c.keepass.as_ref().unwrap();
         assert_eq!(kp.master_password, MasterPasswordSource::Env);
-        assert_eq!(kp.db_path(), PathBuf::from("/srv/secrets/pyoxide.kdbx"));
+        assert_eq!(kp.db_path(), PathBuf::from("/srv/secrets/oxshift.kdbx"));
         assert_eq!(
             kp.key_file_path().unwrap(),
-            dirs::home_dir().unwrap().join("pyoxide.key")
+            dirs::home_dir().unwrap().join("oxshift.key")
         );
         assert!(kp.create);
         assert_eq!(SecretsConfig::parse(&c.to_toml().unwrap()).unwrap(), c);
@@ -386,7 +386,7 @@ create = true
     #[test]
     fn load_and_save() {
         let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("pyoxide").join("secrets.toml");
+        let path = dir.path().join("oxshift").join("secrets.toml");
         assert_eq!(
             SecretsConfig::load(&path).unwrap(),
             SecretsConfig::default()

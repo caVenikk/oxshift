@@ -4,7 +4,7 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-/// Prefix of the type of a configuration that Pyoxide keeps from the
+/// Prefix of the type of a configuration that Oxshift keeps from the
 /// reference IDE without supporting it: `idea:tests` for the reference's
 /// pytest configurations.
 pub const UNSUPPORTED_PREFIX: &str = "idea:";
@@ -83,7 +83,7 @@ impl fmt::Debug for EnvVar {
     }
 }
 
-/// A task to run before launch, kept as the reference wrote it: Pyoxide
+/// A task to run before launch, kept as the reference wrote it: Oxshift
 /// stores and shows these but does not run them yet.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BeforeLaunchTask {
@@ -94,7 +94,7 @@ pub struct BeforeLaunchTask {
     pub xml: String,
 }
 
-/// A configuration of a type Pyoxide does not support yet, kept from the
+/// A configuration of a type Oxshift does not support yet, kept from the
 /// reference as it was written.
 #[derive(Clone, PartialEq, Eq)]
 pub struct Reference {
@@ -102,7 +102,7 @@ pub struct Reference {
     pub type_id: String,
     pub factory: Option<String>,
     /// The type's name in the reference (`Python tests`); `None` for a
-    /// type Pyoxide does not know (listed last, as the reference lists
+    /// type Oxshift does not know (listed last, as the reference lists
     /// configurations of unknown types).
     pub type_name: Option<String>,
     /// The `<configuration>` element, byte for byte.
@@ -152,12 +152,12 @@ pub struct RunConfiguration {
     pub edit_before_run: bool,
     /// The name was generated from the context (`nameIsGenerated`).
     pub name_is_generated: bool,
-    /// For a type Pyoxide does not support: the reference's configuration.
+    /// For a type Oxshift does not support: the reference's configuration.
     pub reference: Option<Reference>,
     /// Keys of the stored form this version does not know, kept as they
     /// are.
     pub extra: toml::Table,
-    /// Stored by a newer version of Pyoxide: shown, never written.
+    /// Stored by a newer version of Oxshift: shown, never written.
     pub newer: bool,
 }
 
@@ -270,7 +270,7 @@ impl RunConfiguration {
 /// registers Shell Script, the Python product registers Python.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TypeInfo {
-    /// Pyoxide's id (`python`), as stored.
+    /// Oxshift's id (`python`), as stored.
     pub id: &'static str,
     /// The type's name in lists and the dialog (`Python`).
     pub name: &'static str,

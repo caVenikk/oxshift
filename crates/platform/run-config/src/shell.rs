@@ -19,7 +19,7 @@ use crate::{params, paths};
 /// the script text with the default shell (`<shell> -c <text>`); the
 /// working directory (the project folder when empty); the system
 /// environment and the configuration's variables. The reference passes
-/// the variables to a script text only in the terminal; Pyoxide passes
+/// the variables to a script text only in the terminal; Oxshift passes
 /// them in both modes. Running in the terminal comes with the terminal.
 pub fn command_line(config: &RunConfiguration, root: &Path) -> Result<CommandLine, String> {
     let text = |k: &str| config.str_option(k).to_owned();
@@ -72,7 +72,7 @@ fn default_shell() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from("/bin/sh"))
 }
 
-/// Pyoxide's id of the type.
+/// Oxshift's id of the type.
 pub const TYPE_ID: &str = "shell-script";
 /// The reference's id and display name of the type.
 pub const REFERENCE_ID: &str = "ShConfigurationType";
@@ -99,7 +99,7 @@ pub mod key {
     pub const INTERPRETER: &str = "interpreter";
     pub const INTERPRETER_OPTIONS: &str = "interpreter-options";
     /// Run in the terminal (`EXECUTE_IN_TERMINAL`, default on); kept
-    /// until Pyoxide has an integrated terminal.
+    /// until Oxshift has an integrated terminal.
     pub const EXECUTE_IN_TERMINAL: &str = "execute-in-terminal";
 }
 

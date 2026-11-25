@@ -1,4 +1,4 @@
-//! The debugger model of Pyoxide IDE without a UI toolkit (ADR 0015), as
+//! The debugger model of Oxshift Python IDE without a UI toolkit (ADR 0015), as
 //! the reference's XDebugger keeps it:
 //!
 //! - [`Debugger`]: one project's breakpoints, watches and mute state and

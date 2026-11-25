@@ -151,7 +151,7 @@ fn a_console_runs_the_statement_at_the_caret_and_logs_it(cx: &mut TestAppContext
     // Only the statement at the caret ran.
     assert!(!log.contains("select 3"), "{log}");
     assert_eq!(s["tabs"].as_array().unwrap().len(), 1, "{s}");
-    assert_eq!(s["tabs"][0]["title"], "pyoxide.demo.customers", "{s}");
+    assert_eq!(s["tabs"][0]["title"], "oxshift.demo.customers", "{s}");
     assert_eq!(s["tabs"][0]["grid"]["rows"], 3, "{s}");
     assert_eq!(s["tabs"][0]["grid"]["columns"][0]["name"], "id", "{s}");
 
@@ -616,7 +616,7 @@ fn execute_in_an_attached_file_runs_that_files_statement_in_its_own_session(
     let log = output(&all[1]);
     assert!(log.contains("3 rows retrieved starting from 1 in"), "{log}");
     assert!(!log.contains("nope"), "{log}");
-    assert_eq!(all[1]["tabs"][0]["title"], "pyoxide.demo.customers");
+    assert_eq!(all[1]["tabs"][0]["title"], "oxshift.demo.customers");
     assert_eq!(all[1]["tabs"][0]["grid"]["rows"], 3);
     assert!(services_visible(&mut h));
 

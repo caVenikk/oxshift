@@ -1,4 +1,4 @@
-//! Running Python in Pyoxide IDE, as the reference's "Current File" run and
+//! Running Python in Oxshift Python IDE, as the reference's "Current File" run and
 //! its Python run configurations do (`PythonRunConfiguration`,
 //! `PythonCommandLineState`).
 //!

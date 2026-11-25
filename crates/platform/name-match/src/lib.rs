@@ -1,4 +1,4 @@
-//! Name matching of Pyoxide IDE, as the reference IDE matches names in Go
+//! Name matching of Oxshift Python IDE, as the reference IDE matches names in Go
 //! to File, Go to Action and speed search: a pattern such as `nut`,
 //! `NaUT`, `*util*` or `na ut` finds `NameUtilTest` by its words (camel
 //! humps, `_`, `-`, `.` and spaces), and a matching degree ranks the names

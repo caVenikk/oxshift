@@ -1,6 +1,6 @@
 [package]
 name = "editor"
-description = "Code editor of Pyoxide IDE on GPUI: virtualized line painting, carets, selections, clipboard, undo and input methods"
+description = "Code editor of Oxshift Python IDE on GPUI: virtualized line painting, carets, selections, clipboard, undo and input methods"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

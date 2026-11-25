@@ -1,4 +1,4 @@
-//! The version control model of Pyoxide IDE (ADR 0016), without a backend
+//! The version control model of Oxshift Python IDE (ADR 0016), without a backend
 //! and without a UI toolkit: what the project tree, the editor tabs, the
 //! gutter markers, the Commit tool window and the branch widget show.
 //!

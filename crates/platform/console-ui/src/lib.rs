@@ -1,4 +1,4 @@
-//! The console view of Pyoxide IDE on GPUI (ADR 0007, 0015), shared by the
+//! The console view of Oxshift Python IDE on GPUI (ADR 0007, 0015), shared by the
 //! Run tool window and the Console tab of a debug session:
 //!
 //! - [`ConsoleView`]: the `console` crate's text model shown in a read-only

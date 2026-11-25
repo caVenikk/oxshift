@@ -439,7 +439,7 @@ pub(crate) struct Gear {
 /// The gear's menu, in the reference's order (`SettingsEntryPointAction`
 /// with `SettingsEntryPointGroup`: update actions, Run Anything…,
 /// Settings…, Plugins…, Theme…, Keymap…, View Mode…, Customize Main
-/// Toolbar). Only what Pyoxide has is listed. Theme… and Keymap… open
+/// Toolbar). Only what Oxshift has is listed. Theme… and Keymap… open
 /// their popups.
 pub fn gear_menu() -> Vec<MenuItem> {
     vec![

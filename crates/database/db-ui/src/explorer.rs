@@ -79,7 +79,7 @@ ui::ui_commands! {
     /// Select a data source in the tool window.
     SelectDataSource { name: String } => "db.explorer.select", "Select Data Source",
         "Selects the data source `name` in the Database tool window.",
-        r#"{"name": "pyoxide-local"}"#;
+        r#"{"name": "oxshift-local"}"#;
     /// Refresh the selected data source's metadata.
     Refresh => "db.explorer.refresh", "Refresh",
         "Reads the metadata of the data source selected in the Database tool window again (its introspection scope) and shows it in the tree; the tree keeps the previous model until the new one is complete.";
@@ -89,11 +89,11 @@ ui::ui_commands! {
     /// Open nodes of the tree.
     Expand { path: String } => "db.explorer.expand", "Expand",
         "Opens every node along `path` in the Database tool window's tree and selects the last: the rows' texts from the data source down, joined by `/`. Opening a node reads the local model, never the database; opening a data source the first time shows its cached model, or reads it when there is none.",
-        r#"{"path": "pyoxide-local/pyoxide/demo/tables"}"#;
+        r#"{"path": "oxshift-local/oxshift/demo/tables"}"#;
     /// Close a node of the tree.
     Collapse { path: String } => "db.explorer.collapse", "Collapse",
         "Closes the node at `path` in the Database tool window's tree (see db.explorer.expand).",
-        r#"{"path": "pyoxide-local/pyoxide/demo"}"#;
+        r#"{"path": "oxshift-local/oxshift/demo"}"#;
     /// Open every node of the tree.
     ExpandAll => "db.explorer.expand-all", "Expand All",
         "Opens every node of the Database tool window's tree that is loaded (the local model is read, never the database).";

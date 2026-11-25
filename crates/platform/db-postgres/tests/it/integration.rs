@@ -10,7 +10,7 @@
 //!
 //! Address and credentials come from `OXSHIFT_TEST_PG_HOST` (default
 //! `localhost`), `OXSHIFT_TEST_PG_PORT` (default `55432`) and
-//! `OXSHIFT_DB_PASSWORD` (default `pyoxide`). Every test creates objects with
+//! `OXSHIFT_DB_PASSWORD` (default `oxshift`). Every test creates objects with
 //! a unique `pxpg_<test>` prefix and drops them again.
 //!
 //! The TLS tests against a TLS-enabled server only run when
@@ -19,7 +19,7 @@
 //! certificate must be valid for `localhost` and `127.0.0.1`. The mutual TLS
 //! test also needs `OXSHIFT_TEST_PG_TLS_CLIENT_CERT` and
 //! `OXSHIFT_TEST_PG_TLS_CLIENT_KEY` for a role that the server maps to the
-//! certificate (`OXSHIFT_TEST_PG_TLS_CLIENT_USER`, default `pyoxide_cert`,
+//! certificate (`OXSHIFT_TEST_PG_TLS_CLIENT_USER`, default `oxshift_cert`,
 //! with a `hostssl ... cert` rule in `pg_hba.conf`).
 
 use std::sync::Arc;
@@ -41,9 +41,9 @@ fn params() -> ConnectParams {
     ConnectParams {
         host: env_or("TEST_PG_HOST", "localhost"),
         port: env_or("TEST_PG_PORT", "55432").parse().expect("port"),
-        database: "pyoxide".into(),
-        user: "pyoxide".into(),
-        password: Secret::new(env_or("DB_PASSWORD", "pyoxide")),
+        database: env_or("PG_DATABASE", "oxshift"),
+        user: env_or("DB_USER", "oxshift"),
+        password: Secret::new(env_or("DB_PASSWORD", "oxshift")),
         ..Default::default()
     }
 }
@@ -1270,8 +1270,8 @@ async fn unreachable_servers_are_network_errors() {
     let p = ConnectParams {
         host: "127.0.0.1".into(),
         port,
-        user: "pyoxide".into(),
-        database: "pyoxide".into(),
+        user: env_or("DB_USER", "oxshift"),
+        database: env_or("PG_DATABASE", "oxshift"),
         password: Secret::new("pw-for-closed-port"),
         connect_timeout: Duration::from_secs(3),
         ..Default::default()
@@ -1306,8 +1306,8 @@ async fn a_silent_server_hits_the_connect_timeout() {
     let p = ConnectParams {
         host: "127.0.0.1".into(),
         port,
-        user: "pyoxide".into(),
-        database: "pyoxide".into(),
+        user: env_or("DB_USER", "oxshift"),
+        database: env_or("PG_DATABASE", "oxshift"),
         connect_timeout: Duration::from_secs(1),
         ..Default::default()
     };
@@ -1422,7 +1422,7 @@ async fn mutual_tls_with_a_client_certificate() {
         eprintln!("skipped: the OXSHIFT_TEST_PG_TLS_* variables are not set");
         return;
     };
-    let user = env_or("TEST_PG_TLS_CLIENT_USER", "pyoxide_cert");
+    let user = env_or("TEST_PG_TLS_CLIENT_USER", "oxshift_cert");
     let mut p = params();
     p.port = port.parse().expect("TLS port");
     p.user = user.clone();

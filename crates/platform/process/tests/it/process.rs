@@ -177,7 +177,7 @@ fn environment_and_working_directory() {
 
 #[test]
 fn a_missing_program_is_an_error() {
-    let err = spawn(&CommandLine::new("pyoxide-no-such-program-here")).unwrap_err();
+    let err = spawn(&CommandLine::new("oxshift-no-such-program-here")).unwrap_err();
     assert_eq!(err.kind(), std::io::ErrorKind::NotFound);
 }
 

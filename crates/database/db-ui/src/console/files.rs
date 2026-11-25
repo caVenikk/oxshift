@@ -52,7 +52,7 @@ mod tests {
 
     #[test]
     fn a_data_source_name_is_a_safe_folder_name() {
-        assert_eq!(folder_name("pyoxide-local"), "pyoxide-local");
+        assert_eq!(folder_name("oxshift-local"), "oxshift-local");
         assert_eq!(folder_name("a/b:c"), "a_b_c");
         assert_eq!(folder_name(".."), "_");
     }

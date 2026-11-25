@@ -1,4 +1,4 @@
-//! Pyoxide's shell integration (ADR 0014): scripts for zsh, bash, fish and
+//! Oxshift's shell integration (ADR 0014): scripts for zsh, bash, fish and
 //! PowerShell that read the user's startup files as the shell would, then
 //! source the scripts customizers ask for (a virtual environment's
 //! `activate`) before the first prompt, and report the working directory
@@ -190,7 +190,7 @@ fn write_atomic(path: &Path, bytes: &[u8]) -> io::Result<()> {
     result
 }
 
-/// Whether Pyoxide has an integration for the shell: zsh, bash, fish,
+/// Whether Oxshift has an integration for the shell: zsh, bash, fish,
 /// PowerShell, and `sh` on macOS (bash there).
 pub fn supports(kind: ShellKind, os: Os) -> bool {
     match kind {

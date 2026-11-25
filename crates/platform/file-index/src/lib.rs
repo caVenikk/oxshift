@@ -1,4 +1,4 @@
-//! File name index of Pyoxide IDE and Go to File.
+//! File name index of Oxshift Python IDE and Go to File.
 //!
 //! [`FileIndex`] holds every file and folder of a project by name. It is
 //! built by one parallel walk of the project with the project tree's rules

@@ -1,6 +1,6 @@
 [package]
 name = "db-core"
-description = "Backend-agnostic database client interface for Pyoxide IDE"
+description = "Backend-agnostic database client interface for Oxshift Python IDE"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

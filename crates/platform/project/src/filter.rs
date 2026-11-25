@@ -2,7 +2,7 @@
 //!
 //! Hidden entries never appear in the tree and are never searched: the
 //! reference IDE's default list of ignored files and folders (version
-//! control folders, byte code, tool caches, backup files) and Pyoxide's own
+//! control folders, byte code, tool caches, backup files) and Oxshift's own
 //! project folder ([`store_dir`]).
 //!
 //! Excluded entries stay in the tree, marked, are not expanded on their own,

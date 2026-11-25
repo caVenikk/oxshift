@@ -1,4 +1,4 @@
-//! Python language services of Pyoxide IDE (ADR 0010, 0011): which servers
+//! Python language services of Oxshift Python IDE (ADR 0010, 0011): which servers
 //! run for a project (ruff, and ty or basedpyright as the type server),
 //! where their executables are, how they are configured, and the one-time
 //! import of the reference's tool settings from `.idea`.

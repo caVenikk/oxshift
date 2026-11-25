@@ -4,7 +4,7 @@
 # app-info) for what the platform learns at startup. This check fails on the
 # name anywhere else in the code of crates/:
 #
-# - "Pyoxide" / "Oxshift" (case-insensitive: display names, slugs, environment
+# - "Oxshift" (case-insensitive: display names, slugs, environment
 #   variable names, keychain services, folder names) in a string, a name or
 #   a non-comment line of a data file;
 # - not in comments and doc comments (a sweep of those is part of a rebrand,
@@ -37,17 +37,17 @@ BRAND_DIR = "crates/python/brand/"
 ALLOW = [
     (
         "crates/database/db-ui/src/store.rs",
-        r'"pyoxide"',
+        r'"oxshift"',
         "the fake data source's database name, a fixture that mirrors the development database",
     ),
     (
         "crates/database/db-ui/src/dialog/mod.rs",
-        r"pyoxide-local",
+        r"oxshift-local",
         "a data source name in a command example",
     ),
     (
         "crates/database/db-ui/src/explorer.rs",
-        r"pyoxide-local(?:/pyoxide)?",
+        r"oxshift-local(?:/oxshift)?",
         "a data source name in a command example",
     ),
 ]
@@ -205,27 +205,29 @@ def self_test() -> None:
     def rs(src: str) -> list[int]:
         return [no for no, _ in rust_findings(src)]
 
+    # Retired names remain forbidden in production code.
     assert rs('let a = "pyoxide";') == [1]
+    assert rs('let a = "oxshift";') == [1]
     assert rs('let a = "Oxshift Python";') == [1]
     assert rs('let a = "OXSHIFT_CONFIG_DIR";') == [1]
-    assert rs('let a = "Oxshift"; // pyoxide') == [1]
+    assert rs('let a = "Oxshift"; // oxshift') == [1]
     assert rs('// Oxshift Python\nfn f() {}') == []
     assert [no for no, _ in data_findings("# Oxshift Python\nname = 'Oxshift Python'\n")] == [2]
-    assert rs('let a = "x"; // pyoxide in a comment') == []
-    assert rs("/// the Pyoxide docs\nfn f() {}") == []
-    assert rs("/* pyoxide\n pyoxide */ let a = 1;\nlet b = \"OXSHIFT_X\";") == [3]
-    assert rs('let url = "https://github.com/x/pyoxide-ide";') == [1]
-    assert rs('let s = r#"say "Pyoxide""#;') == [1]
+    assert rs('let a = "x"; // oxshift in a comment') == []
+    assert rs("/// the Oxshift docs\nfn f() {}") == []
+    assert rs("/* oxshift\n oxshift */ let a = 1;\nlet b = \"OXSHIFT_X\";") == [3]
+    assert rs('let url = "https://github.com/x/oxshift-ide";') == [1]
+    assert rs('let s = r#"say "Oxshift""#;') == [1]
     assert rs("let c = '\"'; let d = \"ok\";") == []
     assert rs("fn f<'a>(x: &'a str) { oxshift_python::product(); }") == []
     assert rs('let text = "oxshift_python";') == [1]
-    assert rs('let a = 1;\n#[cfg(test)]\nmod tests { fn f() { "pyoxide"; } }') == []
+    assert rs('let a = 1;\n#[cfg(test)]\nmod tests { fn f() { "oxshift"; } }') == []
     assert rs('let a = concat!(env_prefix!(), "_X");') == []
-    assert [no for no, _ in data_findings("# Pyoxide keymap\nname = 'pyoxide'\n")] == [2]
-    assert allowed("crates/python/brand/src/lib.rs", "x pyoxide")
-    assert not allowed("crates/platform/ui/src/lib.rs", '"pyoxide"')
-    assert allowed("crates/database/db-ui/src/store.rs", 'vec!["pyoxide".into()]')
-    assert not allowed("crates/database/db-ui/src/store.rs", 'vec!["pyoxide", "Oxshift"]')
+    assert [no for no, _ in data_findings("# Oxshift keymap\nname = 'oxshift'\n")] == [2]
+    assert allowed("crates/python/brand/src/lib.rs", "x oxshift")
+    assert not allowed("crates/platform/ui/src/lib.rs", '"oxshift"')
+    assert allowed("crates/database/db-ui/src/store.rs", 'vec!["oxshift".into()]')
+    assert not allowed("crates/database/db-ui/src/store.rs", 'vec!["oxshift", "Oxshift"]')
 
 
 def main() -> int:

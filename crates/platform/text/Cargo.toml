@@ -1,6 +1,6 @@
 [package]
 name = "text"
-description = "Text buffer of Pyoxide IDE: rope storage, selections, edit transactions, undo and redo, line separator and encoding handling"
+description = "Text buffer of Oxshift Python IDE: rope storage, selections, edit transactions, undo and redo, line separator and encoding handling"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

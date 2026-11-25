@@ -1,9 +1,9 @@
-//! Application settings of Pyoxide IDE (ADR 0017).
+//! Application settings of Oxshift Python IDE (ADR 0017).
 //!
-//! One [`Store`] holds `<config dir>/pyoxide/settings.toml`: `version = 1`
+//! One [`Store`] holds `<config dir>/<profile>/settings.toml`: `version = 1`
 //! and tables by area (`[system.files]`, `[editor.font]`, `[terminal]`,
 //! ...). Areas read their options as typed [`Section`]s with defaults;
-//! keys and comments Pyoxide does not know survive, defaults are not
+//! keys and comments Oxshift does not know survive, defaults are not
 //! written, a file of a newer version is read and never rewritten, and a
 //! broken file falls back to the defaults and is not written over until a
 //! setting changes. Changes are saved by a [`SavePlan`] that reads the

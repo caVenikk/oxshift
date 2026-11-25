@@ -483,7 +483,7 @@ fn source_folders_of_the_reference_are_imported_once(cx: &mut TestAppContext) {
     let dir = tempfile::tempdir().unwrap();
     let root = native_path::canonicalize(dir.path()).unwrap();
     layout(&root);
-    // A project Pyoxide opened before (its exclusions are stored) and the
+    // A project Oxshift opened before (its exclusions are stored) and the
     // reference IDE marks folders in.
     std::fs::create_dir_all(root.join(".app")).unwrap();
     std::fs::write(
@@ -538,7 +538,7 @@ fn source_folders_of_the_reference_are_imported_once(cx: &mut TestAppContext) {
         t["roots"],
         json!({"sources": [".", "services/api", "src"], "tests": ["tests"]})
     );
-    // The exclusions stay Pyoxide's: `.idea`'s are not read again.
+    // The exclusions stay Oxshift's: `.idea`'s are not read again.
     assert_eq!(t["exclusions"], json!(["app/static"]));
     let text = settings(&root).unwrap();
     assert!(text.contains("[roots]"), "{text}");

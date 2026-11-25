@@ -184,8 +184,8 @@ fn pg() -> Harness {
     let params = ConnectParams {
         host: env("TEST_PG_HOST", "localhost"),
         port: env("TEST_PG_PORT", "55432").parse().expect("port"),
-        database: "pyoxide".into(),
-        user: "pyoxide".into(),
+        database: env("PG_DATABASE", "oxshift"),
+        user: env("DB_USER", "oxshift"),
         password: password(),
         ..ConnectParams::default()
     };
@@ -308,7 +308,7 @@ fn oracle_reads_one_cell_by_the_rows_key() {
         host: env("TEST_ORACLE_HOST", "localhost"),
         port: env("TEST_ORACLE_PORT", "1521").parse().unwrap_or(1521),
         database: env("TEST_ORACLE_SERVICE", "FREEPDB1"),
-        user: "pyoxide".into(),
+        user: env("DB_USER", "oxshift"),
         password: password(),
         ..ConnectParams::default()
     };
@@ -345,7 +345,7 @@ fn oracle_pages_with_offset_and_fetch() {
         host: env("TEST_ORACLE_HOST", "localhost"),
         port: env("TEST_ORACLE_PORT", "1521").parse().unwrap_or(1521),
         database: env("TEST_ORACLE_SERVICE", "FREEPDB1"),
-        user: "pyoxide".into(),
+        user: env("DB_USER", "oxshift"),
         password: password(),
         ..ConnectParams::default()
     };

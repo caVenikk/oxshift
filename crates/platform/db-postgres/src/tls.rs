@@ -330,7 +330,7 @@ mod tests {
         ca_params.key_usages = vec![KeyUsagePurpose::KeyCertSign];
         ca_params
             .distinguished_name
-            .push(DnType::CommonName, "pyoxide test CA");
+            .push(DnType::CommonName, "oxshift test CA");
         let ca = ca_params.self_signed(&ca_key).unwrap();
 
         let leaf_key = KeyPair::generate().unwrap();

@@ -51,7 +51,7 @@ ui::ui_commands! {
     COMMANDS, scope = "FirstRun";
     /// Import a configuration folder.
     ImportFrom { folder: Option<String> } => "first-run.import", "Import Settings",
-        "Imports the reference IDE's settings from a configuration folder found (by its name, `PyCharm2026.2`, or its path; without one the newest); the window then closes.",
+        "Imports settings from a supported configuration folder found (by its name, `PyCharm2026.2`, or its path; without one the newest); the window then closes.",
         r#"{"folder": "PyCharm2026.2"}"#;
     /// Skip the import.
     SkipImport => "first-run.skip", "Skip Import",
@@ -82,7 +82,7 @@ ui::ui_commands! {
     WORKBENCH_COMMANDS, scope = "Workbench";
     /// The import again.
     ImportReference => "settings.import-reference", "Import Settings\u{2026}",
-        "Opens the first-run window over the main window, modal to it: import the reference IDE's settings from a configuration folder, or skip.";
+        "Opens the first-run window over the main window, modal to it: import settings from the selected configuration folder, or skip.";
 }
 
 /// The window's size (`OnboardingDialog`: 640 by 467).

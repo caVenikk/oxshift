@@ -1,0 +1,27 @@
+## @PRODUCT_NAME@ @VERSION@
+
+This is a pre-alpha build. See the [release guide](https://github.com/@REPOSITORY@/blob/@TAG@/docs/release.md)
+for supported systems, installation and known limitations. Check downloaded files
+against `SHA256SUMS` before installing.
+
+- macOS arm64 / Intel: `@SLUG@-@VERSION@-macos-{aarch64,x86_64}.dmg` or `.tar.gz`.
+  Open the DMG and drag `@APP@` to Applications. Builds are ad hoc signed,
+  not notarized; Gatekeeper may require System Settings → Privacy & Security →
+  Open Anyway. The archive includes the same application bundle.
+- Windows x64: `@SLUG@-@VERSION@-windows-x86_64.setup.exe` offers current-user
+  and all-users installation; the latter requires administrator privileges.
+  The `.zip` includes a `data` directory for portable profiles; installers do
+  not. This does not isolate projects, external tools or Windows-managed data.
+  SmartScreen and enterprise policies can block unsigned applications.
+- Linux arm64 / x64: `.tar.gz`, `.deb`, and `.AppImage` packages built on Ubuntu
+  24.04. These need the native graphics libraries listed in the release guide;
+  the AppImage is not a promise of compatibility with every distribution.
+
+The application is `@IDE@`. Python tooling and its debugpy helper ship only with
+the Python product. `install-@SLUG@.sh` is an inspectable checksum-checking user
+installer for the tar archive; `@SLUG@.rb` is a Homebrew formula template rendered
+for this release. No Homebrew tap is published automatically.
+
+Preview workflow artifacts are for testing. Creation of a draft release and its
+publication are separate maintainer steps after cross-platform checks and build
+acceptance. No auto-update or unattended migration is included.

@@ -6,6 +6,11 @@ on:
     # ready_for_review: a draft that becomes ready gets its full run.
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft, edited]
   workflow_dispatch:
+    inputs:
+      desktop_preview:
+        description: Build downloadable desktop packages only
+        type: boolean
+        default: false
 
 # One run per pull request: a new push cancels the run of the one before
 # instead of letting both finish. Runs on main are never cancelled.
@@ -14,8 +19,15 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  desktop-preview:
+    if: github.event_name == 'workflow_dispatch' && inputs.desktop_preview
+    permissions:
+      contents: read
+    uses: ./.github/workflows/desktop-packages.yml
+
   # The immutable plan binds every job to the live PR base/head pair.
   scope:
+    if: github.event_name != 'workflow_dispatch' || !inputs.desktop_preview
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -178,7 +190,7 @@ jobs:
       - name: doctests
         run: bash scripts/check.sh --plan .ci-plan.json doc
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && (github.event_name != 'workflow_dispatch' || !inputs.desktop_preview)
         with:
           name: junit-${{ matrix.os }}
           overwrite: true
@@ -204,6 +216,7 @@ jobs:
           if-no-files-found: error
 
   progress:
+    if: github.event_name != 'workflow_dispatch' || !inputs.desktop_preview
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -292,7 +305,7 @@ jobs:
   # `oxshift-db diagnose` on a machine without a Rust toolchain.
   binaries:
     name: binaries (${{ matrix.os }})
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || !inputs.desktop_preview)
     strategy:
       fail-fast: false
       matrix:

@@ -4,7 +4,31 @@
 use editor::{SyntaxHighlighter, WrapCondition, WrapRule};
 use std::sync::Arc;
 use ui::icons::{IconName, IconSvg};
-use workbench::FileType;
+use workbench::{FileType, Product};
+
+/// Installs the shared syntax defaults after product modules have registered
+/// their enhanced file types. Existing types and icons win by name, and their
+/// order and file associations stay unchanged. The SQL factory is supplied by
+/// the product so the language pack does not depend on the database module.
+pub fn with_shared_syntax(mut product: Product, sql_default: impl FnOnce() -> FileType) -> Product {
+    let mut missing: Vec<_> = file_types()
+        .into_iter()
+        .filter(|default| !product.file_types.iter().any(|ty| ty.name == default.name))
+        .collect();
+    if !product.file_types.iter().any(|ty| ty.name == "SQL") {
+        missing.push(sql_default());
+    }
+    missing.append(&mut product.file_types);
+    product.file_types = missing;
+
+    let mut missing_icons: Vec<_> = icons()
+        .into_iter()
+        .filter(|default| !product.icons.iter().any(|icon| icon.name == default.name))
+        .collect();
+    missing_icons.append(&mut product.icons);
+    product.icons = missing_icons;
+    product
+}
 
 /// File types with the grammars shipped by this pack.
 pub fn file_types() -> Vec<FileType> {

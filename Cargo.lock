@@ -5049,6 +5049,7 @@ dependencies = [
  "serde_json",
  "settings",
  "settings-ui",
+ "sql-highlight",
  "syntax-pack",
  "tempfile",
  "terminal",

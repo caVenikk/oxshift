@@ -1,2 +1,2 @@
 feature,area,priority,original,clone,notes
-"SQL syntax highlighting by dialect: keywords, literals, comments, tables, columns, aliases and schemas",db-gui,should,yes,yes,"Pro; lexical colours at once, names from a background parse (#321, ADR 0022)"
+"SQL syntax highlighting by dialect: keywords, literals, comments, tables, columns, aliases and schemas",db-gui,should,yes,yes,"Pro; shared lexical colours at once and names from a background parse (#321, ADR 0022); Oxshift uses generic SQL without database services, while Oxshift Python retains the Database module's dialect, context and execution hooks through common syntax composition"

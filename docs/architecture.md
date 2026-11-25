@@ -224,6 +224,10 @@ Shared language module (`crates/languages/`):
 - `py-syntax`: the Python grammar, highlight query and line lexer for `syntax`.
 - `syntax-pack`: syntax-only Python file types, editing rules and icons, composed
   by each desktop product independently of interpreter, run, debug and LSP tools.
+  `with_shared_syntax` installs missing Python and SQL defaults after product
+  modules, preserving their enhanced types, icons, order and file associations.
+  Products supply the SQL default factory to keep language and database modules
+  independent.
 
 The database module also provides `sql-highlight`: the shared SQL lexer and
 background tree highlighting. Its generic file type needs no database services;

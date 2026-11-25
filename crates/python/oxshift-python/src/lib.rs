@@ -216,18 +216,12 @@ pub fn launch() {
 
 /// The Python product for the workbench.
 pub fn product() -> Product {
-    Product {
+    let product = Product {
         name: brand::PRODUCT_NAME,
         app_info: brand::INFO,
-        file_types: syntax_pack::file_types()
-            .into_iter()
-            .chain(python_files())
-            .collect(),
+        file_types: python_files().into(),
         file_associations: FILE_ASSOCIATIONS.to_vec(),
-        icons: syntax_pack::icons()
-            .into_iter()
-            .chain(ICONS.iter().copied())
-            .collect(),
+        icons: ICONS.to_vec(),
         left_stripe_bottom: vec![
             StripeItem {
                 id: "stripe-python-packages",
@@ -276,7 +270,8 @@ pub fn product() -> Product {
     }
     // The database module (ADR 0022): the Database tool window and the
     // data sources of the project.
-    .with_module(database::module())
+    .with_module(database::module());
+    syntax_pack::with_shared_syntax(product, sql_highlight::file_type)
 }
 
 /// The product with its language services finding tools only in the
@@ -311,6 +306,75 @@ fn welcome_tiles() -> Vec<workbench::welcome::WelcomeTile> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn shared_syntax_keeps_database_sql_and_standalone_defaults_distinct() {
+        let python = product();
+        let standalone =
+            syntax_pack::with_shared_syntax(Product::default(), sql_highlight::file_type);
+        for (product, key_context) in [
+            (&python, Some(db_ui::sql::KEY_CONTEXT)),
+            (&standalone, None),
+        ] {
+            let sql: Vec<_> = product
+                .file_types
+                .iter()
+                .filter(|ty| ty.name == "SQL")
+                .collect();
+            assert_eq!(sql.len(), 1);
+            assert_eq!(sql[0].language_id, Some("sql"));
+            assert_eq!(sql[0].key_context, key_context);
+            assert!(sql[0].highlighter.is_some());
+            assert_eq!(sql[0].decorator.is_some(), key_context.is_some());
+            assert_eq!(sql[0].context_menu.is_some(), key_context.is_some());
+            let py: Vec<_> = product
+                .file_types
+                .iter()
+                .filter(|ty| ty.name == "Python")
+                .collect();
+            assert_eq!(py.len(), 1);
+            assert_eq!(py[0].language_id, Some("python"));
+            assert_eq!(py[0].key_context, None);
+            assert!(py[0].highlighter.is_some());
+        }
+        assert_eq!(
+            python
+                .file_types
+                .iter()
+                .take(3)
+                .map(|ty| ty.name)
+                .collect::<Vec<_>>(),
+            ["Python", "Requirements", "PyTyped"]
+        );
+        assert_eq!(python.file_associations.len(), FILE_ASSOCIATIONS.len());
+        for (actual, expected) in python
+            .file_associations
+            .iter()
+            .zip(FILE_ASSOCIATIONS.iter())
+        {
+            assert_eq!(actual.mask, expected.mask);
+            assert_eq!(actual.file_type, expected.file_type);
+        }
+        let names: Vec<_> = python.file_types.iter().map(|ty| ty.name).collect();
+        let icon_names: Vec<_> = python.icons.iter().map(|icon| icon.name).collect();
+        let reapplied = syntax_pack::with_shared_syntax(python, || panic!("existing SQL must win"));
+        assert_eq!(
+            reapplied
+                .file_types
+                .iter()
+                .map(|ty| ty.name)
+                .collect::<Vec<_>>(),
+            names
+        );
+        assert_eq!(
+            reapplied
+                .icons
+                .iter()
+                .map(|icon| icon.name)
+                .collect::<Vec<_>>(),
+            icon_names
+        );
+    }
 
     #[test]
     fn source_roots_as_the_reference_marks_them() {

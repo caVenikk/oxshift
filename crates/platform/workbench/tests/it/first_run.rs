@@ -290,6 +290,55 @@ fn neutral_product_does_not_detect_or_brand_pycharm(cx: &mut TestAppContext) {
     h.cx.update(|cx| {
         assert!(!first_run::supports_pycharm(cx));
         assert!(!ui::icons::exists(cx, ui::IconName("import/pycharm")));
+        let commands = ui::command::list(cx);
+        assert!(
+            !commands
+                .iter()
+                .any(|c| c.meta.id == "settings.import-reference")
+        );
+        assert!(
+            commands
+                .iter()
+                .any(|c| c.meta.id == "settings.import-theme")
+        );
+        assert!(
+            commands
+                .iter()
+                .any(|c| c.meta.id == "settings.import-keymap")
+        );
+        let window = workbench::open_main_window(cx, Rc::new(Product::default()));
+        window
+            .update(cx, |_, window, cx| {
+                first_run::open_over(
+                    window,
+                    Start {
+                        title: "Test IDE".into(),
+                        reference_root: None,
+                        activate: false,
+                    },
+                    cx,
+                );
+            })
+            .unwrap();
+    });
+    h.settle();
+    assert!(h.window().is_none());
+}
+
+#[gpui::test]
+fn a_product_import_source_registers_after_platform_initialization(cx: &mut TestAppContext) {
+    let product = Product {
+        init: vec![workbench::Init::new(first_run::enable_pycharm)],
+        ..Product::default()
+    };
+    cx.update(|cx| {
+        workbench::init(cx, &product);
+        assert!(first_run::supports_pycharm(cx));
+        assert!(
+            ui::command::list(cx)
+                .iter()
+                .any(|c| c.meta.id == "settings.import-reference")
+        );
     });
 }
 

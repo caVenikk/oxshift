@@ -128,7 +128,8 @@ pub struct Product {
     /// workbench's.
     pub keymaps: Vec<KeymapFiles>,
     /// Runs files of the product's languages (the run widget, the Run tool
-    /// window and the `run.*` commands); without it nothing can be run.
+    /// window and the `run.*` commands); without it only the platform's
+    /// Shell Script configurations can run.
     pub run: Option<RunHook>,
     /// Language services of the product's languages and its modules'
     /// (ADR 0010, 0022), the product's first: editor tabs of file types

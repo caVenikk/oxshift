@@ -27,10 +27,12 @@ CRATES = ROOT / "crates"
 NAME = re.compile(r"pyoxide|oxshift", re.IGNORECASE)
 # Rust paths of the product crates (`oxshift_python::product()`): a crate name,
 # renamed with its package.
-CRATE_PATH = re.compile(r"\boxshift_(?:python|cli|db)(?=::)")
+CRATE_PATH = re.compile(r"\boxshift_(?:python|platform|cli|db)(?=::)")
 
 # The brand module: the one place the name is spelled out.
 BRAND_DIR = "crates/python/brand/"
+# The standalone host owns its identity in one exact file.
+BRAND_FILES = {"crates/desktop/oxshift-platform/src/brand.rs"}
 
 # Allowed occurrences: (path prefix, regex matched against the offending
 # line, why). Keep this short: an entry is a name the product does not own.
@@ -165,7 +167,7 @@ def data_findings(text: str) -> list[tuple[int, str]]:
 
 
 def allowed(rel: str, line: str) -> bool:
-    if rel.startswith(BRAND_DIR):
+    if rel.startswith(BRAND_DIR) or rel in BRAND_FILES:
         return True
     return any(
         rel.startswith(p) and re.search(rx, line) and not NAME.search(re.sub(rx, "", line))
@@ -225,6 +227,11 @@ def self_test() -> None:
     assert rs('let a = concat!(env_prefix!(), "_X");') == []
     assert [no for no, _ in data_findings("# Oxshift keymap\nname = 'oxshift'\n")] == [2]
     assert allowed("crates/python/brand/src/lib.rs", "x oxshift")
+    assert allowed("crates/desktop/oxshift-platform/src/brand.rs", '"Oxshift"')
+    assert not allowed("crates/desktop/oxshift-platform/src/lib.rs", '"Oxshift"')
+    assert not allowed("crates/desktop/oxshift-platform/src/brand.rs.bak", '"Oxshift"')
+    assert rs("oxshift_platform::launch();") == []
+    assert rs('let text = "oxshift_platform";') == [1]
     assert not allowed("crates/platform/ui/src/lib.rs", '"oxshift"')
     assert allowed("crates/database/db-ui/src/store.rs", 'vec!["oxshift".into()]')
     assert not allowed("crates/database/db-ui/src/store.rs", 'vec!["oxshift", "Oxshift"]')

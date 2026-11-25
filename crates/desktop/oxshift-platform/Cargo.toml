@@ -1,0 +1,18 @@
+[package]
+name = "oxshift-platform"
+description = "Oxshift standalone desktop workbench"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[features]
+default = ["runtime-shaders"]
+runtime-shaders = ["gpui/runtime_shaders"]
+
+[dependencies]
+app-info.workspace = true
+gpui.workspace = true
+ui.workspace = true
+workbench.workspace = true

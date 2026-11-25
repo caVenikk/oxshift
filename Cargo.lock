@@ -5003,6 +5003,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxshift-platform"
+version = "0.0.1"
+dependencies = [
+ "app-info",
+ "gpui",
+ "ui",
+ "workbench",
+]
+
+[[package]]
 name = "oxshift-python"
 version = "0.0.1"
 dependencies = [

@@ -51,6 +51,7 @@ members = [
     "crates/database/db-session",
     "crates/database/sql-intel",
     "crates/database/db-ui",
+    "crates/desktop/oxshift-platform",
     "crates/python/brand",
     "crates/python/oxshift-db",
     "crates/python/py-debug",

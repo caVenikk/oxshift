@@ -50,8 +50,8 @@ still override the default. CLI database profiles and the secret-store
 configuration retain their own overrides, `OXSHIFT_DB_PROFILES` and
 `OXSHIFT_SECRETS_CONFIG`.
 
-Built-in themes use `oxshift-dark` and `oxshift-light`; existing theme selections
-remain readable. Credential services are `oxshift-db` (OS keychain) and
+The base themes are `oxshift-dark` (Oxshift Python Dark) and
+`oxshift-light` (Oxshift Python Light). Credential services are `oxshift-db` (OS keychain) and
 `oxshift-keepass`, with KeePass group `Oxshift`. Signing uses Oxshift identifiers
 and the local certificate `Oxshift Local Dev` (see [Code signing](code-signing.md)).
 Credentials from the previous product identity are not moved automatically.

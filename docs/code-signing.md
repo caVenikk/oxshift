@@ -89,12 +89,16 @@ developer, as for any local build.
 
 Release binaries are signed with one Developer ID Application certificate,
 all of them (`oxshift-python`, `oxshift-db`, `oxshift`, and the `.app` bundle
-that holds them), with a fixed identifier each:
+that holds them), with a fixed identifier each. The bare IDE executable uses
+`oxshift-python`; the `Oxshift Python.app` bundle uses `dev.oxshift.python`:
 
 ```bash
 codesign --force --timestamp --options runtime \
   --sign "Developer ID Application: <Name> (<TEAMID>)" \
-  --identifier dev.oxshift.python --entitlements release.entitlements oxshift-python
+  --identifier oxshift-python --entitlements release.entitlements oxshift-python
+codesign --force --timestamp --options runtime \
+  --sign "Developer ID Application: <Name> (<TEAMID>)" \
+  --identifier dev.oxshift.python --entitlements release.entitlements "Oxshift Python.app"
 ```
 
 - The same certificate for every binary: the access list of an item names

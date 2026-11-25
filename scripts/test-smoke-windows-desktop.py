@@ -1,8 +1,11 @@
 import importlib.util
+import json
 from pathlib import Path
 import struct
 import tempfile
 import unittest
+from unittest.mock import patch
+import zipfile
 
 SPEC = importlib.util.spec_from_file_location('smoke', Path(__file__).with_name('smoke-windows-desktop.py'))
 smoke = importlib.util.module_from_spec(SPEC)
@@ -146,6 +149,40 @@ class WindowsSmokeFixtures(unittest.TestCase):
         (self.root / 'data/.oxshift-portable').unlink()
         with self.assertRaisesRegex(ValueError, 'marker'):
             smoke.inspect_package(self.root, '2026.1', 'skip')
+
+    def test_portable_runtime_reads_reports_from_data_not_config(self):
+        class Process:
+            returncode = 0
+
+            def communicate(inner, timeout):
+                return (b'OXSHIFT run help.local-bug-report-state {"status":"partial"}\n'
+                        b'OXSHIFT run terminal.state {"started":true,"lines":["OXSHIFT_TERMINAL_SMOKE"]}\n', None)
+
+        def launch(args, **kwargs):
+            data = Path(args[0]).parent / 'data'
+            config = data / 'config'
+            config.mkdir(parents=True)
+            (config / 'settings.toml').write_text('idle-seconds = 17\n')
+            reports = data / 'bug-reports'
+            reports.mkdir()
+            for count in (1, 2):
+                metadata = {
+                    'version': '2026.1', 'window_count': count, 'status': 'partial',
+                    'recent_command_ids': ['settings.open'],
+                    'screenshots': [{'status': 'unavailable', 'reason': 'No capture device'}] * count,
+                }
+                with zipfile.ZipFile(reports / f'report-{count}.zip', 'w') as report:
+                    report.writestr('report.json', json.dumps(metadata))
+            return Process()
+
+        with patch.object(smoke, 'desktop_available', return_value=True), \
+             patch.object(smoke.subprocess, 'CREATE_NEW_PROCESS_GROUP', 512, create=True), \
+             patch.object(smoke.subprocess, 'Popen', side_effect=launch):
+            result = smoke.runtime_smoke(self.root, self.exe.name, '2026.1', 'auto')
+        self.assertEqual(result['status'], 'partial')
+        self.assertEqual(result['portable_settings'], 'passed')
+        self.assertEqual(result['terminal'], 'passed')
+        self.assertEqual([len(group) for group in result['report_captures']], [1, 2])
 
     def test_explicit_required_mode_never_succeeds_without_desktop(self):
         original = smoke.desktop_available

@@ -233,7 +233,7 @@ def runtime_smoke(package, executable, version, mode):
         require(states and states[-1]['status'] in ('saved', 'partial'), 'report command did not complete')
         config = copied / 'data/config'
         require(re.search(r'^idle-seconds\s*=\s*17\s*$', (config / 'settings.toml').read_text(encoding='utf-8'), re.M), 'settings were not persisted in portable profile')
-        captures = validate_reports(config / 'bug-reports', version)
+        captures = validate_reports(copied / 'data/bug-reports', version)
         terminal = command_results(log, 'terminal.state')
         require(any(any(line.strip() == 'OXSHIFT_TERMINAL_SMOKE' for line in state.get('lines', [])) and state.get('started') for state in terminal), 'terminal command produced no verified output')
         complete = all(image['status'] == 'saved' for group in captures for image in group)

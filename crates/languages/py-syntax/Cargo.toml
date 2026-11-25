@@ -1,6 +1,6 @@
 [package]
 name = "py-syntax"
-description = "Python syntax for Oxshift Python IDE: the tree-sitter grammar and the highlight query mapped to theme text roles"
+description = "Shared Python syntax for Oxshift products: the tree-sitter grammar and the highlight query mapped to theme text roles"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

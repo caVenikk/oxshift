@@ -58,7 +58,9 @@ members = [
     "crates/python/py-env",
     "crates/python/py-lsp",
     "crates/python/py-run",
-    "crates/python/py-syntax",
+    "crates/languages/py-syntax",
+    "crates/languages/syntax-pack",
+    "crates/database/sql-highlight",
     "crates/python/oxshift-cli",
     "crates/python/oxshift-python",
 ]
@@ -160,7 +162,9 @@ py-debug = { path = "crates/python/py-debug" }
 py-env = { path = "crates/python/py-env" }
 py-lsp = { path = "crates/python/py-lsp" }
 py-run = { path = "crates/python/py-run" }
-py-syntax = { path = "crates/python/py-syntax" }
+py-syntax = { path = "crates/languages/py-syntax" }
+syntax-pack = { path = "crates/languages/syntax-pack" }
+sql-highlight = { path = "crates/database/sql-highlight" }
 
 # Dependencies (GPUI, tree-sitter, ropey, ...) are optimized in debug builds
 # as well: a debug build of the IDE stays responsive enough to use, while

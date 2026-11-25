@@ -19,7 +19,6 @@ pub mod type_engine;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use editor::{SyntaxHighlighter, WrapCondition, WrapRule};
 use ui::icons::{IconName, IconSvg};
 use workbench::{
     AutoExclusions, FileAssociation, FileType, NavigationHooks, Product, RootKind, RunHook,
@@ -29,11 +28,6 @@ use workbench::{
 /// Icons of the Python product (IntelliJ Platform Community, Apache-2.0,
 /// see NOTICE).
 const ICONS: &[IconSvg] = &[
-    IconSvg {
-        name: "python/file",
-        light: include_bytes!("../assets/icons/python.svg"),
-        dark: Some(include_bytes!("../assets/icons/python_dark.svg")),
-    },
     IconSvg {
         name: "python/packages",
         light: include_bytes!("../assets/icons/pythonPackages@20x20.svg"),
@@ -85,42 +79,6 @@ fn tree() -> TreeHooks {
         module_icon: Some(IconName("python/pyProjectModule")),
     }
 }
-
-/// Python source files (and `#!` scripts naming Python).
-fn python() -> FileType {
-    FileType {
-        hash_bangs: &["python"],
-        // A block opens after a colon at the end of a line and ends after
-        // a statement that leaves it.
-        indent_after: &[':'],
-        dedent_after: &["return", "pass", "break", "continue", "raise"],
-        line_comment: Some("# "),
-        quotes: &['"', '\''],
-        triple_quotes: true,
-        // String prefixes: raw, bytes, formatted, template, unicode.
-        string_prefixes: &['r', 'R', 'b', 'B', 'f', 'F', 't', 'T', 'u', 'U'],
-        highlighter: Some(Arc::new(SyntaxHighlighter::factory(py_syntax::language()))),
-        language_id: Some("python"),
-        wrap_rules: PYTHON_WRAP_RULES,
-        ..FileType::plain("Python", &["py", "pyi", "pyw"], IconName("python/file"))
-    }
-}
-
-/// Where a soft-wrapped Python line may wrap when no space is near: after
-/// a comma (preferred a little) or an opening bracket, around spaces and
-/// tabs (the reference's Python line wrap strategy).
-const PYTHON_WRAP_RULES: &[WrapRule] = &[
-    WrapRule::weighted(
-        ',',
-        WrapCondition::After,
-        WrapRule::DEFAULT_WEIGHT * 11 / 10,
-    ),
-    WrapRule::new(' ', WrapCondition::Both),
-    WrapRule::new('\t', WrapCondition::Both),
-    WrapRule::new('(', WrapCondition::After),
-    WrapRule::new('[', WrapCondition::After),
-    WrapRule::new('{', WrapCondition::After),
-];
 
 /// The other file types of the reference's Python plugin: requirements
 /// files and the `py.typed` marker, both drawn as text.
@@ -262,9 +220,15 @@ pub fn product() -> Product {
     Product {
         name: brand::PRODUCT_NAME,
         app_info: brand::INFO,
-        file_types: [python()].into_iter().chain(python_files()).collect(),
+        file_types: syntax_pack::file_types()
+            .into_iter()
+            .chain(python_files())
+            .collect(),
         file_associations: FILE_ASSOCIATIONS.to_vec(),
-        icons: ICONS.to_vec(),
+        icons: syntax_pack::icons()
+            .into_iter()
+            .chain(ICONS.iter().copied())
+            .collect(),
         left_stripe_bottom: vec![
             StripeItem {
                 id: "stripe-python-packages",

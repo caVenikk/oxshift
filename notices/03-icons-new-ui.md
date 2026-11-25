@@ -1,4 +1,5 @@
-- crates/platform/ui/assets/icons/, crates/python/oxshift-python/assets/icons/
+- crates/platform/ui/assets/icons/, crates/python/oxshift-python/assets/icons/,
+  crates/languages/syntax-pack/assets/icons/
   New UI icons of the IntelliJ Platform Community (Apache-2.0, license text in
   LICENSE-APACHE), https://github.com/JetBrains/intellij-community @
   f5a0bddb9cee9135c700de9a67534e11cdf61c07. Files (light `name.svg` and dark

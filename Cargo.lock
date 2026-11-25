@@ -1918,6 +1918,7 @@ dependencies = [
  "serde_json",
  "settings",
  "settings-ui",
+ "sql-highlight",
  "sql-intel",
  "sql-syntax",
  "syntax",
@@ -5043,6 +5044,7 @@ dependencies = [
  "serde_json",
  "settings",
  "settings-ui",
+ "syntax-pack",
  "tempfile",
  "terminal",
  "text",
@@ -6954,6 +6956,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sql-highlight"
+version = "0.0.1"
+dependencies = [
+ "editor",
+ "gpui",
+ "sql-syntax",
+ "syntax",
+ "text",
+ "themes",
+ "ui",
+ "workbench",
+]
+
+[[package]]
 name = "sql-intel"
 version = "2026.1.0"
 dependencies = [
@@ -7309,6 +7325,17 @@ dependencies = [
  "text",
  "themes",
  "tree-sitter",
+]
+
+[[package]]
+name = "syntax-pack"
+version = "0.0.1"
+dependencies = [
+ "editor",
+ "gpui",
+ "py-syntax",
+ "ui",
+ "workbench",
 ]
 
 [[package]]

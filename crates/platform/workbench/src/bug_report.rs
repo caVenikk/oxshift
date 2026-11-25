@@ -149,16 +149,20 @@ fn target(window: &Window) -> Result<CaptureTarget, String> {
 
 fn notify(owner: AnyWindowHandle, kind: &str, title: &str, content: String, cx: &mut App) {
     let _ = owner.update(cx, |_, window, cx| {
-        window.dispatch_action(
-            Box::new(crate::notifications::Notify {
-                kind: Some(kind.into()),
-                title: Some(title.into()),
-                content: Some(content),
-                sticky: Some(true),
-                actions: None,
-            }),
-            cx,
-        );
+        let action = crate::notifications::Notify {
+            kind: Some(kind.into()),
+            title: Some(title.into()),
+            content: Some(content),
+            sticky: Some(true),
+            actions: None,
+        };
+        if let Some(workbench) = window.root::<crate::Workbench>().flatten() {
+            workbench.update(cx, |workbench, cx| {
+                workbench.notify(action.notification(), cx);
+            });
+        } else {
+            window.dispatch_action(Box::new(action), cx);
+        }
     });
 }
 

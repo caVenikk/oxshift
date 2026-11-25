@@ -183,6 +183,8 @@ def put_debugpy(dest, given):
 def put_notices(folder):
     """NOTICE (the complete third-party text), the licences, the fonts' licences."""
     folder.mkdir(parents=True, exist_ok=True)
+    run([python(), str(ROOT / "scripts/runtime-notices.py"), "check"], stdout=subprocess.DEVNULL)
+    shutil.copy2(PACKAGING / "runtime/THIRD-PARTY-LICENSES.txt", folder / "THIRD-PARTY-LICENSES.txt")
     run([python(), str(ROOT / "scripts" / "notice.py"), "--out", str(folder / "NOTICE.txt")],
         stdout=subprocess.DEVNULL)
     for name in ("LICENSE-MIT", "LICENSE-APACHE"):
@@ -198,6 +200,13 @@ def put_notices(folder):
         if not license_file.stat().st_size:
             fail(f"empty font license: {license_file}")
         shutil.copy2(license_file, licenses / license_file.name)
+
+
+def verify_runtime_notices(resources):
+    expected = PACKAGING / "runtime/THIRD-PARTY-LICENSES.txt"
+    actual = resources / "THIRD-PARTY-LICENSES.txt"
+    if not actual.is_file() or actual.read_bytes() != expected.read_bytes():
+        fail("runtime third-party license bytes do not match the reviewed bundle")
 
 
 def put_conpty(dest, given, arch):
@@ -523,6 +532,7 @@ def cmd_verify(args):
         top = tops[0]
         programs = top / "Contents/MacOS" if os_name == "macos" else top
         resources = top / "Contents/Resources" if os_name == "macos" else top
+        verify_runtime_notices(resources)
         wanted = [programs / (binary + suffix) for binary in names.binaries]
         wanted += [resources / name for name in ("NOTICE.txt", "LICENSE-MIT", "LICENSE-APACHE")]
         if names.kind == "python":
@@ -568,6 +578,7 @@ def cmd_verify_dmg(args):
         try:
             bundle = mount / names.app
             resources = bundle / "Contents/Resources"
+            verify_runtime_notices(resources)
             info = plistlib.loads((bundle / "Contents/Info.plist").read_bytes())
             validate_icons(resources, names.kind, info)
             if (info["CFBundleIdentifier"] != names.bundle_id
@@ -605,6 +616,7 @@ def cmd_installer_script(args):
 
 
 def cmd_check(args):
+    run([python(), str(ROOT / "scripts/runtime-notices.py"), "check"])
     for product in ("platform", "python"):
         names = Names(product)
         for suffix in (".icns", ".ico", ".png"):

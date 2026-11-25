@@ -76,6 +76,20 @@ class PackagingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             package.validate_icons(resources, 'platform', {'CFBundleIconName': 'Oxshift', 'CFBundleIconFile': 'Oxshift.icns'})
 
+    def test_runtime_license_bytes_are_required(self):
+        resources = self.root / 'licenses-test'
+        package.put_notices(resources)
+        package.verify_runtime_notices(resources)
+        bundle = resources / 'THIRD-PARTY-LICENSES.txt'
+        self.assertIn(b'aws-lc-sys', bundle.read_bytes())
+        self.assertIn(b'option-ext', bundle.read_bytes())
+        bundle.write_bytes(bundle.read_bytes() + b'changed')
+        with self.assertRaises(SystemExit):
+            package.verify_runtime_notices(resources)
+        bundle.unlink()
+        with self.assertRaises(SystemExit):
+            package.verify_runtime_notices(resources)
+
     def test_calendar_versions_and_distinct_products(self):
         platform, python = package.Names('platform'), package.Names('python')
         self.assertEqual(platform.version, '2026.1')

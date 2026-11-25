@@ -159,6 +159,10 @@ class WindowsSmokeFixtures(unittest.TestCase):
                         b'OXSHIFT run terminal.state {"started":true,"lines":["OXSHIFT_TERMINAL_SMOKE"]}\n', None)
 
         def launch(args, **kwargs):
+            commands = json.loads(kwargs['env']['OXSHIFT_RUN'])
+            opened = next(arguments for command, arguments in commands if command == 'terminal.open')
+            self.assertEqual(opened['input'], 'echo OXSHIFT_TERMINAL_SMOKE\r')
+            self.assertEqual(commands[-1], ['app.quit', {}])
             data = Path(args[0]).parent / 'data'
             config = data / 'config'
             config.mkdir(parents=True)
@@ -183,6 +187,24 @@ class WindowsSmokeFixtures(unittest.TestCase):
         self.assertEqual(result['portable_settings'], 'passed')
         self.assertEqual(result['terminal'], 'passed')
         self.assertEqual([len(group) for group in result['report_captures']], [1, 2])
+
+    def test_terminal_requires_command_output_not_echoed_input(self):
+        for states in ([], [{'tabs': []}], [{'started': True, 'lines': ['echo OXSHIFT_TERMINAL_SMOKE']}],
+                       [{'started': False, 'lines': ['OXSHIFT_TERMINAL_SMOKE']}]):
+            with self.subTest(states=states), self.assertRaisesRegex(ValueError, 'no verified output'):
+                smoke.validate_terminal(states)
+        smoke.validate_terminal([{'started': True, 'lines': [' OXSHIFT_TERMINAL_SMOKE ']}])
+
+    def test_terminal_failure_details_do_not_disclose_content(self):
+        state = {'started': True, 'exited': True, 'error': 'PRIVATE_ERROR',
+                 'lines': ['PRIVATE_OUTPUT'], 'tabs': [{'shell': 'PRIVATE_PATH'}]}
+        with self.assertRaises(ValueError) as error:
+            smoke.validate_terminal([state])
+        message = str(error.exception)
+        self.assertNotIn('PRIVATE', message)
+        diagnostics = json.loads(message.split(': ', 1)[1])
+        self.assertEqual(diagnostics, {'samples': 1, 'started_samples': 1, 'exited_samples': 1,
+                                      'error_samples': 1, 'max_tabs': 1, 'max_lines': 1})
 
     def test_explicit_required_mode_never_succeeds_without_desktop(self):
         original = smoke.desktop_available

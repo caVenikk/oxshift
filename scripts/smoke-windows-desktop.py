@@ -185,6 +185,23 @@ def validate_reports(folder, version):
     return captures
 
 
+def validate_terminal(states):
+    verified = any(state.get('started') and any(
+        line.strip() == 'OXSHIFT_TERMINAL_SMOKE' for line in state.get('lines', [])
+    ) for state in states)
+    # Only counts and booleans leave the isolated profile, never terminal text,
+    # shell paths, titles or error messages.
+    diagnostics = {
+        'samples': len(states),
+        'started_samples': sum(bool(state.get('started')) for state in states),
+        'error_samples': sum(bool(state.get('error')) for state in states),
+        'exited_samples': sum(bool(state.get('exited')) for state in states),
+        'max_tabs': max((len(state.get('tabs', [])) for state in states), default=0),
+        'max_lines': max((len(state.get('lines', [])) for state in states), default=0),
+    }
+    require(verified, 'terminal command produced no verified output: ' + json.dumps(diagnostics, sort_keys=True))
+
+
 def runtime_smoke(package, executable, version, mode):
     if mode == 'skip' or not desktop_available():
         require(mode != 'required', 'Windows input desktop is unavailable')
@@ -208,8 +225,10 @@ def runtime_smoke(package, executable, version, mode):
             ['settings.open', {'page': 'editor.font', 'filter': ''}],
             ['help.create-local-bug-report', {}], *poll,
             ['settings.escape', {}],
+            # Keep the session alive for polling; exit closes its tab by default.
+            # CR is the terminal's Enter key, not a text-file line ending.
             ['terminal.open', {'shell': os.environ.get('COMSPEC', 'cmd.exe'),
-                               'input': 'echo OXSHIFT_TERMINAL_SMOKE\r\nexit\r\n'}],
+                               'input': 'echo OXSHIFT_TERMINAL_SMOKE\r'}],
             *[['terminal.state', {}] for _ in range(10)], ['app.quit', {}],
         ]
         env = {key: value for key, value in os.environ.items() if not key.startswith('OXSHIFT_')}
@@ -235,7 +254,7 @@ def runtime_smoke(package, executable, version, mode):
         require(re.search(r'^idle-seconds\s*=\s*17\s*$', (config / 'settings.toml').read_text(encoding='utf-8'), re.M), 'settings were not persisted in portable profile')
         captures = validate_reports(copied / 'data/bug-reports', version)
         terminal = command_results(log, 'terminal.state')
-        require(any(any(line.strip() == 'OXSHIFT_TERMINAL_SMOKE' for line in state.get('lines', [])) and state.get('started') for state in terminal), 'terminal command produced no verified output')
+        validate_terminal(terminal)
         complete = all(image['status'] == 'saved' for group in captures for image in group)
         require(mode != 'required' or complete, 'window capture unavailable on required desktop runner')
         return {'status': 'passed' if complete else 'partial', 'portable_settings': 'passed',

@@ -27,7 +27,7 @@ NAME = re.compile(r"[a-z0-9][a-z0-9-]*\.md")
 # Add a name here when an entry needs a licence that is not listed.
 LICENCE = re.compile(
     r"\b(Apache-2\.0|MIT|BSD-[23]-Clause|ISC|MPL-2\.0|CC0-1\.0|Unlicense|Zlib"
-    r"|SIL Open Font License)\b"
+    r"|SIL Open Font License|JetBrains Brand Guidelines)\b"
 )
 URL = re.compile(r"https?://[^\s)]+")
 

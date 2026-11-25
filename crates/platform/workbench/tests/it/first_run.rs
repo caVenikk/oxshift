@@ -62,6 +62,13 @@ impl H<'_> {
         out
     }
 
+    fn press(&mut self, keys: &str) {
+        let owner = self.window().expect("the first-run window");
+        let target = self.cx.update(|cx| ui::dialog_window::innermost(owner, cx));
+        self.cx.simulate_keystrokes(target, keys);
+        self.settle();
+    }
+
     fn state(&mut self) -> Value {
         self.invoke("first-run.state", json!(null))
     }
@@ -217,6 +224,15 @@ fn reference(root: &Path) {
 }
 
 fn open(cx: &mut TestAppContext, with_reference: bool) -> H<'_> {
+    open_for_product(cx, with_reference, true, false)
+}
+
+fn open_for_product(
+    cx: &mut TestAppContext,
+    with_reference: bool,
+    enabled: bool,
+    community: bool,
+) -> H<'_> {
     let dir = tempfile::tempdir().unwrap();
     let config = dir.path().join("config");
     let file = config.join("settings.toml");
@@ -224,6 +240,12 @@ fn open(cx: &mut TestAppContext, with_reference: bool) -> H<'_> {
     std::fs::create_dir_all(&root).unwrap();
     if with_reference {
         reference(&root);
+    }
+    if community {
+        write(
+            &root.join("PyCharmCE2025.3/options/other.xml"),
+            "<application/>",
+        );
     }
     let product = Product {
         name: "Test IDE",
@@ -234,6 +256,9 @@ fn open(cx: &mut TestAppContext, with_reference: bool) -> H<'_> {
     let store_file = file.clone();
     cx.update(|cx| {
         workbench::init(cx, &product);
+        if enabled {
+            first_run::enable_pycharm(cx);
+        }
         settings_ui::store::load(cx, store_file);
         theme_switch::load(cx, Some(config.join("themes")), None);
         workbench::keymap::active::load(cx, Some(config.join("keymaps")));
@@ -258,12 +283,25 @@ fn open(cx: &mut TestAppContext, with_reference: bool) -> H<'_> {
 }
 
 #[gpui::test]
+fn neutral_product_does_not_detect_or_brand_pycharm(cx: &mut TestAppContext) {
+    let mut h = open_for_product(cx, true, false, false);
+    assert!(h.window().is_none());
+    assert!(h.done.get());
+    h.cx.update(|cx| {
+        assert!(!first_run::supports_pycharm(cx));
+        assert!(!ui::icons::exists(cx, ui::IconName("import/pycharm")));
+    });
+}
+
+#[gpui::test]
 fn the_import_brings_the_reference_settings_and_closes_the_window(cx: &mut TestAppContext) {
     let mut h = open(cx, true);
     let s = h.state();
     assert_eq!(s["page"], json!("import"), "{s}");
     assert_eq!(s["main"][0]["name"], json!("PyCharm2026.2"));
-    assert_eq!(s["main"][0]["label"], json!("Reference IDE 2026.2"));
+    assert_eq!(s["main"][0]["label"], json!("PyCharm 2026.2"));
+    assert_eq!(s["main"][0]["source_product"], json!("PyCharm"));
+    assert_eq!(s["main"][0]["source_icon"], json!("import/pycharm"));
     assert_eq!(s["main"][0]["used"], json!("Used today"));
     assert_eq!(s["other"][0]["name"], json!("PyCharm2025.1"));
     assert_eq!(s["decided"], Value::Null);
@@ -336,7 +374,7 @@ fn the_import_brings_the_reference_settings_and_closes_the_window(cx: &mut TestA
     let report = h.cx.update(first_run::take_report).expect("a balloon");
     assert_eq!(report.title.as_ref(), "Settings imported");
     for part in [
-        "From Reference IDE 2026.2",
+        "From PyCharm 2026.2",
         "the theme Nightfall",
         "the keymap Mine (based on macOS)",
         "the editor font (Menlo, 14.5, ligatures)",
@@ -410,7 +448,7 @@ fn other_options_list_older_folders_and_refuse_other_folders(cx: &mut TestAppCon
         labels,
         [
             "Local Settings",
-            "Reference IDE 2025.1",
+            "PyCharm 2025.1",
             "-",
             "Config or Installation Directory"
         ],
@@ -445,6 +483,79 @@ fn other_options_list_older_folders_and_refuse_other_folders(cx: &mut TestAppCon
     assert!(h.window().is_none());
     assert_eq!(h.get("import.source"), json!("PyCharm"));
     assert_eq!(h.get("import.version"), json!("2025.1"));
+}
+
+#[gpui::test]
+fn enter_opens_multiple_sources_and_arrows_choose_without_implicit_import(cx: &mut TestAppContext) {
+    let mut h = open_for_product(cx, true, true, true);
+    assert_eq!(h.state()["main"].as_array().unwrap().len(), 2);
+    h.press("enter");
+    assert!(!h.state()["popup"].is_null());
+    assert_eq!(h.get("import.source"), Value::Null);
+    h.press("down");
+    let popup = h.state()["popup"].clone();
+    assert_eq!(popup["levels"][0]["selected"], json!(1));
+    assert_eq!(
+        popup["levels"][0]["items"][1]["label"],
+        json!("PyCharm 2026.2")
+    );
+    h.press("escape");
+    assert!(h.state()["popup"].is_null());
+    assert_eq!(h.get("import.source"), Value::Null);
+    assert!(!h.config().join("imported").exists());
+    h.press("enter");
+    h.press("down");
+    h.press("enter");
+    assert!(h.window().is_none());
+    assert_eq!(h.get("import.source"), json!("PyCharm"));
+    assert_eq!(h.get("import.version"), json!("2026.2"));
+}
+
+#[gpui::test]
+fn other_options_keyboard_selects_an_older_version_and_escape_keeps_it_undecided(
+    cx: &mut TestAppContext,
+) {
+    let mut h = open(cx, true);
+    h.invoke("first-run.other-options", json!(null));
+    h.press("down");
+    h.press("up");
+    assert_eq!(h.state()["popup"]["levels"][0]["selected"], json!(1));
+    h.press("escape");
+    assert!(h.state()["popup"].is_null());
+    assert_eq!(h.get("import.source"), Value::Null);
+    h.invoke("first-run.other-options", json!(null));
+    h.press("down");
+    h.press("up");
+    h.press("enter");
+    assert!(h.window().is_none());
+    assert_eq!(h.get("import.version"), json!("2025.1"));
+}
+
+#[gpui::test]
+fn enter_still_imports_a_single_suggested_source(cx: &mut TestAppContext) {
+    let mut h = open(cx, true);
+    h.press("enter");
+    assert!(h.window().is_none());
+    assert_eq!(h.get("import.version"), json!("2026.2"));
+}
+
+#[gpui::test]
+fn manual_unknown_source_keeps_its_folder_identity_and_snapshot(cx: &mut TestAppContext) {
+    let mut h = open(cx, true);
+    let folder = h._dir.path().join("my-settings");
+    write(&folder.join("options/other.xml"), "<application/>");
+    h.invoke(
+        "first-run.choose-folder",
+        json!({"path": folder.to_string_lossy()}),
+    );
+    assert!(h.window().is_none());
+    assert_eq!(h.get("import.source"), json!("my-settings"));
+    assert_eq!(h.get("import.version"), Value::Null);
+    assert!(
+        h.config()
+            .join("imported/my-settings/options/other.xml")
+            .is_file()
+    );
 }
 
 /// What the importer added after the import read, and how often it was
@@ -553,6 +664,7 @@ fn adopt(cx: &mut TestAppContext, with_reference: bool) -> H<'_> {
     let store_file = file.clone();
     cx.update(|cx| {
         workbench::init(cx, &product);
+        first_run::enable_pycharm(cx);
         settings_ui::store::load(cx, store_file);
         theme_switch::load(cx, Some(config.join("themes")), None);
         first_run::adopt_existing(

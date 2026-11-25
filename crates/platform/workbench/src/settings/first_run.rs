@@ -41,7 +41,7 @@ pub fn start(title: &str) -> Start {
     }
 }
 
-/// The reference's keymap: a predefined one by its Pyoxide name, a custom
+/// The reference's keymap: a predefined one by its application name, a custom
 /// one imported from `keymaps/` (with the custom parents next to it).
 fn import_keymap(source: &Source) -> Applied {
     let Some(name) = source.options.keymap.clone() else {

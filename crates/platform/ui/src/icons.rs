@@ -7,7 +7,7 @@
 //! windows) with [`register`].
 
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use gpui::{
@@ -371,6 +371,8 @@ type ImageKey = (&'static str, bool, u32, Option<u32>, u8, u64);
 #[derive(Default)]
 struct Icons {
     sources: HashMap<&'static str, IconSvg>,
+    /// Assets whose published terms require their original colours and opacity.
+    originals: HashSet<&'static str>,
     images: RefCell<HashMap<ImageKey, Option<Arc<RenderImage>>>>,
 }
 
@@ -389,8 +391,19 @@ pub fn register(cx: &mut App, icons: &[IconSvg]) {
     let registry = cx.default_global::<Icons>();
     for icon in icons {
         registry.sources.insert(icon.name, *icon);
+        registry.originals.remove(icon.name);
     }
     registry.images.borrow_mut().clear();
+}
+
+/// Registers assets that must remain unmodified apart from proportional size.
+/// Theme palettes, tint and disabled opacity do not change these assets.
+pub fn register_original(cx: &mut App, icons: &[IconSvg]) {
+    register(cx, icons);
+    let registry = cx.default_global::<Icons>();
+    registry
+        .originals
+        .extend(icons.iter().map(|icon| icon.name));
 }
 
 /// Whether an icon of this name is registered.
@@ -433,11 +446,20 @@ pub fn image_with_opacity(
     let theme = cx.theme();
     let dark = theme.is_dark();
     let pixels = (f32::from(size) * window.scale_factor()).round().max(1.0) as u32;
-    let tint = tint.map(rgba8);
-    let alpha = (opacity.clamp(0.0, 1.0) * 255.0).round() as u8;
+    let original = icons.originals.contains(name.0);
+    let tint = if original { None } else { tint.map(rgba8) };
+    let alpha = if original {
+        u8::MAX
+    } else {
+        (opacity.clamp(0.0, 1.0) * 255.0).round() as u8
+    };
     // A tint replaces every colour: the theme's icon colours do not matter.
     let colors = theme.icon_colors();
-    let palette = if tint.is_some() { 0 } else { colors.key };
+    let palette = if original || tint.is_some() {
+        0
+    } else {
+        colors.key
+    };
     let key = (
         name.0,
         dark,
@@ -450,7 +472,7 @@ pub fn image_with_opacity(
         return image.clone();
     }
     let source = icons.sources.get(name.0)?;
-    let svg = if dark {
+    let svg = if dark && !original {
         source.dark.unwrap_or(source.light)
     } else {
         source.light
@@ -633,6 +655,44 @@ impl RenderOnce for Icon {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[gpui::test]
+    fn original_assets_ignore_theme_tint_and_disabled_opacity(cx: &mut gpui::TestAppContext) {
+        struct Host;
+        impl gpui::Render for Host {
+            fn render(&mut self, _: &mut Window, _: &mut gpui::Context<Self>) -> impl IntoElement {
+                div()
+            }
+        }
+        let source = IconSvg {
+            name: "test/original",
+            light: br##"<svg width="2" height="2" xmlns="http://www.w3.org/2000/svg"><rect width="2" height="2" fill="#57965C"/></svg>"##,
+            dark: Some(br##"<svg width="2" height="2" xmlns="http://www.w3.org/2000/svg"><rect width="2" height="2" fill="#FFFFFF"/></svg>"##),
+        };
+        cx.update(|cx| {
+            crate::init(cx, themes::ThemeKind::Dark);
+            register_original(cx, &[source]);
+        });
+        let (_, cx) = cx.add_window_view(|_, _| Host);
+        for kind in [themes::ThemeKind::Light, themes::ThemeKind::Dark] {
+            cx.update(|window, cx| {
+                let mut theme = themes::builtin::theme(kind);
+                theme.ui[themes::UiRole::IconGreenStroke] = themes::Rgba::rgb(255, 0, 0);
+                crate::theme::set(cx, theme);
+                let image = image_with_opacity(
+                    IconName(source.name),
+                    px(24.0),
+                    Some(gpui::white()),
+                    0.2,
+                    window,
+                    cx,
+                )
+                .unwrap();
+                let expected = rasterize(source.light, image.size(0).width.0 as u32).unwrap();
+                assert_eq!(image.as_bytes(0), expected.as_bytes(0));
+            });
+        }
+    }
 
     #[test]
     fn every_platform_icon_rasterizes() {

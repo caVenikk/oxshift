@@ -1,6 +1,6 @@
 [package]
 name = "settings-import"
-description = "Import of settings from other IDEs into Pyoxide IDE (PyCharm data sources and their passwords, the reference's application options)"
+description = "Import of settings from other IDEs into Oxshift Python (PyCharm data sources and their passwords, the reference's application options)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

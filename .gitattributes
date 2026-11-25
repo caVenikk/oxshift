@@ -5,3 +5,11 @@
 # Windows checkout does not turn "\n\n" block separators into CRLF.
 *.sql text eol=lf
 crates/**/tests/**/*.txt text eol=lf
+# Runtime license integrity uses exact bytes, including under core.autocrlf=true.
+.gitattributes text eol=lf
+Cargo.lock text eol=lf
+Cargo.toml text eol=lf
+crates/**/Cargo.toml text eol=lf
+vendor/**/Cargo.toml text eol=lf
+scripts/runtime-notices.py text eol=lf
+packaging/runtime/** text eol=lf

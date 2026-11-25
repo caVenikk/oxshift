@@ -1,0 +1,442 @@
+[
+  {
+    "package": "blade-graphics",
+    "version": "0.7.1",
+    "file": "blade-graphics-0.7.1.txt",
+    "url": "https://raw.githubusercontent.com/kvark/blade/88b6c64cd7a32dd933acc4e5266808a07143ce84/LICENSE",
+    "sha256": "8e9e23a134d00ae1760811ca60482b2e98b2db9154ffda66e58791796aa24ca1",
+    "original_sha256": "8e9e23a134d00ae1760811ca60482b2e98b2db9154ffda66e58791796aa24ca1"
+  },
+  {
+    "package": "blade-macros",
+    "version": "0.3.0",
+    "file": "blade-macros-0.3.0.txt",
+    "url": "https://raw.githubusercontent.com/kvark/blade/875b9c87e15e83ed48414c094f9a2b3fb189925d/LICENSE",
+    "sha256": "8e9e23a134d00ae1760811ca60482b2e98b2db9154ffda66e58791796aa24ca1",
+    "original_sha256": "8e9e23a134d00ae1760811ca60482b2e98b2db9154ffda66e58791796aa24ca1"
+  },
+  {
+    "package": "blade-util",
+    "version": "0.3.0",
+    "file": "blade-util-0.3.0.txt",
+    "url": "https://raw.githubusercontent.com/kvark/blade/23e378613440513e1045f4e0f7c5979e67645d3b/LICENSE",
+    "sha256": "8e9e23a134d00ae1760811ca60482b2e98b2db9154ffda66e58791796aa24ca1",
+    "original_sha256": "8e9e23a134d00ae1760811ca60482b2e98b2db9154ffda66e58791796aa24ca1"
+  },
+  {
+    "package": "blake2b_simd",
+    "version": "1.0.5",
+    "file": "blake2b_simd-1.0.5.txt",
+    "url": "https://raw.githubusercontent.com/oconnor663/blake2_simd/47714dc3c424e82213d7f2eb4a833e3843017be5/LICENSE",
+    "sha256": "27e0387973d6b8507cb15f825f6f26e0278d4d5857082c1f56b49a7b39a90183",
+    "original_sha256": "27e0387973d6b8507cb15f825f6f26e0278d4d5857082c1f56b49a7b39a90183"
+  },
+  {
+    "package": "block",
+    "version": "0.1.6",
+    "file": "block-0.1.6.txt",
+    "url": "https://raw.githubusercontent.com/SSheldon/rust-block/642ea4a4a5853a21b55b05c34832a5f1bb1af61c/README.md",
+    "sha256": "01c56329fa14f48ea1c9c7986c3660c41beeff2477f61c2d36bd8e666b9fc562",
+    "note": "Upstream attribution document; package SPDX terms are included separately.",
+    "original_sha256": "01c56329fa14f48ea1c9c7986c3660c41beeff2477f61c2d36bd8e666b9fc562"
+  },
+  {
+    "package": "block-modes",
+    "version": "0.9.1",
+    "file": "block-modes-0.9.1.txt",
+    "url": "https://raw.githubusercontent.com/RustCrypto/block-modes/2fbded9b3a375351212b6bdcc48988f60a27a2b5/README.md",
+    "sha256": "8a4ea5cee6b1024d739f0bd5c53d07b7005b02a8537aed307df3de88e37c45c4",
+    "note": "Upstream attribution document; package SPDX terms are included separately.",
+    "original_sha256": "8a4ea5cee6b1024d739f0bd5c53d07b7005b02a8537aed307df3de88e37c45c4"
+  },
+  {
+    "package": "block2",
+    "version": "0.6.2",
+    "file": "block2-0.6.2.txt",
+    "url": "https://raw.githubusercontent.com/madsmtm/objc2/b4167b582b2f75f9a1be75495c41b765344fd03c/LICENSE.md",
+    "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54",
+    "original_sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+  },
+  {
+    "package": "convert_case",
+    "version": "0.4.0",
+    "file": "convert_case-0.4.0.txt",
+    "url": "https://raw.githubusercontent.com/rutrum/convert-case/300d9eef9e8c970e15f324afbc3df8b6a4ebbf71/README.md",
+    "sha256": "e2c239f152b34058cca9848c12a357eabd4af3df9d97bac11cfdcdd09f612b72",
+    "note": "Upstream attribution document; package SPDX terms are included separately.",
+    "original_sha256": "e2c239f152b34058cca9848c12a357eabd4af3df9d97bac11cfdcdd09f612b72"
+  },
+  {
+    "package": "dtor",
+    "version": "0.0.6",
+    "file": "dtor-0.0.6.txt",
+    "url": "https://raw.githubusercontent.com/mmastrac/rust-ctor/e8c8b4a82de72311a5257db0502ced728081e745/LICENSE-MIT",
+    "sha256": "fd80a26fbb3f644af1fa994134446702932968519797227e07a1368dea80f0bc",
+    "original_sha256": "bccaa8b6c09f94e81f06696e179dbe058464bbdfbc823b6d49cada1d71e84ac3"
+  },
+  {
+    "package": "dtor-proc-macro",
+    "version": "0.0.5",
+    "file": "dtor-proc-macro-0.0.5.txt",
+    "url": "https://raw.githubusercontent.com/mmastrac/rust-ctor/b05136ac964049a1ee29de763d0b119c42258567/LICENSE-MIT",
+    "sha256": "fd80a26fbb3f644af1fa994134446702932968519797227e07a1368dea80f0bc",
+    "original_sha256": "bccaa8b6c09f94e81f06696e179dbe058464bbdfbc823b6d49cada1d71e84ac3"
+  },
+  {
+    "package": "dwrote",
+    "version": "0.11.5",
+    "file": "dwrote-0.11.5.txt",
+    "url": "https://raw.githubusercontent.com/servo/dwrote-rs/5bbe910f7156213cdbaca4e1addfe85ea8b421ef/README.md",
+    "sha256": "d69d75705e2582721cbfb2d3b4b2af052c71679057a0b2ac53a22c03f1755bba",
+    "note": "Upstream attribution document; package SPDX terms are included separately.",
+    "original_sha256": "d69d75705e2582721cbfb2d3b4b2af052c71679057a0b2ac53a22c03f1755bba"
+  },
+  {
+    "package": "gpu-alloc",
+    "version": "0.6.2",
+    "file": "gpu-alloc-0.6.2.txt",
+    "url": "https://raw.githubusercontent.com/zakarumych/gpu-alloc/61020bdcb4eb04fca6bbf748aeb9570e859236e0/COPYING",
+    "sha256": "12121dfa588677007848ab922a45a1e3248868f6ff063598fceb3141d7897314",
+    "original_sha256": "12121dfa588677007848ab922a45a1e3248868f6ff063598fceb3141d7897314"
+  },
+  {
+    "package": "gpu-alloc-ash",
+    "version": "0.7.1",
+    "file": "gpu-alloc-ash-0.7.1.txt",
+    "url": "https://raw.githubusercontent.com/zakarumych/gpu-alloc/7ddd1fe576fcfc503347eb97e476a47581479f22/COPYING",
+    "sha256": "12121dfa588677007848ab922a45a1e3248868f6ff063598fceb3141d7897314",
+    "original_sha256": "12121dfa588677007848ab922a45a1e3248868f6ff063598fceb3141d7897314"
+  },
+  {
+    "package": "gpu-alloc-types",
+    "version": "0.3.1",
+    "file": "gpu-alloc-types-0.3.1.txt",
+    "url": "https://raw.githubusercontent.com/zakarumych/gpu-alloc/7ddd1fe576fcfc503347eb97e476a47581479f22/COPYING",
+    "sha256": "12121dfa588677007848ab922a45a1e3248868f6ff063598fceb3141d7897314",
+    "original_sha256": "12121dfa588677007848ab922a45a1e3248868f6ff063598fceb3141d7897314"
+  },
+  {
+    "package": "hexf-parse",
+    "version": "0.2.1",
+    "file": "hexf-parse-0.2.1.txt",
+    "url": "https://raw.githubusercontent.com/lifthrasiir/hexf/4225763d744183d720f575ae96d04161b4d08ea0/README.md",
+    "sha256": "c6c18e19523f8289460861dbc840ada0fd18d284162e521e6d72109bd5c2a0de",
+    "note": "Upstream attribution document; package SPDX terms are included separately.",
+    "original_sha256": "425cb6fae64b193ab5342094774bc66b7d7b9276c7c43d9ac7ccca7063f4ed5b"
+  },
+  {
+    "package": "leak",
+    "version": "0.1.2",
+    "file": "leak-0.1.2.txt",
+    "url": "https://raw.githubusercontent.com/jmesmon/leak/4cc418b7f5ccaa4010aa31fa9b146a45bef5c480/README.md",
+    "sha256": "f011e5b4cf7c5e422d12f1cd2a694e021b1d02ce4f2bfe192cac0eaed9558691",
+    "note": "Upstream attribution document; package SPDX terms are included separately.",
+    "original_sha256": "f011e5b4cf7c5e422d12f1cd2a694e021b1d02ce4f2bfe192cac0eaed9558691"
+  },
+  {
+    "package": "leaky-cow",
+    "version": "0.1.1",
+    "file": "leaky-cow-0.1.1.txt",
+    "url": "https://raw.githubusercontent.com/notriddle/rust-leaky-cow/74e94437d9d800bd0bb993fdbbb7e138374a320d/README.md",
+    "sha256": "d6a36cac94f514d207369efa152ac6f78702c2f96016ef8674203526a889c98d",
+    "note": "Upstream attribution document; package SPDX terms are included separately.",
+    "original_sha256": "655b84c22abd3a40ab5e6c76460fe2c90c9c254f29f9ed2a1bb8268caf42f4e2"
+  },
+  {
+    "package": "lyon",
+    "version": "1.0.19",
+    "file": "lyon-1.0.19.txt",
+    "url": "https://raw.githubusercontent.com/nical/lyon/56219c95c658d4f39de7b190d98e57d5773ba241/LICENSE-MIT",
+    "sha256": "80f275e90d799911ed3830a7f242a2ef5a4ade2092fe0aa07bfb2d2cf2f2b95e",
+    "original_sha256": "80f275e90d799911ed3830a7f242a2ef5a4ade2092fe0aa07bfb2d2cf2f2b95e"
+  },
+  {
+    "package": "lyon_algorithms",
+    "version": "1.0.21",
+    "file": "lyon_algorithms-1.0.21.txt",
+    "url": "https://raw.githubusercontent.com/nical/lyon/994526f2766c7e9bc5bb16687232fd7e8999dbdf/LICENSE-MIT",
+    "sha256": "80f275e90d799911ed3830a7f242a2ef5a4ade2092fe0aa07bfb2d2cf2f2b95e",
+    "original_sha256": "80f275e90d799911ed3830a7f242a2ef5a4ade2092fe0aa07bfb2d2cf2f2b95e"
+  },
+  {
+    "package": "lyon_geom",
+    "version": "1.0.19",
+    "file": "lyon_geom-1.0.19.txt",
+    "url": "https://raw.githubusercontent.com/nical/lyon/56219c95c658d4f39de7b190d98e57d5773ba241/LICENSE-MIT",
+    "sha256": "80f275e90d799911ed3830a7f242a2ef5a4ade2092fe0aa07bfb2d2cf2f2b95e",
+    "original_sha256": "80f275e90d799911ed3830a7f242a2ef5a4ade2092fe0aa07bfb2d2cf2f2b95e"
+  },
+  {
+    "package": "lyon_path",
+    "version": "1.0.19",
+    "file": "lyon_path-1.0.19.txt",
+    "url": "https://raw.githubusercontent.com/nical/lyon/56219c95c658d4f39de7b190d98e57d5773ba241/LICENSE-MIT",
+    "sha256": "80f275e90d799911ed3830a7f242a2ef5a4ade2092fe0aa07bfb2d2cf2f2b95e",
+    "original_sha256": "80f275e90d799911ed3830a7f242a2ef5a4ade2092fe0aa07bfb2d2cf2f2b95e"
+  },
+  {
+    "package": "lyon_tessellation",
+    "version": "1.0.22",
+    "file": "lyon_tessellation-1.0.22.txt",
+    "url": "https://raw.githubusercontent.com/nical/lyon/b456b143215a1942a617c4672776b68b9a30feee/LICENSE-MIT",
+    "sha256": "80f275e90d799911ed3830a7f242a2ef5a4ade2092fe0aa07bfb2d2cf2f2b95e",
+    "original_sha256": "80f275e90d799911ed3830a7f242a2ef5a4ade2092fe0aa07bfb2d2cf2f2b95e"
+  },
+  {
+    "package": "mac",
+    "version": "0.1.1",
+    "file": "mac-0.1.1.txt",
+    "url": "https://raw.githubusercontent.com/reem/rust-mac/66afc663b68a65633ea165c742b5a9c6734581c2/README.md",
+    "sha256": "6cdc5225009420b27ccd0eb66cc75d67330915c7c9b11e5d6bf50c0ba05db096",
+    "note": "Upstream attribution document; package SPDX terms are included separately.",
+    "original_sha256": "8edb7a912d295acf1e1cfeafdd19a6813a63b301c7bbfda3c67f65509bd8d8cc"
+  },
+  {
+    "package": "malloc_buf",
+    "version": "0.0.6",
+    "file": "malloc_buf-0.0.6.txt",
+    "url": "https://raw.githubusercontent.com/SSheldon/malloc_buf/d9a3e539642bd90e07df458d226b19cdfa606863/LICENSE",
+    "sha256": "aced7b57e474a63edb5a724954222bf7659c01ceef0e648a03af799582991db7",
+    "note": "Upstream attribution document; package SPDX terms are included separately.",
+    "original_sha256": "aced7b57e474a63edb5a724954222bf7659c01ceef0e648a03af799582991db7"
+  },
+  {
+    "package": "naga",
+    "version": "25.0.1",
+    "file": "naga-25.0.1.txt",
+    "url": "https://raw.githubusercontent.com/gfx-rs/wgpu/060a779fc5f56560215ea84bda70278cbbd31e72/LICENSE.MIT",
+    "sha256": "c7fea58d1cfe49634cd92e54fc10a9d871f4b275321a4cd8c09e449122caaeb4",
+    "note": "Upstream attribution document; package SPDX terms are included separately.",
+    "original_sha256": "c7fea58d1cfe49634cd92e54fc10a9d871f4b275321a4cd8c09e449122caaeb4"
+  },
+  {
+    "package": "objc2",
+    "version": "0.6.5",
+    "file": "objc2-0.6.5.txt",
+    "url": "https://raw.githubusercontent.com/madsmtm/objc2/d7d2fa23ceaa5e6096c923b081040e5d81b3b9df/LICENSE.md",
+    "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54",
+    "original_sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+  },
+  {
+    "package": "objc2-app-kit",
+    "version": "0.3.2",
+    "file": "objc2-app-kit-0.3.2.txt",
+    "url": "https://raw.githubusercontent.com/madsmtm/objc2/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md",
+    "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54",
+    "original_sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+  },
+  {
+    "package": "objc2-core-foundation",
+    "version": "0.3.2",
+    "file": "objc2-core-foundation-0.3.2.txt",
+    "url": "https://raw.githubusercontent.com/madsmtm/objc2/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md",
+    "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54",
+    "original_sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+  },
+  {
+    "package": "objc2-encode",
+    "version": "4.1.0",
+    "file": "objc2-encode-4.1.0.txt",
+    "url": "https://raw.githubusercontent.com/madsmtm/objc2/8d214f5477365ffcbcbb7de058c86ed9a518efb7/LICENSE.md",
+    "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54",
+    "original_sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+  },
+  {
+    "package": "objc2-foundation",
+    "version": "0.3.2",
+    "file": "objc2-foundation-0.3.2.txt",
+    "url": "https://raw.githubusercontent.com/madsmtm/objc2/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md",
+    "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54",
+    "original_sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+  },
+  {
+    "package": "objc2-metal",
+    "version": "0.3.2",
+    "file": "objc2-metal-0.3.2.txt",
+    "url": "https://raw.githubusercontent.com/madsmtm/objc2/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md",
+    "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54",
+    "original_sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+  },
+  {
+    "package": "objc2-quartz-core",
+    "version": "0.3.2",
+    "file": "objc2-quartz-core-0.3.2.txt",
+    "url": "https://raw.githubusercontent.com/madsmtm/objc2/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md",
+    "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54",
+    "original_sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+  },
+  {
+    "package": "objc2-system-configuration",
+    "version": "0.3.2",
+    "file": "objc2-system-configuration-0.3.2.txt",
+    "url": "https://raw.githubusercontent.com/madsmtm/objc2/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md",
+    "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54",
+    "original_sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+  },
+  {
+    "package": "odpic-sys",
+    "version": "0.1.1",
+    "file": "odpic-sys-0.1.1.txt",
+    "url": "https://raw.githubusercontent.com/kubo/odpic-sys/c96a97550701cbbc4f88bde5bd0b90274ea7d681/README.md",
+    "sha256": "d34b0723f47d7dbfeefaff2ab19ee5bb9d00823ddc497f261feb460ec46b5fa7",
+    "note": "Upstream attribution document; package SPDX terms are included separately.",
+    "original_sha256": "d34b0723f47d7dbfeefaff2ab19ee5bb9d00823ddc497f261feb460ec46b5fa7"
+  },
+  {
+    "package": "oracle",
+    "version": "0.6.3",
+    "file": "oracle-0.6.3.txt",
+    "url": "https://raw.githubusercontent.com/kubo/rust-oracle/4593547ff4e8803dd9739cbbb67191442e4a7782/README.md",
+    "sha256": "2cfdae6538d6c20c7e7e16c1f093e573d125b169c08424337c44811684847df0",
+    "note": "Upstream attribution document; package SPDX terms are included separately.",
+    "original_sha256": "2cfdae6538d6c20c7e7e16c1f093e573d125b169c08424337c44811684847df0"
+  },
+  {
+    "package": "oracle_procmacro",
+    "version": "0.1.2",
+    "file": "oracle_procmacro-0.1.2.txt",
+    "url": "https://raw.githubusercontent.com/kubo/rust-oracle/df78a3a64789490e3da0d9dbdb1cd261b4960b04/README.md",
+    "sha256": "daf2ad7d80a005f83676cd9f4776dfba3a20a374659499b1a3100b878cfc5661",
+    "note": "Upstream attribution document; package SPDX terms are included separately.",
+    "original_sha256": "daf2ad7d80a005f83676cd9f4776dfba3a20a374659499b1a3100b878cfc5661"
+  },
+  {
+    "package": "pathfinder_geometry",
+    "version": "0.5.1",
+    "file": "pathfinder_geometry-0.5.1.txt",
+    "url": "https://raw.githubusercontent.com/servo/pathfinder/c1baff34ca00e0fa77d9f5ca015dbbdc0b5268c0/LICENSE-MIT",
+    "sha256": "0621878e61f0d0fda054bcbe02df75192c28bde1ecc8289cbd86aeba2dd72720",
+    "note": "Upstream attribution document; package SPDX terms are included separately.",
+    "original_sha256": "0621878e61f0d0fda054bcbe02df75192c28bde1ecc8289cbd86aeba2dd72720"
+  },
+  {
+    "package": "pathfinder_simd",
+    "version": "0.5.6",
+    "file": "pathfinder_simd-0.5.6.txt",
+    "url": "https://raw.githubusercontent.com/servo/pathfinder/6c3c0466f451c5bd2007087728cd168798cd64e8/LICENSE-MIT",
+    "sha256": "0621878e61f0d0fda054bcbe02df75192c28bde1ecc8289cbd86aeba2dd72720",
+    "original_sha256": "0621878e61f0d0fda054bcbe02df75192c28bde1ecc8289cbd86aeba2dd72720"
+  },
+  {
+    "package": "profiling",
+    "version": "1.0.18",
+    "file": "profiling-1.0.18.txt",
+    "url": "https://raw.githubusercontent.com/aclysma/profiling/8271551172eb6fa4cba47369aedd93790c623df9/LICENSE-MIT",
+    "sha256": "e64891b51361725890d69bafa508ad013bc92aeef99054caecb6f5ce5f7dfd51",
+    "original_sha256": "c8167fdeeed46d3f244d3f85c5bf998ce889343691c32be2c61a8bc4b5c08333"
+  },
+  {
+    "package": "profiling-procmacros",
+    "version": "1.0.18",
+    "file": "profiling-procmacros-1.0.18.txt",
+    "url": "https://raw.githubusercontent.com/aclysma/profiling/8271551172eb6fa4cba47369aedd93790c623df9/LICENSE-MIT",
+    "sha256": "e64891b51361725890d69bafa508ad013bc92aeef99054caecb6f5ce5f7dfd51",
+    "original_sha256": "c8167fdeeed46d3f244d3f85c5bf998ce889343691c32be2c61a8bc4b5c08333"
+  },
+  {
+    "package": "pulp-wasm-simd-flag",
+    "version": "0.1.1",
+    "file": "pulp-wasm-simd-flag-0.1.1.txt",
+    "url": "https://raw.githubusercontent.com/sarah-quinones/pulp/5eb07fd7b68edf0a5e19f71737d315f72a510295/LICENSE",
+    "sha256": "d64f878c89bd5f1e5ada7e4aad57690b122727cf5229b7b87ea1980c188da1d9",
+    "original_sha256": "d64f878c89bd5f1e5ada7e4aad57690b122727cf5229b7b87ea1980c188da1d9"
+  },
+  {
+    "package": "seahash",
+    "version": "4.1.0",
+    "file": "seahash-4.1.0.txt",
+    "url": "https://raw.githubusercontent.com/ticki/tfs/344ce0f56dee996f098d239ccc3515df0f6bb8ad/LICENSE",
+    "sha256": "6252f0c8d4a0df9b2dc0c6464cb2489dbe8859b0eb727e19c14e6af1ee432394",
+    "note": "Historical upstream monorepo containing seahash; package SPDX declaration and authors are included separately.",
+    "original_sha256": "6252f0c8d4a0df9b2dc0c6464cb2489dbe8859b0eb727e19c14e6af1ee432394"
+  },
+  {
+    "package": "simd_helpers",
+    "version": "0.1.0",
+    "file": "simd_helpers-0.1.0.txt",
+    "url": "https://raw.githubusercontent.com/lu-zero/simd_helpers/ca1a2f84aa386d758e98f8a609d990263932fb85/README.md",
+    "sha256": "e672b974ba905441c8eee630f10bc351f4e8e462c99d178b334ae3e48d8ca7f5",
+    "note": "Upstream attribution document; package SPDX terms are included separately.",
+    "original_sha256": "e672b974ba905441c8eee630f10bc351f4e8e462c99d178b334ae3e48d8ca7f5"
+  },
+  {
+    "package": "spirv",
+    "version": "0.3.0+sdk-1.3.268.0",
+    "file": "spirv-0.3.0+sdk-1.3.268.0.txt",
+    "url": "https://raw.githubusercontent.com/gfx-rs/rspirv/e91a5debc10c395b36db7721dfff6326d697a1e2/LICENSE",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "original_sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "package": "stacksafe",
+    "version": "0.1.4",
+    "file": "stacksafe-0.1.4.txt",
+    "url": "https://raw.githubusercontent.com/fast/stacksafe/a5c029b7d3a5fe6771ecd79266b6e21313cfa174/LICENSE",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "original_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  },
+  {
+    "package": "stacksafe-macro",
+    "version": "0.1.4",
+    "file": "stacksafe-macro-0.1.4.txt",
+    "url": "https://raw.githubusercontent.com/fast/stacksafe/a5c029b7d3a5fe6771ecd79266b6e21313cfa174/LICENSE",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "original_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  },
+  {
+    "package": "svg_fmt",
+    "version": "0.4.5",
+    "file": "svg_fmt-0.4.5.txt",
+    "url": "https://raw.githubusercontent.com/nical/rust_debug/93f414cd572b5c2781df93dbdc068ed13443d05a/LICENSE",
+    "sha256": "7e98bed7f100747aaae7d82ab94fbe6b76fd6b84b09a3aaa413bff8196d0fbb1",
+    "original_sha256": "7e98bed7f100747aaae7d82ab94fbe6b76fd6b84b09a3aaa413bff8196d0fbb1"
+  },
+  {
+    "package": "taffy",
+    "version": "0.9.0",
+    "file": "taffy-0.9.0.txt",
+    "url": "https://raw.githubusercontent.com/DioxusLabs/taffy/599b1b7d7410d97e13bafc4c01fbe6d7a9cf060a/LICENSE.md",
+    "sha256": "a7083ef3dd41a65eeb2162c2c091b0082e2724fb4c6ed029b363c7840d244ecd",
+    "original_sha256": "a7083ef3dd41a65eeb2162c2c091b0082e2724fb4c6ed029b363c7840d244ecd"
+  },
+  {
+    "package": "tree-sitter",
+    "version": "0.25.10",
+    "file": "tree-sitter-0.25.10.txt",
+    "url": "https://raw.githubusercontent.com/tree-sitter/tree-sitter/da6fe9beb4f7f67beb75914ca8e0d48ae48d6406/LICENSE",
+    "sha256": "5f9cf9fb6acb1972b35ae29119ce563bb60ec097656bc4b69b9bac2d04c7a147",
+    "original_sha256": "5f9cf9fb6acb1972b35ae29119ce563bb60ec097656bc4b69b9bac2d04c7a147"
+  },
+  {
+    "package": "wayland-protocols-plasma",
+    "version": "0.2.0",
+    "file": "wayland-protocols-plasma-0.2.0.txt",
+    "url": "https://raw.githubusercontent.com/smithay/wayland-rs/ea4c856cca609bf658cc7945ffa7e4b4aa268171/LICENSE.txt",
+    "sha256": "1cb6f4dee8c649f175736380495f0af0c753c87f22d50931692968bb24bf2161",
+    "original_sha256": "1cb6f4dee8c649f175736380495f0af0c753c87f22d50931692968bb24bf2161"
+  },
+  {
+    "package": "xim-ctext",
+    "version": "0.3.0",
+    "file": "xim-ctext-0.3.0.txt",
+    "url": "https://raw.githubusercontent.com/Riey/xim-rs/65f77e44524ba487285a63aac4080faf2c05b4ed/LICENSE",
+    "sha256": "efa1224931b98468f5005f77285457f8d2eab0a77a15941aa10abbab1ae9a74e",
+    "original_sha256": "efa1224931b98468f5005f77285457f8d2eab0a77a15941aa10abbab1ae9a74e"
+  },
+  {
+    "package": "xim-parser",
+    "version": "0.2.2",
+    "file": "xim-parser-0.2.2.txt",
+    "url": "https://raw.githubusercontent.com/Riey/xim-rs/7300de35a111de2df1a694bf70454532a8419685/LICENSE",
+    "sha256": "efa1224931b98468f5005f77285457f8d2eab0a77a15941aa10abbab1ae9a74e",
+    "original_sha256": "efa1224931b98468f5005f77285457f8d2eab0a77a15941aa10abbab1ae9a74e"
+  },
+  {
+    "package": "zune-inflate",
+    "version": "0.2.54",
+    "file": "zune-inflate-0.2.54.txt",
+    "url": "https://raw.githubusercontent.com/etemesi254/zune-image/69502ce83fdfecdd0beefd677e2abb3781b29d98/LICENSE.md",
+    "sha256": "ab06c4120a17af4c930cde89c9a9087e2b6e8be08ed21652f32d2cbd7d890dc4",
+    "original_sha256": "e870d7fd7819a9f0453c62798cb52ae95d148a8c91dc2de1d983f997143c72de"
+  }
+]

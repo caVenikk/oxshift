@@ -40,7 +40,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CRATES = ROOT / "crates"
 
 # ADR 0022: directories of crates/ that are reusable modules, not products.
-MODULES = {"database"}
+MODULES = {"database", "languages"}
 
 # ADR 0010; stream-framing, dap-client, debugger and py-debug: ADR 0015;
 # progress: the background tasks API that UI crates observe.
@@ -164,6 +164,16 @@ def self_test():
     for p, word in fails:
         got = layer_violations(layers, [p], {"database", "other-mod"})
         assert len(got) == 1 and word in got[0], f"{p} should fail with '{word}', got {got}"
+
+    # Syntax modules can be composed by both products, never by the platform.
+    syntax_layers = {"editor": "platform", "syntax-pack": "languages", "py-syntax": "languages",
+                     "desktop": "desktop", "python-app": "python"}
+    for p in [pkg("desktop", "syntax-pack"), pkg("python-app", "syntax-pack"),
+              pkg("syntax-pack", "py-syntax", "editor")]:
+        assert not layer_violations(syntax_layers, [p], MODULES)
+    for p in [pkg("editor", "syntax-pack"), pkg("syntax-pack", "python-app"),
+              pkg("desktop", "python-app")]:
+        assert layer_violations(syntax_layers, [p], MODULES)
 
     # The database module's own rules, on made-up dependency graphs.
     names = ["sql-syntax", "sql-intel", "db-model", "db-session", "db-core", "db-ui", "db-postgres", "db-service", "editor", "gpui", "wb"]

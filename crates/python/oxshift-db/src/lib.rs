@@ -21,7 +21,7 @@ use secrets::{KeyringStore, Prompter, SecretStore, SecretsConfig};
 use serde::Serialize;
 
 #[derive(Parser)]
-#[command(name = brand::DB_CLI_NAME, version)]
+#[command(name = brand::DB_CLI_NAME, version = brand::release_version())]
 struct Cli {
     /// Profiles file (default: the product's profiles variable or the user config directory).
     #[arg(long, global = true, value_name = "PATH")]

@@ -27,6 +27,7 @@ settings.workspace = true
 settings-ui.workspace = true
 sql-intel.workspace = true
 sql-syntax.workspace = true
+sql-highlight.workspace = true
 syntax.workspace = true
 text.workspace = true
 themes.workspace = true

@@ -10,6 +10,7 @@
 pub mod app;
 pub mod background_tasks;
 mod bench;
+pub mod bug_report;
 pub mod chrome;
 pub mod commands;
 pub mod dialog;

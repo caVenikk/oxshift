@@ -24,7 +24,7 @@ use py_env::{CancellationToken, EnvError, EnvService, ErrorKind, RunContext};
 use serde::Serialize;
 
 #[derive(Parser)]
-#[command(name = brand::CLI_NAME, version)]
+#[command(name = brand::CLI_NAME, version = brand::release_version())]
 struct Cli {
     /// Print machine-readable JSON instead of text.
     #[arg(long, global = true)]

@@ -1,4 +1,4 @@
-//! Python syntax for Oxshift Python IDE: the `tree-sitter-python` grammar (MIT,
+//! Shared Python syntax for Oxshift products: the `tree-sitter-python` grammar (MIT,
 //! see NOTICE) with this crate's own highlight query
 //! (`queries/highlights.scm`), whose captures map to the text roles of the
 //! themes crate, and a line lexer that colours tokens without the tree.

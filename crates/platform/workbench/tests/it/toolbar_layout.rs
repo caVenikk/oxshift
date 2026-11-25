@@ -20,6 +20,7 @@ const EPS: f32 = 0.6;
 fn open(cx: &mut TestAppContext) -> WindowHandle<Workbench> {
     let product = Product {
         name: "Test IDE",
+        run: Some(super::support::run_hook()),
         file_types: vec![FileType::plain(
             "Python",
             &["py"],
@@ -254,4 +255,19 @@ fn the_status_bar_cuts_the_breadcrumbs_then_slides_out(cx: &mut TestAppContext) 
     assert!(x(frames[0].status_left.size.width) > 0.0);
     assert!(x(narrowest.status_left.size.width) < EPS);
     assert!(x(narrowest.status_right.left()) < 0.0);
+}
+
+#[gpui::test]
+fn a_product_without_execution_hooks_has_no_run_widgets(cx: &mut TestAppContext) {
+    let window = cx.update(|cx| {
+        let product = Product::default();
+        workbench::init(cx, &product);
+        workbench::open_main_window(cx, Rc::new(product))
+    });
+    cx.run_until_parked();
+    let cx = &mut VisualTestContext::from_window(window.into(), cx);
+    cx.update(|window, cx| window.draw(cx).clear());
+    assert!(cx.debug_bounds("run-configuration").is_none());
+    assert!(cx.debug_bounds("run-buttons").is_none());
+    assert!(cx.debug_bounds("toolbar-settings").is_some());
 }

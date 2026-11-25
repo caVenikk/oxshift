@@ -172,9 +172,10 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
 name = "app-info"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "dirs 7.0.0",
+ "tempfile",
 ]
 
 [[package]]
@@ -890,7 +891,7 @@ dependencies = [
 
 [[package]]
 name = "brand"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
 ]
@@ -1235,7 +1236,7 @@ dependencies = [
 
 [[package]]
 name = "code-intel"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "flume",
  "futures",
@@ -1247,7 +1248,7 @@ dependencies = [
 
 [[package]]
 name = "code-intel-ui"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "code-intel",
@@ -1303,7 +1304,7 @@ dependencies = [
 
 [[package]]
 name = "commands"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "async-trait",
  "serde",
@@ -1341,14 +1342,14 @@ dependencies = [
 
 [[package]]
 name = "console"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "regex",
 ]
 
 [[package]]
 name = "console-ui"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "console",
  "editor",
@@ -1696,7 +1697,7 @@ checksum = "f27ae1dd37df86211c42e150270f82743308803d90a6f6e6651cd730d5e1732f"
 
 [[package]]
 name = "dap-client"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "flume",
@@ -1756,7 +1757,7 @@ checksum = "be1e0bca6c3637f992fc1cc7cbc52a78c1ef6db076dbf1059c4323d6a2048376"
 
 [[package]]
 name = "db-core"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1770,7 +1771,7 @@ dependencies = [
 
 [[package]]
 name = "db-model"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "db-core",
@@ -1782,7 +1783,7 @@ dependencies = [
 
 [[package]]
 name = "db-oracle-odpi"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "async-trait",
@@ -1795,7 +1796,7 @@ dependencies = [
 
 [[package]]
 name = "db-oracle-thin"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1808,7 +1809,7 @@ dependencies = [
 
 [[package]]
 name = "db-postgres"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "async-trait",
@@ -1827,7 +1828,7 @@ dependencies = [
 
 [[package]]
 name = "db-service"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "async-trait",
@@ -1852,7 +1853,7 @@ dependencies = [
 
 [[package]]
 name = "db-session"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "async-trait",
@@ -1872,7 +1873,7 @@ dependencies = [
 
 [[package]]
 name = "db-sqlite"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1887,7 +1888,7 @@ dependencies = [
 
 [[package]]
 name = "db-testkit"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1897,7 +1898,7 @@ dependencies = [
 
 [[package]]
 name = "db-ui"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1918,6 +1919,7 @@ dependencies = [
  "serde_json",
  "settings",
  "settings-ui",
+ "sql-highlight",
  "sql-intel",
  "sql-syntax",
  "syntax",
@@ -1962,7 +1964,7 @@ dependencies = [
 
 [[package]]
 name = "debugger"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "commands",
  "dap-client",
@@ -1980,7 +1982,7 @@ dependencies = [
 
 [[package]]
 name = "debugger-ui"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "console",
  "console-ui",
@@ -2232,7 +2234,7 @@ checksum = "d0881ea181b1df73ff77ffaaf9c7544ecc11e82fba9b5f27b262a3c73a332555"
 
 [[package]]
 name = "editor"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "console",
  "gpui",
@@ -2465,7 +2467,7 @@ dependencies = [
 
 [[package]]
 name = "file-index"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "ignore",
  "name-match",
@@ -2477,7 +2479,7 @@ dependencies = [
 
 [[package]]
 name = "file-watcher"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "flume",
  "native-path",
@@ -2883,7 +2885,7 @@ checksum = "e629b9b98ef3dd8afe6ca2bd0f89306cec16d43d907889945bc5d6687f2f13c7"
 
 [[package]]
 name = "git"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "commands",
@@ -4150,7 +4152,7 @@ checksum = "4050469837a6ff301cd14c1f8f24f88549e6d548f24f64e2148eb0f72cebc51f"
 
 [[package]]
 name = "lsp-client"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "code-intel",
@@ -4424,7 +4426,7 @@ dependencies = [
 
 [[package]]
 name = "name-match"
-version = "0.0.1"
+version = "2026.1.0"
 
 [[package]]
 name = "nanorand"
@@ -4437,7 +4439,7 @@ dependencies = [
 
 [[package]]
 name = "native-path"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "dunce",
  "tempfile",
@@ -4972,7 +4974,7 @@ dependencies = [
 
 [[package]]
 name = "oxshift-cli"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "brand",
  "clap",
@@ -4989,7 +4991,7 @@ dependencies = [
 
 [[package]]
 name = "oxshift-db"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "brand",
  "clap",
@@ -5003,8 +5005,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxshift-platform"
+version = "2026.1.0"
+dependencies = [
+ "app-info",
+ "embed-resource",
+ "gpui",
+ "process",
+ "sql-highlight",
+ "syntax-pack",
+ "ui",
+ "workbench",
+]
+
+[[package]]
 name = "oxshift-python"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "async-trait",
  "brand",
@@ -5017,6 +5033,7 @@ dependencies = [
  "debugger",
  "dirs 7.0.0",
  "editor",
+ "embed-resource",
  "flume",
  "gpui",
  "lsp-client",
@@ -5033,6 +5050,8 @@ dependencies = [
  "serde_json",
  "settings",
  "settings-ui",
+ "sql-highlight",
+ "syntax-pack",
  "tempfile",
  "terminal",
  "text",
@@ -5407,7 +5426,7 @@ dependencies = [
 
 [[package]]
 name = "process"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "flume",
@@ -5437,11 +5456,11 @@ dependencies = [
 
 [[package]]
 name = "progress"
-version = "0.0.1"
+version = "2026.1.0"
 
 [[package]]
 name = "project"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "native-path",
@@ -5457,7 +5476,7 @@ dependencies = [
 
 [[package]]
 name = "project-search"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "ignore",
  "project",
@@ -5519,7 +5538,7 @@ checksum = "d55d956fa96f5ec02be2e13af0e20391a5aa83d6a074e3ad368959d0fab299ea"
 
 [[package]]
 name = "py-debug"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "brand",
@@ -5540,7 +5559,7 @@ dependencies = [
 
 [[package]]
 name = "py-env"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "async-trait",
  "brand",
@@ -5560,7 +5579,7 @@ dependencies = [
 
 [[package]]
 name = "py-lsp"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "brand",
  "code-intel",
@@ -5583,7 +5602,7 @@ dependencies = [
 
 [[package]]
 name = "py-run"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "console",
  "native-path",
@@ -5597,7 +5616,7 @@ dependencies = [
 
 [[package]]
 name = "py-syntax"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "syntax",
  "text",
@@ -6099,7 +6118,7 @@ dependencies = [
 
 [[package]]
 name = "run-config"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "process",
@@ -6470,7 +6489,7 @@ checksum = "1c107b6f4780854c8b126e228ea8869f4d7b71260f962fefb57b996b8959ba6b"
 
 [[package]]
 name = "search"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "regex",
 ]
@@ -6505,7 +6524,7 @@ dependencies = [
 
 [[package]]
 name = "secrets"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "aes 0.9.3",
  "app-info",
@@ -6697,7 +6716,7 @@ dependencies = [
 
 [[package]]
 name = "settings"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "serde",
@@ -6709,7 +6728,7 @@ dependencies = [
 
 [[package]]
 name = "settings-import"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "aes 0.9.3",
  "base64 0.23.1",
@@ -6728,7 +6747,7 @@ dependencies = [
 
 [[package]]
 name = "settings-ui"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "editor",
@@ -6944,8 +6963,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "sql-highlight"
+version = "2026.1.0"
+dependencies = [
+ "editor",
+ "gpui",
+ "sql-syntax",
+ "syntax",
+ "text",
+ "themes",
+ "ui",
+ "workbench",
+]
+
+[[package]]
 name = "sql-intel"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "code-intel",
  "db-core",
@@ -6961,7 +6994,7 @@ dependencies = [
 
 [[package]]
 name = "sql-syntax"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "sqlparser",
 ]
@@ -7029,7 +7062,7 @@ checksum = "d08889ec5408683408db66ad89e0e1f93dff55c73a4ccc71c427d5b277ee47e6"
 
 [[package]]
 name = "stream-framing"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "serde_json",
 ]
@@ -7293,12 +7326,23 @@ dependencies = [
 
 [[package]]
 name = "syntax"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "ropey",
  "text",
  "themes",
  "tree-sitter",
+]
+
+[[package]]
+name = "syntax-pack"
+version = "2026.1.0"
+dependencies = [
+ "editor",
+ "gpui",
+ "py-syntax",
+ "ui",
+ "workbench",
 ]
 
 [[package]]
@@ -7410,7 +7454,7 @@ dependencies = [
 
 [[package]]
 name = "terminal"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "alacritty_terminal",
  "app-info",
@@ -7426,7 +7470,7 @@ dependencies = [
 
 [[package]]
 name = "terminal-ui"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "console",
  "editor",
@@ -7440,7 +7484,7 @@ dependencies = [
 
 [[package]]
 name = "text"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "ropey",
  "serde",
@@ -7450,7 +7494,7 @@ dependencies = [
 
 [[package]]
 name = "themes"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "flate2",
@@ -7991,7 +8035,7 @@ dependencies = [
 
 [[package]]
 name = "ui"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "block",
  "chrono",
@@ -8270,7 +8314,7 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "vcs"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "imara-diff",
  "serde",
@@ -8278,7 +8322,7 @@ dependencies = [
 
 [[package]]
 name = "vcs-ui"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "editor",
  "gpui",
@@ -9233,7 +9277,7 @@ checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
 
 [[package]]
 name = "workbench"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "app-info",
  "chrono",
@@ -9282,13 +9326,15 @@ dependencies = [
  "ui",
  "vcs",
  "vcs-ui",
+ "windows 0.61.3",
+ "windows-capture",
  "workbench-fixture-module",
  "zip",
 ]
 
 [[package]]
 name = "workbench-fixture-module"
-version = "0.0.1"
+version = "2026.1.0"
 dependencies = [
  "code-intel",
  "gpui",

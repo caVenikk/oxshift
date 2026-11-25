@@ -25,6 +25,11 @@ fn check(h: &mut H, b: &Binding) -> bool {
         "app.quit" | "app.hide" | "app.hide-others" | "window.minimize" | "window.zoom" => {
             h.press(keys);
         }
+        "help.create-local-bug-report" => {
+            h.press(keys);
+            let state = h.invoke("help.local-bug-report-state", json!(null));
+            assert_ne!(state, Value::Null, "{what}");
+        }
         "dialog.confirm" | "dialog.cancel" => {
             let first = h.start_run(&support::long_running(), "started");
             h.invoke("run.run", json!(null));

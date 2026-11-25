@@ -1,8 +1,8 @@
 #!/bin/sh
 # Installs the IDE from a GitHub Release (macOS and Linux). docs/release.md.
 #
-#   curl -fsSL https://github.com/@REPOSITORY@/releases/latest/download/install.sh | sh
-#   sh install.sh [--version YEAR.RELEASE] [--prefix DIR] [--bin-dir DIR] [--uninstall]
+#   curl -fsSL https://github.com/@REPOSITORY@/releases/latest/download/install-@SLUG@.sh | sh
+#   sh install-@SLUG@.sh [--version YEAR.RELEASE] [--prefix DIR] [--bin-dir DIR] [--uninstall]
 #
 # What it does:
 #   1. finds the release (the latest one, or --version),
@@ -229,4 +229,4 @@ esac
 if [ "$os" = macos ]; then
     say "Start the IDE from $prefix (Finder, Launchpad, Spotlight) or with:  open \"$app_dir\""
 fi
-say "Uninstall:  sh install.sh --uninstall"
+say "Uninstall:  sh install-@SLUG@.sh --uninstall"

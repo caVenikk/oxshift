@@ -166,7 +166,8 @@ def put_debugpy(dest, given):
     """The debugger helper (ADR 0015), unmodified: copied from a folder that
     holds one, else fetched and checked by scripts/fetch-debugpy.py."""
     if given:
-        for marker in ("debugpy/adapter/__main__.py", "debugpy-1.8.21.dist-info/RECORD"):
+        for marker in ("debugpy/adapter/__main__.py", "debugpy-1.8.21.dist-info/RECORD",
+                       "debugpy-1.8.21.dist-info/licenses/LICENSE"):
             if not (given / marker).is_file():
                 fail(f"{given} is not a debugpy helper folder ({marker} is missing)")
         # A folder that was used has bytecode in it, which is not the wheel's.
@@ -188,7 +189,12 @@ def put_notices(folder):
     licenses.mkdir(exist_ok=True)
     for license_file in sorted((PACKAGING / "licenses").glob("*.txt")):
         shutil.copy2(license_file, licenses / license_file.name)
-    for license_file in sorted(FONT_LICENSES.glob("LICENSE-*.txt")):
+    font_licenses = sorted(FONT_LICENSES.glob("LICENSE-*.txt"))
+    if not font_licenses:
+        fail("font license texts are missing")
+    for license_file in font_licenses:
+        if not license_file.stat().st_size:
+            fail(f"empty font license: {license_file}")
         shutil.copy2(license_file, licenses / license_file.name)
 
 
@@ -338,7 +344,7 @@ def make_deb(names, version, folder, out, arch):
         applications = root / "usr/share/applications"
         applications.mkdir(parents=True)
         (applications / (names.slug + ".desktop")).write_text(desktop_entry(names), encoding="utf-8")
-        icons = root / "usr/share/icons/hicolor/256x256/apps"
+        icons = root / "usr/share/icons/hicolor/512x512/apps"
         icons.mkdir(parents=True)
         shutil.copy2(ROOT / "assets/brand" / (names.icon + ".png"), icons / (names.slug + ".png"))
         run(["dpkg-deb", "--root-owner-group", "--build", str(root), str(out)])

@@ -37,6 +37,7 @@ a separate acceptance check.
 The AppImage contains the application payload and a pinned type-2 runtime. It
 still relies on the host's graphics libraries: fontconfig, FreeType, X11/XCB,
 xkbcommon, Wayland and Vulkan. This is not a claim of universal Linux support.
+Make an AppImage executable with `chmod +x file.AppImage` before opening it.
 AppImage tool 1.9.1 and runtime 20251108 are checked by SHA-256 before use; the
 explicit `--runtime-file` prevents an unpinned runtime download. The Debian
 package declares these native dependencies. Native runner package creation,
@@ -68,9 +69,11 @@ publisher signature.
 After full CI and maintainer build acceptance, a maintainer may create and push
 `v2026.1`. The separate `release.yml` checks that the tag matches the version,
 the exact SHA belongs to actual `main`, its latest exact `ci.yml` main push
-completed a full three-OS and database run, and repository rules hold. The gate
-checks successful full-mode receipt steps as well as `CI required`; a PR,
-dispatch, reused or skipped run is insufficient. It calls the same artifact workflow and creates a **draft** release
+succeeded, and repository rules hold. The gate accepts a full three-OS/database
+run or the existing verified-main reuse branch: for reuse it revalidates the
+immutable full PR receipt with `ci-control.py`, binding exact tree, base/head,
+configuration, toolchain, workflow and three-OS/database results. Arbitrary
+named checks, draft or skipped runs and unrelated dispatches are insufficient. It calls the same artifact workflow and creates a **draft** release
 with `--verify-tag`. It never publishes that draft or replaces an existing
 release. The maintainer reviews it and publishes separately. No paid signing
 credentials or token for another repository are assumed.

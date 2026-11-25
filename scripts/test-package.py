@@ -34,7 +34,8 @@ class PackagingTests(unittest.TestCase):
                     target.chmod(0o755)
         self.helper = self.root / 'debugpy'
         for name in ('debugpy/adapter/__main__.py', 'debugpy/ThirdPartyNotices.txt',
-                     'debugpy-1.8.21.dist-info/RECORD', 'debugpy/__pycache__/old.pyc'):
+                     'debugpy-1.8.21.dist-info/RECORD', 'debugpy-1.8.21.dist-info/licenses/LICENSE',
+                     'debugpy/__pycache__/old.pyc'):
             path = self.helper / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text('fixture')
@@ -214,6 +215,17 @@ class ReleaseGateTests(unittest.TestCase):
                  dict(name='CI required', conclusion='success',
                       steps=[dict(name='Validate exact results and live PR identity', conclusion='success')])]
         gate.validate_jobs(jobs)
+        self.assertEqual(gate.accept_full_or_reuse(jobs, '', lambda: self.fail('full run must not need reuse')), 'full')
+        reused = [jobs[-1]]
+        called = []
+        self.assertEqual(gate.accept_full_or_reuse(reused, '2026-11-25 CI required: reuse passed', lambda: called.append(True)), 'verified-main')
+        self.assertEqual(called, [True])
+        with self.assertRaises(ValueError):
+            gate.accept_full_or_reuse(reused, 'CI required: draft passed', lambda: None)
+        def invalid_proof():
+            raise ValueError('proof tree differs')
+        with self.assertRaises(ValueError):
+            gate.accept_full_or_reuse(reused, 'CI required: reuse passed', invalid_proof)
         jobs[0]['steps'][0]['conclusion'] = 'skipped'
         with self.assertRaises(ValueError):
             gate.validate_jobs(jobs)

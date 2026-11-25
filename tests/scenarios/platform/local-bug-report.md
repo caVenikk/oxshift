@@ -10,12 +10,14 @@ not an inference of the reference IDE's expected behavior.
 2. The IDE remains responsive. The completed report ZIP is revealed
    in the file manager and a persistent notification states the location and
    whether screenshots were saved. Nothing is uploaded.
-3. Inspect `<product configuration>/bug-reports/report-<timestamp>-<counter>.zip`.
-   On macOS, `window-0.png` shows the requesting IDE's main window and subsequent
+3. Inspect `<product local data>/bug-reports/report-<timestamp>-<counter>.zip`.
+   On macOS and Windows, `window-0.png` shows the requesting IDE's main window and subsequent
    images show its owned windows. Other IDE project windows and the desktop are
    absent. Existing protected-field masking remains visible as rendered.
 4. Inspect `report.json`: product/version, OS/architecture, UTC time, active
-   window index and capture outcomes are present. At most 20 registered command
+   window index, main/dialog/popup roles and capture outcomes are present.
+   With more than 16 owned windows, the focused window is included and the report
+   records how many were omitted, with partial status. At most 20 registered command
    IDs are included; command arguments, editor text, document paths, logs and
    environment variables are absent. Coverage explicitly excludes direct
    keyboard/native dispatch. No guessed cause, repro steps or expected result

@@ -187,6 +187,16 @@ pub fn config_dir() -> Option<PathBuf> {
     }
 }
 
+/// Persistent, machine-local product data. Isolated profiles keep this data
+/// below their explicit configuration root as well. On Windows, the default
+/// uses Local AppData even when the user's settings profile roams.
+pub fn local_data_dir() -> Option<PathBuf> {
+    match var_os("CONFIG_DIR").filter(|d| !d.is_empty()) {
+        Some(dir) => Some(PathBuf::from(dir)),
+        None => dirs::data_local_dir().map(|base| profile_in(&base)),
+    }
+}
+
 /// The application's cache folder: the environment variable
 /// `<prefix>_CACHE_DIR`, else the product profile in the user's cache folder
 /// (`~/Library/Caches` on macOS, `$XDG_CACHE_HOME` or `~/.cache` on Linux,

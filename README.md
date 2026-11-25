@@ -33,7 +33,10 @@ for database commands.
 
 In either desktop app, choose **Help → Create Local Bug Report**. The shortcut is
 **⌘⌥⇧B** on macOS and **Ctrl+Alt+Shift+B** on Windows. The app reveals a ZIP in
-the current product profile’s `bug-reports` folder. It contains diagnostic metadata
+the product’s local data folder. On Windows this is
+`%LOCALAPPDATA%/<profile>/bug-reports` and on macOS it is
+`~/Library/Application Support/<profile>/bug-reports`. The profile is
+`oxshift-platform` or `oxshift-python`. The ZIP contains diagnostic metadata
 and, when available, images of the requesting window and its open dialogs or
 popups. The notification indicates if a capture failed. Images can show code
 and other visible information. You choose whether to share the archive.

@@ -33,7 +33,11 @@ names and compatibility identifiers are defined in the `brand` crate
 
 ## Project storage and PyCharm import
 
-The IDE and both command-line tools use `oxshift-python/` in the OS
+The standalone desktop uses the `oxshift-platform` profile, the
+`dev.oxshift.platform` bundle ID and the Oxshift star icon. The Python desktop
+uses the Oxshift Python snake icon. The two applications can run side by side.
+
+The Python IDE and both command-line tools use `oxshift-python/` in the OS
 configuration and cache locations. Profiles and caches from the previous
 product identity are not selected or imported automatically. Explicit configuration and cache path
 overrides select the requested location instead of the default.

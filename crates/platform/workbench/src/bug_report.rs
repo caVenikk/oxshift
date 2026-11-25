@@ -67,7 +67,7 @@ fn start(window: &mut Window, cx: &mut App) {
     // Only windows related to the requesting window. Never enumerate the desktop.
     let mut windows = vec![owner];
     let mut index = 0;
-    while index < windows.len() && windows.len() < 16 {
+    while index < windows.len() {
         let parent = windows[index];
         let mut children = ui::dialog_window::non_modal_of(parent, cx);
         if let Some(child) = ui::dialog_window::modal_of(parent, cx) {
@@ -75,12 +75,37 @@ fn start(window: &mut Window, cx: &mut App) {
         }
         children.extend(ui::popup_window::windows_of(parent, cx));
         for child in children {
-            if windows.len() < 16 && !windows.contains(&child) {
+            if !windows.contains(&child) {
                 windows.push(child);
             }
         }
         index += 1;
     }
+    // Preserve the focused dialog even if a project has many open children.
+    const MAX_CAPTURES: usize = 16;
+    let total_windows = windows.len();
+    if let Some(active_index) = windows.iter().position(|handle| *handle == active)
+        && active_index >= MAX_CAPTURES
+    {
+        windows.swap(active_index, MAX_CAPTURES - 1);
+    }
+    windows.truncate(MAX_CAPTURES);
+    let window_roles: Vec<_> = windows
+        .iter()
+        .map(|handle| {
+            if let Some(parent) = ui::dialog_window::parent_of(*handle, cx) {
+                if ui::dialog_window::modal_of(parent, cx) == Some(*handle) {
+                    "modal_dialog"
+                } else {
+                    "dialog"
+                }
+            } else if ui::popup_window::parent_of(*handle, cx).is_some() {
+                "popup"
+            } else {
+                "main"
+            }
+        })
+        .collect();
     let captures = windows
         .iter()
         .map(|handle| {
@@ -103,12 +128,14 @@ fn start(window: &mut Window, cx: &mut App) {
         "recent_command_ids": ui::command::recent_ids(cx),
         "command_history_coverage": "Registry invocations only; direct keyboard and native actions may be absent. No arguments recorded.",
         "active_window": windows.iter().position(|w| *w == active),
-        "window_count": windows.len(),
+        "window_count": total_windows,
+        "window_roles": window_roles,
+        "omitted_window_count": total_windows - windows.len(),
         "privacy": "User-triggered local capture. Images may contain private code. No project paths, document text, command arguments, logs or environment variables are collected as metadata. Nothing is uploaded.",
     });
     cx.global_mut::<State>().busy = true;
     cx.global_mut::<State>().last = json!({"status": "saving"});
-    let root = app_info::config_dir().map(|p| p.join("bug-reports"));
+    let root = app_info::local_data_dir().map(|p| p.join("bug-reports"));
     let job = cx.background_executor().spawn(async move {
         let root = root.ok_or_else(|| "No local profile directory is available".to_string())?;
         write_report(&root, captures, metadata).map_err(|e| e.to_string())
@@ -198,7 +225,8 @@ fn write_report(
         .compression_method(zip::CompressionMethod::Deflated)
         .unix_permissions(0o600);
     let mut zip = zip::ZipWriter::new(archive.as_file_mut());
-    let mut complete = !captures.is_empty();
+    let mut complete =
+        !captures.is_empty() && metadata["omitted_window_count"].as_u64().unwrap_or(0) == 0;
     let mut images = Vec::new();
     for (index, capture) in captures.into_iter().enumerate() {
         let name = format!("window-{index}.png");

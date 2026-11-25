@@ -12,7 +12,7 @@ description: >-
 
 # replica-test
 
-## Pyoxide override (read first; see `../PYOXIDE.md`)
+## Oxshift Python override (read first; see `../OXSHIFT.md`)
 
 - No Playwright/web. Layers: `cargo test` (unit), `#[ignore]` integration tests against Docker services (Oracle Free, Postgres), **scenario tests** from `tests/scenarios/` (steps + expected output recorded from PyCharm behaviour), headless UI snapshot tests through the offscreen/JSON control channel, CI matrix Windows/macOS/Linux.
 - Test plan comes from recon flows as upstream says; severity scheme and bug-report format unchanged.

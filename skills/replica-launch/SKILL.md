@@ -12,7 +12,7 @@ description: >-
 
 # replica-launch
 
-## Pyoxide override (read first; see `../PYOXIDE.md`)
+## Oxshift Python override (read first; see `../OXSHIFT.md`)
 
 - No pricing, no App Store/Google Play listing. Deliverables: `README.md` (what it is, status honestly, install, build, screenshots of our own UI), a static docs/landing page, release notes, a 60-second demo script/GIF plan, a "Show HN"/Reddit post draft, contributor guide.
 - Positioning comes from replica-entrepreneur. Keep claims measurable (benchmarks from `replica/perf.md`), no comparisons that imply endorsement or affiliation. Include the non-affiliation notice (PyCharm/JetBrains/Python/Oracle trademarks).

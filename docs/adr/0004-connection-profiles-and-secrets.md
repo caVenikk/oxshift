@@ -36,7 +36,7 @@ macOS, `%APPDATA%` on Windows, `$XDG_CONFIG_HOME` or `~/.config` on Linux).
 **Secrets** are looked up in this order:
 1. The environment variable named by the profile's `password_env`, else
    `OXSHIFT_DB_PASSWORD`.
-2. The configured secret store (crate `secrets`), service `pyoxide-db`,
+2. The configured secret store (crate `secrets`), service `oxshift-db`,
    account = profile name; wallet passwords use `<profile>/wallet`. Stores:
    - the OS credential store through the `keyring` crate (macOS Keychain,
      Windows Credential Manager, Secret Service on Linux), the default;
@@ -54,7 +54,7 @@ store.
 and `dataSources.local.xml`, the user's own configuration files) are imported
 as profiles; their passwords are read from the user's own credential store
 used by that IDE (OS store or KeePass file) when the user allows it, and are
-saved into the configured Pyoxide store, never into the profiles file.
+saved into the configured Oxshift Python store, never into the profiles file.
 
 ## Consequences
 - Profiles can be committed or shared; secrets stay per machine.

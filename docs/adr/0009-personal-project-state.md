@@ -4,7 +4,7 @@
 - Date: 2026-10-13
 
 ## Context
-ADR 0008 gave Pyoxide a project folder, `.oxshift/`, with shared settings in
+ADR 0008 gave Oxshift Python a project folder, `.oxshift/`, with shared settings in
 `.oxshift/project.toml` that are meant to be committed. It left open where
 personal state goes: what belongs to one person on one machine, such as the
 chosen Python interpreter (an absolute or machine-specific path), and later
@@ -31,7 +31,7 @@ The reference IDE keeps the same split in its `.idea` folder:
   /workspace.xml
   ```
 
-Pyoxide has no table of configured interpreters yet (it comes with the
+Oxshift Python has no table of configured interpreters yet (it comes with the
 interpreter settings, #75); the interpreter widget offers the environments
 found in the project and stores the chosen one by path.
 
@@ -61,7 +61,7 @@ Option 3.
 
 - `.oxshift/workspace.toml` holds personal project state. It follows the
   conventions of `project.toml`: TOML with a `version` (now 1), keys and
-  comments Pyoxide does not know survive a rewrite, a file of a newer
+  comments Oxshift Python does not know survive a rewrite, a file of a newer
   version is read as far as it is understood and never rewritten, writes
   replace the file at once (a temporary file and a rename), and the file
   is created only when there is a value to store.
@@ -71,7 +71,7 @@ Option 3.
   tables; the Python product writes `[python] interpreter`.
 
   ```toml
-  # Pyoxide personal project state (this person, this machine). Not meant to be committed.
+  # Oxshift Python personal project state (this person, this machine). Not meant to be committed.
   version = 1
 
   [python]
@@ -80,7 +80,7 @@ Option 3.
 
 - Paths inside the project are stored relative to the project root with
   `/` separators; paths outside it are stored as they are.
-- When Pyoxide creates `workspace.toml`, it also writes `.oxshift/.gitignore`
+- When Oxshift Python creates `workspace.toml`, it also writes `.oxshift/.gitignore`
   unless that file exists (an existing one, even an empty one, is never
   rewritten):
 
@@ -91,20 +91,20 @@ Option 3.
 
   It is written together with the personal file, so a person who deletes
   the `.gitignore` does not get it back while the personal file exists.
-  Pyoxide has no version control integration yet, so it does not check, as
+  Oxshift Python has no version control integration yet, so it does not check, as
   the reference does, whether the folder is already tracked by Git.
 - The one-time import of the reference's exclusions (ADR 0008) now depends
   on the shared settings file rather than on the folder: a project that
   has only personal state still reads `.idea` until `project.toml` exists.
   Before this change the folder held nothing but `project.toml`, so the
   rule is unchanged for existing projects.
-- The interpreter is personal for now because Pyoxide stores it by path.
+- The interpreter is personal for now because Oxshift Python stores it by path.
   The reference shares a name and keeps the path per person; once
-  Pyoxide has named, configured interpreters (#75), the shared name can
+  Oxshift Python has named, configured interpreters (#75), the shared name can
   move to `project.toml` while the paths stay personal.
 - The reference's interpreter of a project is imported once, like its
   exclusions (ADR 0008), and `.idea` is never written: while the personal
-  state holds no interpreter, Pyoxide reads the SDK the project names (the
+  state holds no interpreter, Oxshift Python reads the SDK the project names (the
   first module's `orderEntry type="jdk"`, else `ProjectRootManager` in
   `.idea/misc.xml`) and looks it up in the SDK table
   (`options/jdk.table.xml`) of the newest PyCharm configuration directory
@@ -132,4 +132,4 @@ Option 3.
   new tables without a format change. Importing run configurations from
   `.idea` is not part of this decision.
 - A later change of the interpreter in the reference does not reach
-  Pyoxide once the import has happened, as with exclusions.
+  Oxshift Python once the import has happened, as with exclusions.

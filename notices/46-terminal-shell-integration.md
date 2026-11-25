@@ -16,7 +16,7 @@
   of powershell/powershell-integration.ps1 and
   command-block-support-reworked.ps1, and the sourcing after the user's
   configuration of fish/fish-integration.fish.
-  Changes: Pyoxide's own scripts that emit standard OSC 7 and OSC 133
+  Changes: Oxshift's own scripts that emit standard OSC 7 and OSC 133
   instead of the reference's OSC 1341 events; the scripts to source are
   passed in numbered variables with their arguments; /bin/sh of macOS gets
   ENV (it ignores --rcfile) with a POSIX script that reads the profile

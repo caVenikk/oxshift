@@ -50,7 +50,7 @@
 - Other names: an existing folder ("A directory with the name 'pkg'
   already exists"), `..` ("'..' is an invalid file name"), an ignored name
   such as `x.pyc` ("Trying to create a directory with an ignored name
-  ('x.pyc'); the result will not be visible"). Pyoxide never creates
+  ('x.pyc'); the result will not be visible"). Oxshift Python never creates
   outside the project: `../../x.py` and `~/x.py` are "outside the
   project" (the reference creates them).
 - Step 3: *New Directory* checks the name while it is typed: `src` shows

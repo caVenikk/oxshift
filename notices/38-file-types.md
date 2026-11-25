@@ -1,4 +1,4 @@
-- crates/platform/workbench/src/file_types.rs, crates/python/pyoxide-ide/
+- crates/platform/workbench/src/file_types.rs, crates/python/oxshift-python/
   src/lib.rs (file types), crates/platform/project/src/filter.rs
   (wildcard_match)
   File types follow the IntelliJ Platform Community (Apache-2.0),

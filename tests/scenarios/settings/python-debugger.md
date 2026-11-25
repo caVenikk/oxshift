@@ -47,7 +47,7 @@
 - Step 6: the page shows the options of the reference's file (a project
   with `myAttachToSubprocess` off has the check box off). They are
   written to `[python.debugger]` at once, so later changes of the
-  reference's file do not reach Pyoxide, and `.idea` is never written.
+  reference's file do not reach Oxshift Python, and `.idea` is never written.
 
 ## Commands
 `settings.open {"page": "python.debugger"}`, `settings.edit`

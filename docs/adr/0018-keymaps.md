@@ -4,7 +4,7 @@
 - Date: 2026-10-16
 
 ## Context
-ADR 0007 made keymaps Pyoxide's own TOML files that bind keystrokes to
+ADR 0007 made keymaps Oxshift Python's own TOML files that bind keystrokes to
 command ids per key context, with two built-in keymaps (macOS, and Windows
 and Linux) following the reference's defaults, and a test that presses
 every binding. The keymap is fixed per platform. #40 asks for a choice on
@@ -32,9 +32,9 @@ keymap code (KeymapImpl, MacOSDefaultKeymap, KeymapManagerImpl).
    VS Code sets and imported keymaps would be copies that drift from their
    parents.
 2. Keymaps as a parent plus overrides by command, with a table from the
-   reference's action ids to Pyoxide commands, so the reference's XML (VS
+   reference's action ids to Oxshift Python commands, so the reference's XML (VS
    Code sets, the user's custom keymaps) is converted by one code path.
-3. Keep the reference's XML as Pyoxide's format. Ties Pyoxide's commands
+3. Keep the reference's XML as Oxshift Python's format. Ties Oxshift Python's commands
    and contexts to the reference's action model.
 
 A Zed keymap was asked for: Zed's keymap files are GPL-3.0 and there is no
@@ -72,9 +72,9 @@ Option 2.
   override binds is taken from the parent's other commands in that
   context, so a keystroke stays bound once per context.
 - **Action table**: `keymaps/actions/*.toml` (one file per menu) in the
-  workbench maps the reference's action ids to Pyoxide commands (with
+  workbench maps the reference's action ids to Oxshift Python commands (with
   arguments and a context where one action is several commands). It is
-  written by hand from the Community keymap files; actions Pyoxide does not
+  written by hand from the Community keymap files; actions Oxshift Python does not
   have are listed as unmapped.
   An action can have `use-shortcut-of = "<action id>"`: it has the
   shortcuts of that action unless the keymap lists it itself (the
@@ -111,6 +111,6 @@ Option 2.
   resolved tree with search by name and by shortcut. Editing shortcuts,
   Duplicate and Restore Defaults come later and write derived keymaps.
 - The reference's control/meta swap for keymaps inherited on macOS is not
-  needed: a derived keymap names a Pyoxide base keymap as its parent.
+  needed: a derived keymap names a Oxshift Python base keymap as its parent.
 - A Zed keymap needs a permissively licensed source or the maintainer's
   decision to write one from public documentation of its bindings.

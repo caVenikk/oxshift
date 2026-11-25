@@ -12,4 +12,4 @@
   (folders, names, Windows shells and their names); the customizer hook
   follows LocalTerminalCustomizer.java. Changes: reimplemented in Rust without
   remote environments (Eel), WSL distributions read from the registry, the
-  emulator name "Pyoxide".
+  emulator name "Oxshift".

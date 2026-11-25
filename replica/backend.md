@@ -51,4 +51,4 @@ automatic restart). Server memory is reported next to the application's.
 | Plugins sandboxed (WASM) | M7 |
 | LSP frames from servers parsed defensively (length limits, invalid UTF-8, malformed JSON); framing fuzzed | M3 |
 | Workspace edits from servers applied only to files of the project or open documents, as one undo step | M3 |
-| `uvx` fallback downloads a tool on first use: asked once for Pyoxide's default tools, silent for tools the user enabled, as the reference (ADR 0010) | M3 |
+| `uvx` fallback downloads a tool on first use: asked once for Oxshift Python's default tools, silent for tools the user enabled, as the reference (ADR 0010) | M3 |

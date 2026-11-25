@@ -51,10 +51,10 @@ excluded files are shown (the default), and Find in Files leaves the files
 in it (and `.iml`, `.ipr`, `.iws` files) out unless asked to include them
 (`ProjectCoreUtil.isProjectOrWorkspaceFile`, `FileScanner`).
 
-People use the reference IDE and Pyoxide on the same projects and mark
+People use the reference IDE and Oxshift Python on the same projects and mark
 virtual environments and build folders as excluded in the reference.
-Those exclusions should hold in Pyoxide as soon as it opens the project.
-Pyoxide also needs a place of its own for project settings, starting with
+Those exclusions should hold in Oxshift Python as soon as it opens the project.
+Oxshift Python also needs a place of its own for project settings, starting with
 exclusions.
 
 Sources: IntelliJ Platform Community (Apache-2.0),
@@ -67,14 +67,14 @@ https://github.com/JetBrains/intellij-community @
    files itself, and both IDEs editing them at once could lose changes.
 2. Per-project state in the application data folder, keyed by the project
    path. Invisible to the team, lost when the project moves.
-3. A folder of Pyoxide's own in the project root with a settings file,
+3. A folder of Oxshift Python's own in the project root with a settings file,
    importing the reference's exclusions once.
 
 ## Decision
 Option 3.
 
 ### Project folder
-- Pyoxide keeps project settings in `.oxshift/` in the project root. The
+- Oxshift Python keeps project settings in `.oxshift/` in the project root. The
   name is provisional and lives in one constant, `project::STORE_DIR`.
 - Shared settings are in `.oxshift/project.toml`, which is meant to be
   committed: exclusions are shared project settings.
@@ -93,7 +93,7 @@ Option 3.
   patterns = ["*.egg-info"]
   ```
 
-- Keys and comments Pyoxide does not know survive a rewrite (`toml_edit`),
+- Keys and comments Oxshift Python does not know survive a rewrite (`toml_edit`),
   so later settings can be added without losing data. A file with a
   higher version is read as far as it is understood and never rewritten.
 - Writes replace the file at once: a temporary file in `.oxshift/`, flushed,
@@ -103,18 +103,18 @@ Option 3.
   creates an empty folder.
 
 ### Import from the reference
-- When a project is opened and has no `.oxshift/` yet, Pyoxide reads the
+- When a project is opened and has no `.oxshift/` yet, Oxshift Python reads the
   exclusions of `.idea` (the module files listed in `modules.xml`, or the
   `.iml` files in `.idea` without it; `excludeFolder` entries inside the
   project, and the `excludePattern` entries of a content root at the
   project root) and saves them into `.oxshift/project.toml`.
-- After that `.oxshift/` is the only source. Pyoxide never writes into
+- After that `.oxshift/` is the only source. Oxshift Python never writes into
   `.idea` and never reads it again for exclusions.
 
 ### Hidden and excluded
 - Hidden (never shown, never searched): the reference's default ignored
   list above, and `.oxshift/`. The reference shows `.idea` and only leaves
-  it out of Find in Files; Pyoxide hides its own folder from both, and
+  it out of Find in Files; Oxshift Python hides its own folder from both, and
   shows `.idea` as an ordinary folder.
 - Excluded: the paths of the project settings and everything below them,
   names matching the patterns, and the folders a product excludes on its
@@ -165,7 +165,7 @@ Option 3.
 
 ## Consequences
 - There is no two-way sync. Exclusions made in the reference after the
-  import are not picked up, and exclusions made in Pyoxide do not reach
+  import are not picked up, and exclusions made in Oxshift Python do not reach
   the reference. A command that imports `.idea` again can follow.
 - Projects get a committable `.oxshift/` folder once they have settings.
 - Exclude patterns of content roots below the project root and modules

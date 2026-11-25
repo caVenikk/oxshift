@@ -25,7 +25,7 @@
 - Step 7: the file of the tab that was left is saved.
 - Step 8: every modified file is saved when the window loses the focus.
 - The reference IDE saves on deactivation by default and offers saving
-  after N idle seconds (off by default, 15 s); Pyoxide turns the idle save
+  after N idle seconds (off by default, 15 s); Oxshift Python turns the idle save
   on with 2 s and adds saving on tab switch (ADR 0007).
 - A failing write (read-only file) keeps the file modified and reports the
   error in a notification; the text in the editor is not lost.

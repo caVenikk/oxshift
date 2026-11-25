@@ -1,5 +1,5 @@
 - crates/platform/workbench/src/search_everywhere/ (pages, footer, scope
-  mnemonics), crates/python/pyoxide-ide/src/main.rs (source roots)
+  mnemonics), crates/python/oxshift-python/src/main.rs (source roots)
   Follow the IntelliJ Platform Community (Apache-2.0),
   https://github.com/JetBrains/intellij-community @ pycharm/261.27258.51:
   the page sizes of platform/lang-impl/src/com/intellij/ide/actions/

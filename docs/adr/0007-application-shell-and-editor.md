@@ -128,14 +128,14 @@ another application, when the application quits, and after 2 seconds
 without keyboard or mouse input
 or edits (`workbench::SaveSettings`, defaults in code until there is a
 settings window). The reference IDE saves on frame deactivation by default
-and has an idle save that is off by default (15 s, 1 to 300 s); Pyoxide
+and has an idle save that is off by default (15 s, 1 to 300 s); Oxshift Python
 turns the idle save on with a shorter time and adds the save on tab
 switch. Idle time is a timer that is armed by input and, when it fires
 early because of later input, sleeps for the rest of the time; there is no
 polling. While a file is modified its tab shows a 6 px dot in the theme's
 accent colour in place of the close button, which comes back on hover. The
 reference IDE draws the same dot (in its information badge colour) only
-when "Mark modified" is switched on, which is off by default; Pyoxide
+when "Mark modified" is switched on, which is off by default; Oxshift Python
 always shows it.
 
 ### Reloading
@@ -169,7 +169,7 @@ reference; a rename outside is a deletion and a creation. A missing file
 is looked at again after 300 ms first, since tools such as `git` remove a
 file and write it again. One deviation: an editor with changes stays
 open, its tab title in the error colour, and is not saved automatically,
-because Pyoxide has no Local History yet to get the changes back from;
+because Oxshift Python has no Local History yet to get the changes back from;
 Save writes the file again, and closing the tab asks with the reference's
 prompt for editors that are not saved automatically (its LightEdit
 "Close Document": Save, Discard, Cancel). Open files are also written
@@ -183,7 +183,7 @@ and the index are built again instead. The folder of an open file
 outside the project folder, or of any open file without a project, is
 watched too (without its subfolders), and the watcher starts with the
 first such file: the reference watches only project and library roots,
-but it always has a project, while Pyoxide opens single files, and a
+but it always has a project, while Oxshift Python opens single files, and a
 window that never gets the focus would otherwise never see their
 changes.
 

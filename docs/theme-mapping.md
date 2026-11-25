@@ -34,7 +34,7 @@ are listed, with a description each, in `crates/platform/themes/src/roles.rs`.
 
 Themes are TOML files. A file can `extends` another theme and then lists only
 what it changes; colours can refer to entries of a `[palette]` table with
-`"$name"`. The built-in themes `pyoxide-dark` and `pyoxide-light` define every
+`"$name"`. The built-in themes `oxshift-dark` and `oxshift-light` define every
 role; the importers always start from one of them. The default themes of the
 IDE are `islands-dark` and `islands-light` (see "Built-in themes").
 
@@ -42,7 +42,7 @@ IDE are `islands-dark` and `islands-light` (see "Built-in themes").
 [theme]
 id = "my-dark"
 name = "My Dark"
-extends = "pyoxide-dark"
+extends = "oxshift-dark"
 
 [palette]
 rust = "#c8643c"
@@ -92,8 +92,8 @@ to that theme's own scheme.
 |---|---|---|
 | `islands-dark` | Islands Dark | default dark theme, generated from the IntelliJ Platform Community New UI files |
 | `islands-light` | Islands Light | default light theme, generated the same way |
-| `pyoxide-dark` | Oxshift Python Dark | original colours; base of an import (not under an islands theme) |
-| `pyoxide-light` | Oxshift Python Light | original colours; base of an import (not under an islands theme) |
+| `oxshift-dark` | Oxshift Python Dark | original colours; base of an import (not under an islands theme) |
+| `oxshift-light` | Oxshift Python Light | original colours; base of an import (not under an islands theme) |
 
 The islands themes are produced by this importer from the IntelliJ Platform
 Community repository (Apache-2.0, see NOTICE): the Islands UI themes with
@@ -113,7 +113,7 @@ cargo run -p themes --example builtin_islands -- ic <commit>
 ```
 
 Roles the Community files do not define, the metrics and the fonts come from
-the pyoxide themes, so layout changes go into `pyoxide-*.toml` first and the
+the oxshift themes, so layout changes go into `oxshift-*.toml` first and the
 islands themes are regenerated afterwards. One attribute the reference draws
 in code rather than through its schemes is added by the generator: a hint
 of the Python language services (`syntax.diagnostic-hint`, empty in the
@@ -187,8 +187,8 @@ brightness (`Darcula` for dark, `Default` for light) when it is among the inputs
 7. **Derived values.** A role no source supplies takes the value of its
    fallback role (tables below) when that role was imported or derived itself,
    and is listed as an approximation.
-8. **Base theme.** Whatever is still missing comes from `pyoxide-dark` or
-   `pyoxide-light` (chosen by `dark`; a scheme alone is dark when its editor
+8. **Base theme.** Whatever is still missing comes from `oxshift-dark` or
+   `oxshift-light` (chosen by `dark`; a scheme alone is dark when its editor
    background is dark, else by the name of its base scheme) and is listed in
    the report as taken from the base theme. A text role that a scheme defines
    replaces the base style completely; it is not merged with it. A theme

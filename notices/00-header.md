@@ -1,5 +1,5 @@
-Pyoxide IDE
-Copyright (c) 2026 Pyoxide IDE contributors
+Oxshift
+Copyright (c) 2026 Oxshift contributors
 
 Licensed under MIT OR Apache-2.0 (see LICENSE-MIT, LICENSE-APACHE).
 

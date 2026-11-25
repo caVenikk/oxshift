@@ -12,4 +12,4 @@
   TerminalBundle.properties, platform/platform-impl/src/com/intellij/ui/
   FontComboBox.java and platform/ide-core/resources/messages/
   OptionsBundle.properties (the Tools group). Reimplemented in Rust with
-  GPUI over Pyoxide's own settings store.
+  GPUI over Oxshift's own settings store.

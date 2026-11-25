@@ -15,4 +15,4 @@
   expui/fileTypes/docker.svg: the whale unchanged, three small containers
   in place of the one container, or one small container and the whale in
   the grey of the platform's icons. fileTypes/ini.svg and yaml.svg (in
-  place of the copied YAML icon) are Pyoxide's own drawings.
+  place of the copied YAML icon) are Oxshift's own drawings.

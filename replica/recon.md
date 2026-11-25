@@ -85,7 +85,7 @@ ResultPage   columns (name, type), rows, page size, has_more
              evidence: sources 4, 6        confidence: high
 ```
 
-Pyoxide mapping: `DataSource` = connection profile (TOML, ADR 0004);
+Oxshift Python mapping: `DataSource` = connection profile (TOML, ADR 0004);
 `Session` = `db_core::Connection`; `ResultPage` = `Cursor::next_page`.
 
 ### Feature matrix
@@ -249,7 +249,7 @@ Keymap       action -> shortcuts per context, parent keymap
              evidence: sources 10, 13                   confidence: high
 ```
 
-Pyoxide mapping: `Project` is the crate `project`, `Document` the crate
+Oxshift Python mapping: `Project` is the crate `project`, `Document` the crate
 `text` (rope buffer and history), `EditorState` the crate `editor`,
 `Keymap` the TOML keymaps of the crate `workbench` (ADR 0007).
 
@@ -328,7 +328,7 @@ private mid-size project are summarised in ADR 0011.
 - The type engine (Built-in by default, Pyrefly offered for single-module
   projects, ty behind a registry flag) only replaces type inference under
   the PSI features.
-- Pyoxide has no PSI engine. The clone keeps the reference's editor UX
+- Oxshift Python has no PSI engine. The clone keeps the reference's editor UX
   (lookup, popups, keys, highlighting) and takes the data from a type
   server running by default in place of the built-in engine, plus ruff for
   lint, quick fixes, formatting and import sorting.
@@ -459,7 +459,7 @@ Diagnostic      range, severity, message, source, code (rule name for
                 evidence: source 11 LspDiagnosticsCustomizer, ruff docs  confidence: high
 ```
 
-Pyoxide mapping: tool and engine settings in `.oxshift/project.toml`
+Oxshift Python mapping: tool and engine settings in `.oxshift/project.toml`
 (shared) with personal executable paths in `.oxshift/workspace.toml`
 (ADR 0009), imported once from `.idea/pyLspTools.xml` and
 `.idea/pyTypeEngine.xml`; the rest is runtime state of the language
@@ -637,7 +637,7 @@ TerminalOptions  application (terminal.xml, terminal-local.xml,
                  evidence: sources 2, 3                  confidence: high
 ```
 
-Pyoxide mapping: application options in the application settings store;
+Oxshift Python mapping: application options in the application settings store;
 project options and tabs in `.oxshift/workspace.toml` (ADR 0009), imported
 once from `.idea`. Emulator and PTY: ADR 0014 (proposed; candidate
 `alacritty_terminal`, a grid element of its own); venv activation through
@@ -673,7 +673,7 @@ Scope: debugging Python programs with the reference's debugger UI: Debug
 for the current file and run configurations, line breakpoints in the
 gutter with their popup and dialog, exception breakpoints, the Debug tool
 window (toolbar, frames, variables, watches, console), stepping,
-evaluation, the execution point and inline values in the editor. Pyoxide
+evaluation, the execution point and inline values in the editor. Oxshift Python
 debugs through debugpy over the Debug Adapter Protocol (DAP).
 Date: 2026-10-16. Reference: PyCharm 2026.2.3 (IntelliJ Community tag
 `pycharm/2026.2.3`).
@@ -701,7 +701,7 @@ screenshot.
   plugin that is not in Community and falls back to pydevd for remote
   interpreters and Python before 3.9. With it the Debug tool window has a
   "Mode: debugpy | pydevd" switch. The bundled debugpy is 1.8.21.
-- Pyoxide has one backend, debugpy 1.8.21 shipped with the application and
+- Oxshift Python has one backend, debugpy 1.8.21 shipped with the application and
   driven over DAP, so no Mode switch; the UI follows the reference.
 
 ### Core loop
@@ -815,7 +815,7 @@ DebuggerOptions      project (workspace.xml): attach to subprocesses (on),
                      evidence: sources 5, 6               confidence: high
 ```
 
-Pyoxide mapping: breakpoints, watches, mute state and project options in
+Oxshift Python mapping: breakpoints, watches, mute state and project options in
 `.oxshift/workspace.toml` (ADR 0009), imported once from
 `.idea/workspace.xml` (never written); application options in the
 application settings store. debugpy 1.8.21 ships with the application;
@@ -988,7 +988,7 @@ VcsSettings  mapping root -> Git (shared .idea/vcs.xml); path to git
              evidence: sources 1, 8, 9            confidence: high
 ```
 
-Pyoxide mapping: path to git in the application settings store; commit
+Oxshift Python mapping: path to git in the application settings store; commit
 draft, recent messages and branches in `.oxshift/workspace.toml` (ADR 0009);
 only `.idea/vcs.xml` is imported once. Every operation runs the `git`
 executable as the reference does (ADR 0016, proposed): reads with
@@ -1019,7 +1019,7 @@ component. Size: L (about 42 agent-hours).
 ## Area: settings (Settings window, keymap, interpreters)
 
 Scope: the Settings window (page tree with search, pages, Revert changes,
-Apply / OK / Cancel), Pyoxide's application settings store, the first
+Apply / OK / Cancel), Oxshift Python's application settings store, the first
 pages (Appearance with themes, System Settings for autosave, Keymap,
 Editor > Font, Editor > General soft wraps, Python > Interpreter with the
 Add Python Interpreter dialog, Python > Type Engine, Python > Tools >
@@ -1083,7 +1083,7 @@ Apply; pick a theme or a keymap and see it at once.
 | S-SE15 | Unsaved Changes | close the project or quit with edits | keep edits | "Unsaved Changes", Apply, Don't Save, Cancel | - |
 | S-SE16 | First run import | first start without settings | carry settings over | "Import Settings From" (the reference's configuration) or "Skip Import"; "Choose Theme"; "Choose Keymap" with sample shortcuts; Back, Continue | later |
 
-Pyoxide's tree lists only implemented pages, in the reference's order:
+Oxshift Python's tree lists only implemented pages, in the reference's order:
 Python (Interpreter, Type Engine, Tools > External Tools), Appearance &
 Behavior (Appearance, System Settings), Keymap, Editor (General, Font, File
 Types). The default page is the last one selected, else Appearance.
@@ -1171,7 +1171,7 @@ Interpreter      name, path, kind, associated project; an application list,
                  evidence: sources 7, 9               confidence: high
 ```
 
-Pyoxide mapping (ADR 0017, proposed): `<config>/oxshift-python/settings.toml`
+Oxshift Python mapping (ADR 0017, proposed): `<config>/oxshift-python/settings.toml`
 (versioned, unknown keys kept, atomic writes, a done-once import marker),
 growing data in their own files (`interpreters.toml`, themes, keymaps);
 project settings in `.oxshift/project.toml` and `.oxshift/workspace.toml`
@@ -1187,7 +1187,7 @@ See `replica/features/`, area `settings`; import formats stay in area
 manager panel".
 
 ### Out of scope or deferred
-- Pages for features Pyoxide does not have yet; a page comes with its
+- Pages for features Oxshift Python does not have yet; a page comes with its
   feature.
 - Later: search spotlight on the page, keymap editing, File Types page,
   the first-run window, other Appearance options.
@@ -1497,7 +1497,7 @@ DbSettings       page size, fetch size, LOB limit, NULL text, date and number
                  evidence: S-DG15                      confidence: medium
 ```
 
-Pyoxide mapping: `DataSource` is an ADR 0004 profile plus GUI options;
+Oxshift Python mapping: `DataSource` is an ADR 0004 profile plus GUI options;
 `Session` is a `db_core::Connection`; `GridPage` comes from
 `Cursor::next_page`; `MetadataModel` is new (ADR 0021). Console files,
 histories and bindings live in the personal project state and the

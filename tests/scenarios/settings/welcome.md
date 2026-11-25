@@ -1,7 +1,7 @@
 # The Welcome tab: theme and keymap for a new person
 
 ## Steps
-1. Start Pyoxide with an empty configuration directory
+1. Start Oxshift Python with an empty configuration directory
    (`OXSHIFT_CONFIG_DIR=<empty dir>`) on a machine without the reference
    IDE's configuration (`OXSHIFT_REFERENCE_CONFIG=<empty dir>`).
 2. Click New Script; close its tab and click it again. Click Open File
@@ -16,7 +16,7 @@
 
 ## Expected
 - Step 1: no first-run window; the main window opens with the "Welcome to
-  Pyoxide" tab selected: the title over "Start in one click", the tiles
+  Oxshift Python" tab selected: the title over "Start in one click", the tiles
   New Script (the Python logo), New Notebook, Open File, then Learn and
   Plugins in a second row (New Notebook, Learn and Plugins dimmed, "Not
   available yet" on hover), and at the bottom "Theme: <theme>" and

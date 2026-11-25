@@ -14,7 +14,7 @@ The reference uses pty4j for the pseudo-terminal and JediTerm (Java) as the
 emulator, and has two engines: "Classic" and "Reworked 2025", the default
 since 2025.2. The reworked engine paints JediTerm's screen into an IntelliJ
 editor switched to a character-grid mode and draws command blocks from
-its shell integration. Pyoxide clones the reworked engine's look and
+its shell integration. Oxshift Python clones the reworked engine's look and
 behaviour only; there is no engine choice.
 
 Constraints: no JVM, external processes only behind protocols (a shell over
@@ -69,7 +69,7 @@ environment); the environment is passed per session.
 `alacritty_terminal::Term` with its `vte` parser, pinned `=0.26.0`.
 Alacritty's own event loop is not used. Per session, a reader thread reads
 the PTY, pre-scans the bytes for the sequences `Term` ignores (OSC 7 working
-directory, OSC 133 prompt and command marks, Pyoxide's own integration
+directory, OSC 133 prompt and command marks, Oxshift Python's own integration
 events) and feeds them to the parser under the terminal's lock; a writer
 path sends input, and resizes and the child's exit are handled there too.
 Selection and search use the crate's `Selection` and regex search. A
@@ -95,14 +95,14 @@ terminal:
   (split at wide and fallback glyphs to keep cells aligned), merges
   background quads, and draws the cursor (block, underline, bar; hollow
   when unfocused), the selection, search matches, the hovered link and
-  command separators. Pyoxide's editor has no character-grid mode;
+  command separators. Oxshift Python's editor has no character-grid mode;
   adding one would put terminal concerns (cell alignment, wide cells,
   alternate screen, mouse reporting) into the most performance-sensitive
   crate for one user, and the snapshot already is a grid. Repaint is
   coalesced to one per frame, as the Run console does, and to ten a second
   while output floods, so typing in an editor beside a busy terminal
   keeps its frames.
-- **Shell integration**: Pyoxide's own scripts for zsh (`ZDOTDIR`), bash
+- **Shell integration**: Oxshift Python's own scripts for zsh (`ZDOTDIR`), bash
   (`--rcfile`), fish (`--init-command`) and PowerShell (`-File`), emitting
   standard OSC 7 and OSC 133. The injection mechanism is adapted from the
   Community scripts (NOTICE entry with commit and files if adapted

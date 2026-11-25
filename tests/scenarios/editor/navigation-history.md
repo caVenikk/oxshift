@@ -60,7 +60,7 @@ the places of Back and Forward, the next one last).
 ## Notes
 - Recent Locations (Cmd+Shift+E), Last Edit Location and the toolbar's
   Back and Forward buttons are features of their own.
-- Pyoxide keeps the primary caret of a place; the reference keeps all
+- Oxshift Python keeps the primary caret of a place; the reference keeps all
   carets and selections.
 
 ## Source

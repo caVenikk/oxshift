@@ -13,7 +13,7 @@
   the code style), as one undo step; an already formatted file is left
   unchanged.
 - Step 2: only the selected range is formatted (range formatting).
-- Step 3: the IDE's own formatter is used (Pyoxide v1: nothing happens
+- Step 3: the IDE's own formatter is used (Oxshift Python v1: nothing happens
   without ruff; reported in the status bar).
 - Step 4: imports are sorted in ruff's isort order; the unused import is
   not removed.

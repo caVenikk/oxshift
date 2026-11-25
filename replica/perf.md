@@ -1,6 +1,6 @@
 # Performance report
 
-Baseline numbers of the reference IDE and current Pyoxide numbers, measured
+Baseline numbers of the reference IDE and current Oxshift Python numbers, measured
 the same way on the same machines. Budgets live in
 [docs/performance.md](../docs/performance.md). Record every run in the tables
 below: date, machine, OS, tool versions, project, method, numbers.
@@ -10,7 +10,7 @@ below: date, machine, OS, tool versions, project, method, numbers.
 Measure with a licensed copy of PyCharm, default settings, no extra plugins,
 indexes already built unless the metric says otherwise. Repeat each metric
 5 times; report the median and the worst run. Use the same machine for
-Pyoxide later.
+Oxshift Python later.
 
 ### Machines
 | id | machine | CPU | RAM | OS | storage |
@@ -78,7 +78,7 @@ about 3.
 | 2026-10-11 | mac-1 | PyCharm 2026.1.3 | open the 10 MB file (`huge.py`, 10,485,700 bytes): `openFile` span | 617 ms | 625 ms | runs 570 / 625 / 617 ms; the very first open took 1031 ms |
 | | | | completion | | | not measured yet |
 
-## 2. Pyoxide
+## 2. Oxshift Python
 
 ### Database layer
 Measured with the `db-bench` example (`cargo run --release -p db-service

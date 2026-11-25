@@ -22,25 +22,20 @@ names and compatibility identifiers are defined in the `brand` crate
 | Constant | Today | Where it shows up |
 |---|---|---|
 | `PRODUCT_NAME` | `Oxshift Python` | window title, menus, messages and `TERMINAL_EMULATOR` |
-| `IDENTITY_NAME` | `Pyoxide` | existing KeePass group |
+| `IDENTITY_NAME` | `Oxshift` | KeePass group |
 | `PRODUCT_FULL_NAME` | `Oxshift Python IDE` | LSP and DAP client name, Oracle session module, `--help` |
-| `SLUG` | `pyoxide` | Linux window app ID, database `application_name`, thread names, temporary files, base theme ids (`pyoxide-dark`, `pyoxide-light`), keychain service prefix, save-file marker |
+| `SLUG` | `oxshift` | Linux window app ID, database `application_name`, thread names, temporary files, base theme ids (`oxshift-dark`, `oxshift-light`), save-file marker |
 | `ENV_PREFIX` | `OXSHIFT` | environment variables, including `OXSHIFT_CONFIG_DIR` and `OXSHIFT_DB_PASSWORD`, and the `OXSHIFT ` measurement-line prefix |
 | `PROFILE_DIR` | `oxshift-python` | profile in the OS configuration and cache locations |
 | `PROJECT_DIR` | `.oxshift` | shared and personal project settings, run configurations and project data sources |
-| `BUNDLE_ID` | `dev.pyoxide.ide` | technical product identifier used before the packaging migration |
-| `CLI_NAME`, `DB_CLI_NAME`, `IDE_NAME` | `oxshift`, `oxshift-db`, `oxshift-python` | commands and help text. The credential service remains `pyoxide-db`. |
-
-Third-party notices that record a source or icon under
-`crates/python/pyoxide-ide/src/` or `crates/python/pyoxide-ide/assets/`
-describe files now under `crates/python/oxshift-python/src/` and
-`crates/python/oxshift-python/assets/`, respectively.
+| `BUNDLE_ID` | `dev.oxshift.python` | application bundle identifier |
+| `CLI_NAME`, `DB_CLI_NAME`, `IDE_NAME` | `oxshift`, `oxshift-db`, `oxshift-python` | commands and help text. The credential service is `oxshift-db`. |
 
 ## Project storage and PyCharm import
 
 The IDE and both command-line tools use `oxshift-python/` in the OS
-configuration and cache locations. Existing Pyoxide profiles and caches are
-not selected or imported automatically. Explicit configuration and cache path
+configuration and cache locations. Profiles and caches from the previous
+product identity are not selected or imported automatically. Explicit configuration and cache path
 overrides select the requested location instead of the default.
 
 Project settings always use `.oxshift/`, which holds `project.toml`,
@@ -55,11 +50,13 @@ still override the default. CLI database profiles and the secret-store
 configuration retain their own overrides, `OXSHIFT_DB_PROFILES` and
 `OXSHIFT_SECRETS_CONFIG`.
 
-Existing theme IDs, the KeePass group, keychain services and signing identities
-are stable. A connection configured with the same profile name and secret store
-can read its existing credential entry (`pyoxide-db`, account = profile name).
-This preserves access to saved passwords; it does not select an old settings
-folder or enable old command or environment names.
+The base themes are `oxshift-dark` (Oxshift Python Dark) and
+`oxshift-light` (Oxshift Python Light). Credential services are `oxshift-db` (OS keychain) and
+`oxshift-keepass`, with KeePass group `Oxshift`. Signing uses Oxshift identifiers
+and the local certificate `Oxshift Local Dev` (see [Code signing](code-signing.md)).
+Credentials from the previous product identity are not moved automatically.
+A user can enter a saved password again in Oxshift; the previous credential
+remains safely available in its original store.
 
 ## Rollout
 
@@ -72,7 +69,7 @@ folder or enable old command or environment names.
    use only the Oxshift names: `oxshift-python`, `oxshift`, `oxshift-db`, and
    `OXSHIFT_*`. There are no old command wrappers or environment aliases.
    CLI flags take precedence over environment defaults. The applications use
-   the Oxshift settings locations; existing credential identities remain stable.
+   the Oxshift settings locations; credential stores use the identifiers above.
 3. **Settings, projects, and credentials.** Use the product storage paths
    and import supported PyCharm settings as described above.
    Distribution signing and packaged Keychain acceptance are release checks.

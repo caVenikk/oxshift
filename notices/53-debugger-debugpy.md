@@ -13,7 +13,7 @@
   compiled parts (pydevd_attach_to_process: attach*.dll, .so, .dylib,
   inject_dll*.exe, run_code_on_dllmain*.dll and their .pdb; the Windows
   .pyd of pydevd_cython and pydevd_frame_evaluator) come with their sources
-  (.cpp, .c, .pyx) in the same folder. Pyoxide starts debugpy as a separate
+  (.cpp, .c, .pyx) in the same folder. Oxshift starts debugpy as a separate
   process and links none of it.
   Release packaging ships the folder as unpacked, keeping
   debugpy/ThirdPartyNotices.txt, debugpy-1.8.21.dist-info/licenses/LICENSE

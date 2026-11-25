@@ -29,7 +29,7 @@
   its icon and on the status bar icon; no balloon, no automatic restart.
 - Step 7: an editor tab "Ruff Server Error Output" with the server's
   standard error; Restart Server starts it again.
-- Step 8: settings of the external tools open (Pyoxide: until there is a
+- Step 8: settings of the external tools open (Oxshift Python: until there is a
   settings window, the project settings file).
 
 ## Commands

@@ -42,7 +42,7 @@ fn write_state(root: &Path) {
 }
 
 #[test]
-fn project_storage_ignores_old_files_and_directories() {
+fn project_storage_only_uses_the_product_directory() {
     brand::install();
     let new = tempfile::tempdir().unwrap();
     read_only(new.path());
@@ -50,17 +50,17 @@ fn project_storage_ignores_old_files_and_directories() {
     write_state(new.path());
     assert!(new.path().join(".oxshift/project.toml").is_file());
     assert!(new.path().join(".oxshift/.gitignore").is_file());
-    assert!(!new.path().join(".oxide").exists());
+    assert_eq!(std::fs::read_dir(new.path()).unwrap().count(), 1);
 
-    for old_is_file in [false, true] {
+    for neighbor_is_file in [false, true] {
         let root = tempfile::tempdir().unwrap();
-        let old = root.path().join(".oxide");
-        let original = "version = 1\n[exclusions]\npaths = [\"old-only\"]\n";
-        let sentinel = if old_is_file {
-            old.clone()
+        let neighbor = root.path().join(".other-tool");
+        let original = "version = 1\n[exclusions]\npaths = [\"other-tool-only\"]\n";
+        let sentinel = if neighbor_is_file {
+            neighbor.clone()
         } else {
-            std::fs::create_dir(&old).unwrap();
-            old.join("project.toml")
+            std::fs::create_dir(&neighbor).unwrap();
+            neighbor.join("project.toml")
         };
         std::fs::write(&sentinel, original).unwrap();
         read_only(root.path());
@@ -68,12 +68,12 @@ fn project_storage_ignores_old_files_and_directories() {
         write_state(root.path());
         assert_eq!(std::fs::read_to_string(&sentinel).unwrap(), original);
         assert!(root.path().join(".oxshift/project.toml").is_file());
-        if !old_is_file {
-            assert_eq!(std::fs::read_dir(&old).unwrap().count(), 1);
+        if !neighbor_is_file {
+            assert_eq!(std::fs::read_dir(&neighbor).unwrap().count(), 1);
         }
         let filter = project::Filter::for_root(root.path());
         assert!(filter.is_hidden(".oxshift"));
-        assert!(!filter.is_hidden(".oxide"));
+        assert!(!filter.is_hidden(".other-tool"));
         assert!(!project::is_hidden_path(&sentinel, &filter));
         let changes = project::disk_changes(
             [
@@ -95,7 +95,7 @@ fn occupied_project_directory_reports_error_without_alternate_writes() {
     assert!(store::load(root.path()).is_err());
     assert!(workspace::load_value(root.path(), "test", "value").is_err());
     assert!(workspace::save_value(root.path(), "test", "value", Some("x")).is_err());
-    assert!(!root.path().join(".oxide").exists());
+    assert_eq!(std::fs::read_dir(root.path()).unwrap().count(), 1);
     assert_eq!(
         std::fs::read_to_string(root.path().join(".oxshift")).unwrap(),
         "not a directory"
@@ -103,18 +103,18 @@ fn occupied_project_directory_reports_error_without_alternate_writes() {
 }
 
 #[test]
-fn idea_importers_write_current_store_despite_conflicting_old_data() {
+fn idea_importers_preserve_unrelated_project_files() {
     brand::install();
-    for old_is_file in [false, true] {
+    for neighbor_is_file in [false, true] {
         let root = tempfile::tempdir().unwrap();
-        let old = root.path().join(".oxide");
-        let sentinel = if old_is_file {
-            old.clone()
+        let neighbor = root.path().join(".other-tool");
+        let sentinel = if neighbor_is_file {
+            neighbor.clone()
         } else {
-            std::fs::create_dir(&old).unwrap();
-            old.join("project.toml")
+            std::fs::create_dir(&neighbor).unwrap();
+            neighbor.join("project.toml")
         };
-        // Even a broken old settings file must not block the real importers.
+        // Malformed settings from another tool must not block import.
         std::fs::write(&sentinel, "not valid TOML [").unwrap();
         let idea = root.path().join(".idea");
         std::fs::create_dir_all(idea.join("runConfigurations")).unwrap();
@@ -141,8 +141,8 @@ fn idea_importers_write_current_store_despite_conflicting_old_data() {
             std::fs::read_to_string(&sentinel).unwrap(),
             "not valid TOML ["
         );
-        if !old_is_file {
-            assert_eq!(std::fs::read_dir(&old).unwrap().count(), 1);
+        if !neighbor_is_file {
+            assert_eq!(std::fs::read_dir(&neighbor).unwrap().count(), 1);
         }
         assert_eq!(
             std::fs::read_to_string(idea.join("modules.xml")).unwrap(),

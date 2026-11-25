@@ -837,11 +837,6 @@ mod tests {
             root.path().join(".oxshift/db-profiles.toml")
         );
         assert!(!root.path().join(".oxshift").exists());
-        std::fs::create_dir(root.path().join(".oxide")).unwrap();
-        assert_eq!(
-            profiles_path(root.path()),
-            root.path().join(".oxshift/db-profiles.toml")
-        );
         std::fs::create_dir(root.path().join(".oxshift")).unwrap();
         assert_eq!(
             profiles_path(root.path()),

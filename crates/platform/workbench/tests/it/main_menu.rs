@@ -241,3 +241,62 @@ fn local_bug_report_is_a_discoverable_action_without_collecting_on_the_test_plat
         "unavailable"
     );
 }
+
+fn report_shortcut_in_modal_settings(cx: &mut TestAppContext, keymap: &str, keys: &str) {
+    let mut h = open(cx);
+    h.cx.update(|cx| workbench::keymap::active::activate(keymap, cx).unwrap());
+    assert_eq!(
+        h.invoke("help.local-bug-report-state", json!(null)),
+        Value::Null
+    );
+    let dialog =
+        h.cx.update_window(h.window.into(), |_, window, cx| {
+            settings_ui::open(
+                window,
+                settings_ui::OpenRequest {
+                    project_name: None,
+                    context: settings_ui::PageContext { project: None },
+                    page: None,
+                    filter: None,
+                    activate: true,
+                    modal: true,
+                },
+                cx,
+            )
+            .unwrap()
+        })
+        .unwrap();
+    h.draw();
+    h.cx.update_window(dialog.into(), |_, window, cx| {
+        window.activate_window();
+        window.draw(cx).clear();
+    })
+    .unwrap();
+    h.cx.run_until_parked();
+    assert_eq!(
+        h.cx.read(|cx| ui::dialog_window::modal_of(h.window.into(), cx)),
+        Some(dialog.into())
+    );
+    h.cx.simulate_keystrokes(dialog.into(), keys);
+    h.cx.run_until_parked();
+    assert_eq!(
+        h.invoke("help.local-bug-report-state", json!(null))["status"],
+        "unavailable"
+    );
+    let history = h.cx.read(ui::command::recent_ids);
+    assert!(
+        !history
+            .iter()
+            .any(|id| id.starts_with("help.") || id.ends_with(".state"))
+    );
+}
+
+#[gpui::test]
+fn macos_report_shortcut_reaches_global_handler_from_modal_settings(cx: &mut TestAppContext) {
+    report_shortcut_in_modal_settings(cx, workbench::keymap::MACOS_NAME, "cmd-alt-shift-b");
+}
+
+#[gpui::test]
+fn windows_report_shortcut_reaches_global_handler_from_modal_settings(cx: &mut TestAppContext) {
+    report_shortcut_in_modal_settings(cx, workbench::keymap::WINDOWS_NAME, "ctrl-alt-shift-b");
+}

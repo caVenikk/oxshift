@@ -19,17 +19,36 @@ not an inference of the reference IDE's expected behavior.
    With more than 16 owned windows, the focused window is included and the report
    records how many were omitted, with partial status. At most 20 registered command
    IDs are included; command arguments, editor text, document paths, logs and
-   environment variables are absent. Coverage explicitly excludes direct
-   keyboard/native dispatch. No guessed cause, repro steps or expected result
+   environment variables are absent. History belongs to this IDE process and is
+   shared across its project windows, not limited to the captured window.
+   Handled keyboard shortcuts are included; plain text input, query polling
+   and the report commands themselves are excluded. Native menu dispatch outside
+   the registry may be absent. No guessed cause, repro steps or expected result
    is generated.
 5. On platforms without native capture, or when capture fails, metadata is saved
    with `status: partial`, each unavailable image has a reason, and the
    notification does not claim complete screenshot success.
 6. Trigger another report. It has a different filename; the original remains
-   unchanged. On Unix the report directory has mode `0700`, ZIP files `0600`. Temporary images and incomplete archives are removed.
+   unchanged. On Unix the report directory has mode `0700`, ZIP files `0600`.
+   Temporary images and incomplete archives are removed.
 7. Make the isolated report destination unwritable and trigger again. The status
    is `failed` with a useful notification; no success or upload is claimed.
 
+8. With modal Settings open (for example from first-run), press the platform's
+   report shortcut. It reaches the global report action without closing Settings
+   or editing a field. The normal main-window Settings dialog is non-modal; the
+   same shortcut also works there.
+9. Exercise a real editor shortcut, type text, poll report state, then create a
+   report. `recent_command_ids` includes only registered static command IDs of
+   handled shortcuts/non-query registry invocations. It includes no typed text,
+   argument values, raw keystrokes, polling or report command IDs.
+10. If the file manager does not open, the full ZIP path remains in the sticky
+    notification and `help.local-bug-report-state.path`. Native reveal has no
+    result API, so success of opening the file manager is never claimed. A write
+    failure names the intended directory in the message/state. A first-run host
+    without a Workbench stack displays a native message; background automation
+    uses the status query and never opens a native message.
+
 For background automation, invoke `help.create-local-bug-report` and poll
-`help.local-bug-report-state` until `saved`, `partial`, or `failed`. Background automation does not open the file manager. The test
-platform returns `unavailable` without writing to the real user profile.
+`help.local-bug-report-state` until `saved`, `partial`, or `failed`.
+Background automation does not open the file manager. The test platform returns `unavailable` without writing to the real user profile.

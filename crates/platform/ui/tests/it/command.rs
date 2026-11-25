@@ -174,30 +174,64 @@ impl Render for Empty {
 }
 
 #[gpui::test]
-fn recent_identifiers_are_bounded_and_exclude_arguments_and_unknown_ids(cx: &mut TestAppContext) {
+fn recent_identifiers_are_bounded_and_exclude_arguments_queries_and_diagnostics(
+    cx: &mut TestAppContext,
+) {
     let window = cx.update(|cx| {
         ui::command::register(cx, COMMANDS);
+        for id in ["counter.add", "counter.increment"] {
+            ui::command::register_handler(cx, id, std::rc::Rc::new(|_, _, _| Ok(json!(null))));
+        }
         ui::command::register_query(
             cx,
             "counter.state",
             std::rc::Rc::new(|_, _, _| Ok(json!(null))),
         );
+        ui::command::exclude_from_history(cx, &["counter.increment"]);
         cx.open_window(Default::default(), |_, cx| cx.new(|_| Empty))
             .unwrap()
     });
     for _ in 0..30 {
         cx.update_window(window.into(), |_, window, cx| {
             ui::command::invoke(
-                "counter.state",
+                "counter.add",
                 json!({"secret": "private input"}),
                 window,
                 cx,
             )
             .unwrap();
+            ui::command::invoke("counter.state", json!(null), window, cx).unwrap();
+            ui::command::invoke("counter.increment", json!(null), window, cx).unwrap();
             assert!(ui::command::invoke("private/path/unknown", json!(null), window, cx).is_err());
+            ui::command::record_recent_id("unregistered input", cx);
         })
         .unwrap();
     }
-    let ids = cx.read(ui::command::recent_ids);
-    assert_eq!(ids, vec!["counter.state"; 20]);
+    assert_eq!(cx.read(ui::command::recent_ids), vec!["counter.add"; 20]);
+}
+
+#[gpui::test]
+fn history_observes_handled_shortcuts_once_and_never_plain_input(cx: &mut TestAppContext) {
+    let window = cx.update(|cx| {
+        ui::command::register(cx, COMMANDS);
+        ui::command::observe_shortcuts(cx);
+        ui::command::observe_shortcuts(cx);
+        cx.bind_keys([gpui::KeyBinding::new("ctrl-k", Increment, Some("Counter"))]);
+        cx.open_window(Default::default(), |window, cx| {
+            let view = cx.new(|cx| Counter {
+                value: 0,
+                focus: cx.focus_handle(),
+            });
+            window.focus(&view.read(cx).focus.clone());
+            view
+        })
+        .unwrap()
+    });
+    cx.run_until_parked();
+    cx.simulate_keystrokes(window.into(), "ctrl-k");
+    cx.run_until_parked();
+    assert_eq!(window.read_with(cx, |counter, _| counter.value).unwrap(), 1);
+    cx.simulate_keystrokes(window.into(), "p r i v a t e");
+    cx.run_until_parked();
+    assert_eq!(cx.read(ui::command::recent_ids), ["counter.increment"]);
 }

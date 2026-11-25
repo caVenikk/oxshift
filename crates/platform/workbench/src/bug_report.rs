@@ -25,6 +25,14 @@ impl Global for State {}
 
 pub fn init(cx: &mut App) {
     ui::command::register(cx, COMMANDS);
+    ui::command::exclude_from_history(
+        cx,
+        &[
+            "help.create-local-bug-report",
+            "help.local-bug-report-state",
+        ],
+    );
+    ui::command::observe_shortcuts(cx);
     cx.default_global::<State>();
     ui::command::register_query(
         cx,
@@ -126,7 +134,8 @@ fn start(window: &mut Window, cx: &mut App) {
         "architecture": std::env::consts::ARCH,
         "timestamp_utc": chrono::Utc::now().to_rfc3339(),
         "recent_command_ids": ui::command::recent_ids(cx),
-        "command_history_coverage": "Registry invocations only; direct keyboard and native actions may be absent. No arguments recorded.",
+        "command_history_scope": "Current IDE process; shared across its project windows, not limited to the captured window.",
+        "command_history_coverage": "Non-query registry invocations and handled keyboard shortcuts. Native menu dispatch outside the registry may be absent. Diagnostics, queries, arguments and typed text are omitted.",
         "active_window": windows.iter().position(|w| *w == active),
         "window_count": total_windows,
         "window_roles": window_roles,
@@ -136,6 +145,10 @@ fn start(window: &mut Window, cx: &mut App) {
     cx.global_mut::<State>().busy = true;
     cx.global_mut::<State>().last = json!({"status": "saving"});
     let root = app_info::local_data_dir().map(|p| p.join("bug-reports"));
+    let destination = root
+        .as_ref()
+        .map(|path| path.display().to_string())
+        .unwrap_or_else(|| "the unavailable local profile directory".into());
     let job = cx.background_executor().spawn(async move {
         let root = root.ok_or_else(|| "No local profile directory is available".to_string())?;
         write_report(&root, captures, metadata).map_err(|e| e.to_string())
@@ -155,11 +168,11 @@ fn start(window: &mut Window, cx: &mut App) {
                     }
                     (if complete { "information" } else { "warning" },
                      if complete { "Local bug report saved" } else { "Local bug report saved without all screenshots" },
-                     format!("{}\nScreenshots may contain private code. Nothing was uploaded. Attach this ZIP to your report. See report.json inside for capture status.", path.display()))
+                     format!("ZIP: {}\nIf the file manager does not open, use the path above. Screenshots may contain private code. Nothing was uploaded. See report.json inside for capture status.", path.display()))
                 }
                 Err(error) => {
-                    cx.global_mut::<State>().last = json!({"status": "failed", "error": error});
-                    ("error", "Could not save local bug report", error)
+                    cx.global_mut::<State>().last = json!({"status": "failed", "error": error, "directory": destination});
+                    ("error", "Could not save local bug report", format!("Destination: {destination}\n{error}\nNo completed ZIP was created."))
                 }
             };
             notify(owner, kind, title, content, cx);
@@ -187,8 +200,17 @@ fn notify(owner: AnyWindowHandle, kind: &str, title: &str, content: String, cx: 
             workbench.update(cx, |workbench, cx| {
                 workbench.notify(action.notification(), cx);
             });
-        } else {
-            window.dispatch_action(Box::new(action), cx);
+        } else if !crate::env::background() {
+            // First-run/Welcome hosts may have no Workbench notification stack.
+            // The native reveal API has no result; always retain the full path
+            // in a visible message rather than claiming the file manager opened.
+            let _ = window.prompt(
+                gpui::PromptLevel::Info,
+                title,
+                action.content.as_deref(),
+                &["OK"],
+                cx,
+            );
         }
     });
 }

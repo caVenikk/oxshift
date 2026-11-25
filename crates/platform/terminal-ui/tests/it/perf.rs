@@ -173,7 +173,7 @@ fn spawn(
 #[cfg(unix)]
 fn large_file(bytes: usize, end: &str) -> (std::path::PathBuf, std::path::PathBuf) {
     let dir = std::env::temp_dir().join(format!(
-        "pyoxide-terminal-ui-perf-{}-{bytes}",
+        "oxshift-terminal-ui-perf-{}-{bytes}",
         std::process::id()
     ));
     std::fs::create_dir_all(&dir).unwrap();

@@ -1,6 +1,6 @@
 [package]
 name = "code-intel-ui"
-description = "Code intelligence UI of Pyoxide IDE on GPUI: the per-window controller of the editors' language services, its popups, the Language Services widget and the code.* commands"
+description = "Code intelligence UI of Oxshift Python IDE on GPUI: the per-window controller of the editors' language services, its popups, the Language Services widget and the code.* commands"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

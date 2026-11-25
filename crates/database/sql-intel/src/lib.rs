@@ -1,4 +1,4 @@
-//! SQL language services of Pyoxide IDE (ADR 0022) over the metadata model
+//! SQL language services of Oxshift Python IDE (ADR 0022) over the metadata model
 //! of `db-model` and the syntax tree of `sql-syntax`.
 //!
 //! - [`Scope`], [`SqlContext`] and [`ScopeProvider`]: what names in a

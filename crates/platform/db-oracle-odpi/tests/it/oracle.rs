@@ -30,8 +30,8 @@ fn base_params() -> ConnectParams {
         host: env_or("TEST_ORACLE_HOST", "localhost"),
         port: env_or("TEST_ORACLE_PORT", "1521").parse().unwrap(),
         database: env_or("TEST_ORACLE_SERVICE", "FREEPDB1"),
-        user: "pyoxide".into(),
-        password: Secret::new(env_or("DB_PASSWORD", "pyoxide")),
+        user: env_or("DB_USER", "oxshift"),
+        password: Secret::new(env_or("DB_PASSWORD", "oxshift")),
         connect_timeout: Duration::from_secs(10),
         ..ConnectParams::default()
     }

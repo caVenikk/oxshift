@@ -104,3 +104,53 @@ fn environment_values() {
         }
     }
 }
+
+#[test]
+fn new_identity_uses_a_separate_group_without_removing_saved_passwords() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("secrets.kdbx");
+    let key = || KeePassKey::new(Secret::new("test-master"));
+    let old = KeePassStore::open(
+        &path,
+        key(),
+        KeePassOptions {
+            create: true,
+            kdf: KdfParams {
+                iterations: 1,
+                memory_bytes: 64 * 1024,
+                parallelism: 1,
+            },
+        },
+    )
+    .unwrap();
+    old.set("app-db", "local", &Secret::new("old-password"))
+        .unwrap();
+    drop(old);
+    assert!(app_info::install(app_info::AppInfo {
+        name: "New App",
+        identity_name: "New App",
+        slug: "new-app",
+        ..app_info::AppInfo::NEUTRAL
+    }));
+    let new = KeePassStore::open(&path, key(), KeePassOptions::default()).unwrap();
+    assert!(new.get("app-db", "local").unwrap().is_none());
+    assert!(new.get("new-app-db", "local").unwrap().is_none());
+    new.set("new-app-db", "local", &Secret::new("new-password"))
+        .unwrap();
+    assert_eq!(new.list().unwrap(), [("new-app-db".into(), "local".into())]);
+    let database = keepass::Database::parse(
+        &std::fs::read(&path).unwrap(),
+        keepass::DatabaseKey::new().with_password("test-master"),
+    )
+    .unwrap();
+    let root = database.root();
+    let groups: Vec<_> = root.groups().map(|group| group.name.clone()).collect();
+    assert_eq!(groups, ["App", "New App"]);
+    let old_group = root.groups().find(|group| group.name == "App").unwrap();
+    let old_service = old_group.groups().next().unwrap();
+    assert_eq!(old_service.entries().count(), 1);
+    assert_eq!(
+        old_service.entries().next().unwrap().get_password(),
+        Some("old-password")
+    );
+}

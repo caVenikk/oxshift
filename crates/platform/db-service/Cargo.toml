@@ -1,6 +1,6 @@
 [package]
 name = "db-service"
-description = "Database engine service for Pyoxide IDE: connection profiles, secrets, driver dispatch, diagnostics and the db.* commands"
+description = "Database engine service for Oxshift Python IDE: connection profiles, secrets, driver dispatch, diagnostics and the db.* commands"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

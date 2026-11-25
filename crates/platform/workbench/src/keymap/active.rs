@@ -492,9 +492,9 @@ pub fn choose_and_import(cx: &mut App) {
 pub struct Imported {
     /// The keymaps written, parents first; the last is the one asked for.
     pub keymaps: Vec<Derived>,
-    /// Shortcuts of actions Pyoxide does not have, of every keymap.
+    /// Shortcuts of actions Oxshift does not have, of every keymap.
     pub unmapped: Vec<Unmapped>,
-    /// Parents Pyoxide only approximates: (the reference's name, the
+    /// Parents Oxshift only approximates: (the reference's name, the
     /// keymap used in its place).
     pub approximated: Vec<(String, String)>,
 }

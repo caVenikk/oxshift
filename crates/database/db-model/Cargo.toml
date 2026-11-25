@@ -1,6 +1,6 @@
 [package]
 name = "db-model"
-description = "Metadata model of the database module of Pyoxide IDE: an arena of schema objects with stable ids, immutable snapshots shared per schema, merge of introspection snapshots and deltas, name lookups and search, and the versioned disk cache. No toolkit, no async runtime, no SQL parsing"
+description = "Metadata model of the database module of Oxshift Python IDE: an arena of schema objects with stable ids, immutable snapshots shared per schema, merge of introspection snapshots and deltas, name lookups and search, and the versioned disk cache. No toolkit, no async runtime, no SQL parsing"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

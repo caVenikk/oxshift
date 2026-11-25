@@ -1,6 +1,6 @@
 [package]
 name = "themes"
-description = "Theme model of Pyoxide IDE (UI colour roles, editor syntax tokens, metrics), TOML theme files and importers for PyCharm colour schemes and UI themes"
+description = "Theme model of Oxshift Python IDE (UI colour roles, editor syntax tokens, metrics), TOML theme files and importers for PyCharm colour schemes and UI themes"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

@@ -1,6 +1,6 @@
 # lsp-client
 
-The Language Server Protocol client of Pyoxide IDE (ADR 0010):
+The Language Server Protocol client of Oxshift Python IDE (ADR 0010):
 `LspCodeIntel` implements `code_intel::CodeIntel` over the language servers a
 product describes with `ServerSpec`s.
 

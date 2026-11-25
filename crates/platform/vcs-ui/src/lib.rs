@@ -1,4 +1,4 @@
-//! Version control UI of Pyoxide IDE (ADR 0016) on GPUI. It knows the
+//! Version control UI of Oxshift Python IDE (ADR 0016) on GPUI. It knows the
 //! model (`vcs`), never a backend: the workbench gives it statuses and base
 //! texts.
 //!

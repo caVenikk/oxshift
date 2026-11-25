@@ -62,7 +62,7 @@ pub const RECENT: &str = "Recent Configurations";
 /// The title over a configuration's own actions in its submenu
 /// (`choose.run.popup.separator`).
 pub const CONFIGURATION: &str = "Configuration";
-/// The secondary text of a configuration Pyoxide cannot run yet.
+/// The secondary text of a configuration Oxshift cannot run yet.
 pub const NOT_SUPPORTED: &str = "not supported yet";
 /// Width of the dropdown (`MINIMAL_POPUP_WIDTH`, `MAXIMAL_POPUP_WIDTH`).
 pub const MIN_WIDTH: f32 = 310.0;
@@ -476,7 +476,7 @@ pub const NAME_MAX_CHARS: usize = 33 + 8;
 /// A configuration's name cut in the middle for the run widget, as the
 /// reference cuts it (`trimRunConfigurationName`, `splitCharCount`): the
 /// end keeps 8 characters when it can, the beginning gets the rest.
-/// The reference measures widths; Pyoxide counts characters, up to
+/// The reference measures widths; Oxshift counts characters, up to
 /// [`NAME_MAX_CHARS`] of them.
 pub fn trim_name(name: &str) -> String {
     const MAX: usize = NAME_MAX_CHARS;

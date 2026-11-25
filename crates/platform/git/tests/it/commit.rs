@@ -271,7 +271,7 @@ fn a_partial_commit_takes_the_included_changes_only() {
         .unwrap()
         .flatten()
         .map(|e| e.file_name().to_string_lossy().into_owned())
-        .filter(|n| n.starts_with("pyoxide-index"))
+        .filter(|n| n.starts_with(&format!("{}-index", app_info::slug())))
         .collect();
     assert!(left.is_empty(), "{left:?}");
 }

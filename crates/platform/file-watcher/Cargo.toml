@@ -1,6 +1,6 @@
 [package]
 name = "file-watcher"
-description = "File watcher of Pyoxide IDE: changes on disk under watched folders, reported by the operating system and gathered into batches of changed paths"
+description = "File watcher of Oxshift Python IDE: changes on disk under watched folders, reported by the operating system and gathered into batches of changed paths"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

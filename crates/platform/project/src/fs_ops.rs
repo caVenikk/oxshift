@@ -34,7 +34,7 @@ pub enum NameError {
         "Trying to create a directory with an ignored name ('{0}'); the result will not be visible"
     )]
     Ignored(String),
-    /// The reference creates `../x` and `~/x` anywhere; Pyoxide never
+    /// The reference creates `../x` and `~/x` anywhere; Oxshift never
     /// writes outside the project.
     #[error("'{0}' is outside the project")]
     OutsideProject(String),
@@ -1274,7 +1274,7 @@ mod tests {
     fn moves_to_the_trash() {
         let dir = tempfile::tempdir_in(std::env::var_os("HOME").unwrap()).unwrap();
         let root = native_path::canonicalize(dir.path()).unwrap();
-        let file = root.join("pyoxide-trash-test.txt");
+        let file = root.join("oxshift-trash-test.txt");
         std::fs::write(&file, "x").unwrap();
         assert!(trash::can_move(&file));
         assert_eq!(delete(&file, &root, true).unwrap(), Deleted::Trashed);

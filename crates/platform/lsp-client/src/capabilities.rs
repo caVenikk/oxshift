@@ -2,7 +2,7 @@
 //! server's answer.
 //!
 //! The client capabilities follow the reference's `LspClientCapabilities`
-//! (IntelliJ Platform, `platform/lsp`) for the features Pyoxide has; what
+//! (IntelliJ Platform, `platform/lsp`) for the features Oxshift has; what
 //! it does not have yet (semantic tokens, inlay hints, folding, code
 //! lenses, document links and colours, symbols, hierarchies, show document,
 //! resource operations in workspace edits, completion item defaults) is

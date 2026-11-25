@@ -13,17 +13,17 @@
 #   scripts/sign-local.sh --check PATH...     print the designated requirement of binaries
 #
 # Environment:
-#   OXSHIFT_SIGN_IDENTITY   certificate common name (default: Pyoxide Local Dev)
+#   OXSHIFT_SIGN_IDENTITY   certificate common name (default: Oxshift Local Dev)
 #   OXSHIFT_SIGN_KEYCHAIN   keychain that holds it (default:
-#                           ~/Library/Keychains/pyoxide-signing.keychain-db)
+#                           ~/Library/Keychains/oxshift-signing.keychain-db)
 #
 # The identity lives in its own keychain file, never in the login keychain.
 # Nothing here reads or writes keychain items of the application.
 # Release builds are signed with a Developer ID instead: docs/code-signing.md.
 set -euo pipefail
 
-IDENTITY="${OXSHIFT_SIGN_IDENTITY:-Pyoxide Local Dev}"
-KEYCHAIN="${OXSHIFT_SIGN_KEYCHAIN:-$HOME/Library/Keychains/pyoxide-signing.keychain-db}"
+IDENTITY="${OXSHIFT_SIGN_IDENTITY:-Oxshift Local Dev}"
+KEYCHAIN="${OXSHIFT_SIGN_KEYCHAIN:-$HOME/Library/Keychains/oxshift-signing.keychain-db}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 if [ "$(uname -s)" != "Darwin" ]; then
@@ -51,8 +51,8 @@ Run these in a terminal; nothing touches the login keychain.
       -keyout "\$WORK/key.pem" -out "\$WORK/cert.pem"
   openssl pkcs12 -export -inkey "\$WORK/key.pem" -in "\$WORK/cert.pem" \\
       -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -macalg sha1 \\
-      -out "\$WORK/id.p12" -passout pass:pyoxide-local
-  security import "\$WORK/id.p12" -k "\$KC" -P pyoxide-local -T /usr/bin/codesign
+      -out "\$WORK/id.p12" -passout pass:oxshift-local
+  security import "\$WORK/id.p12" -k "\$KC" -P oxshift-local -T /usr/bin/codesign
   security set-key-partition-list -S apple-tool:,apple: -s -k "" "\$KC" >/dev/null
   rm -rf "\$WORK"
 
@@ -73,9 +73,10 @@ identifier_for() {
     local name
     name=$(basename "${1%.app}")
     case "$name" in
-        oxshift-python) echo pyoxide-ide ;;
-        oxshift-db) echo pyoxide-db ;;
-        oxshift) echo pyoxide ;;
+        "Oxshift Python") echo dev.oxshift.python ;;
+        oxshift-python) echo oxshift-python ;;
+        oxshift-db) echo oxshift-db ;;
+        oxshift) echo oxshift ;;
         *) echo "$name" ;;
     esac
 }

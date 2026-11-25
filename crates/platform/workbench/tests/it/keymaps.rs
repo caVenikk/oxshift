@@ -279,7 +279,7 @@ fn the_unmapped_actions_of_the_vs_code_keymaps_are_expected(_cx: &mut TestAppCon
             "{name}: mapped now {now_mapped:?}, unmapped now {now_unmapped:?}; \
              review and run with OXSHIFT_BLESS=1"
         );
-        // Every shortcut of a mapped action that Pyoxide cannot bind is a
+        // Every shortcut of a mapped action that Oxshift cannot bind is a
         // mouse gesture.
         for s in &converted.unsupported {
             assert!(
@@ -305,7 +305,7 @@ fn vs_code_keymaps_take_the_reference_shortcuts(cx: &mut TestAppContext) {
         keys
     };
     // VSCode on Windows: Go to File is Ctrl+P, Duplicate is Shift+Alt+Down
-    // (EditorDuplicateLines is not Pyoxide's; EditorDuplicate keeps the
+    // (EditorDuplicateLines is not Oxshift's; EditorDuplicate keeps the
     // parent's), Delete Line is Ctrl+Shift+K, Settings Ctrl+Comma.
     assert_eq!(
         keys(cx, VSCODE_NAME, "search-everywhere.go-to-file", None),

@@ -24,7 +24,7 @@
 //! The reference IDE sorts its Files tab with a machine-learning model by
 //! default (its Advanced Settings "Sort results in the Files tab based on
 //! machine learning"), which a trained model decides and no source shows.
-//! [`rank`] is Pyoxide's fixed rule that gives the top results it shows:
+//! [`rank`] is Oxshift's fixed rule that gives the top results it shows:
 //! the name match first (the name starts with the typed name, then a match
 //! at a word start, then inside a word), the folder part only filters.
 
@@ -244,7 +244,7 @@ pub fn rank_by_weight(hits: &mut [FileHit]) {
     hits.sort_by_key(|h| std::cmp::Reverse(h.weight));
 }
 
-/// Orders hits as Pyoxide's popup shows them: a path typed in full or a
+/// Orders hits as Oxshift's popup shows them: a path typed in full or a
 /// file named as typed (`app` for `app.py`) first; then the longer the
 /// name match (the earlier round), the better; then where the name matched
 /// ([`MatchClass`]), the matching degree, and the name without its

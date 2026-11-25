@@ -667,7 +667,7 @@ mod tests {
 
     #[test]
     fn existing_files_and_folders_link() {
-        let dir = std::env::temp_dir().join(format!("pyoxide-links-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("oxshift-links-{}", std::process::id()));
         std::fs::create_dir_all(dir.join("src")).unwrap();
         std::fs::write(dir.join("src/app.py"), "x").unwrap();
         let find = |text: &str| {

@@ -1,6 +1,6 @@
 [package]
 name = "py-run"
-description = "Running Python in Pyoxide IDE: the Python run configuration type and its import from the reference IDE, the reference's command line, environment and PYTHONPATH for a script or module (uv run included), and the Python traceback link filter of the console"
+description = "Running Python in Oxshift Python IDE: the Python run configuration type and its import from the reference IDE, the reference's command line, environment and PYTHONPATH for a script or module (uv run included), and the Python traceback link filter of the console"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

@@ -1,6 +1,6 @@
 [package]
 name = "git"
-description = "Git for Pyoxide IDE through the git executable: lookup and version, a runner with per-repository locks and cancellation, porcelain parsers, readers of the .git folder, repository detection, the status service, base texts and git.* engine commands"
+description = "Git for Oxshift Python IDE through the git executable: lookup and version, a runner with per-repository locks and cancellation, porcelain parsers, readers of the .git folder, repository detection, the status service, base texts and git.* engine commands"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

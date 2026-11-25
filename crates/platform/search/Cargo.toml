@@ -1,6 +1,6 @@
 [package]
 name = "search"
-description = "Text search engine of Pyoxide IDE: plain and regular expression queries with case and whole word options, replacement templates, cancellable searches over text snapshots"
+description = "Text search engine of Oxshift Python IDE: plain and regular expression queries with case and whole word options, replacement templates, cancellable searches over text snapshots"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

@@ -1,7 +1,7 @@
 //! Importers for PyCharm colour schemes (`.icls` and scheme XML), UI themes
 //! (`.theme.json`) and the plugin archives that contain them.
 //!
-//! Only data files are read. The result of an import is a Pyoxide
+//! Only data files are read. The result of an import is a Oxshift
 //! [`Theme`](crate::Theme) and an [`ImportReport`] that lists what was mapped,
 //! what was not, what was approximated and what the built-in base theme had
 //! to supply. The mapping is documented in `docs/theme-mapping.md`.

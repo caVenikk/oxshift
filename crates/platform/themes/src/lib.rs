@@ -1,4 +1,4 @@
-//! Theme model of Pyoxide IDE.
+//! Theme model of Oxshift Python IDE.
 //!
 //! A [`Theme`] assigns a value to every [`UiRole`] (flat colours of the
 //! interface and the editor chrome), every [`TextRole`] (syntax tokens and

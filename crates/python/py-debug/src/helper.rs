@@ -166,7 +166,7 @@ mod tests {
     #[test]
     fn the_bundle_comes_before_the_cache() {
         let dir = tempfile::tempdir().unwrap();
-        let app = dir.path().join("Pyoxide.app").join("Contents");
+        let app = dir.path().join("Oxshift Python.app").join("Contents");
         let exe = app.join("MacOS").join("oxshift-python");
         let cache = dir.path().join("cache");
         let found = candidates(Some(&exe), Some(&cache));

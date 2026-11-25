@@ -25,7 +25,7 @@ fn lines(model: &Model, rows: &[Row]) -> Vec<String> {
         .map(|r| {
             let text = match r.key.node {
                 NodeKey::Source => r.key.source.to_string(),
-                NodeKey::Database => "pyoxide".into(),
+                NodeKey::Database => "oxshift".into(),
                 NodeKey::Status => "status".into(),
                 NodeKey::Node(id) => model.node(id).unwrap().name().to_owned(),
                 NodeKey::Group(_, g) => g.label().to_owned(),
@@ -63,7 +63,7 @@ fn levels_groups_and_nested_partitions() {
     .collect();
     let sources = [SourceTree {
         name: &name,
-        database: Some("pyoxide"),
+        database: Some("oxshift"),
         model: Some(&model),
         status: None,
     }];
@@ -71,7 +71,7 @@ fn levels_groups_and_nested_partitions() {
     let got = lines(&model, &rows);
     let want = [
         "v local",
-        "  v pyoxide",
+        "  v oxshift",
         "    v demo",
         "      v tables",
         "        audit_log",
@@ -104,7 +104,7 @@ fn a_source_without_a_model_shows_its_status() {
     let expanded: HashSet<RowKey> = [RowKey::source(&name)].into_iter().collect();
     let sources = [SourceTree {
         name: &name,
-        database: Some("pyoxide"),
+        database: Some("oxshift"),
         model: None,
         status: Some(Status::Connecting),
     }];

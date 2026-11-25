@@ -1,4 +1,4 @@
-//! Python run configurations in the Pyoxide window: a project of the
+//! Python run configurations in the Oxshift window: a project of the
 //! reference IDE with a Python configuration is opened, the configuration
 //! is imported and selected, and Run starts it with the project's
 //! interpreter (a stand-in shell script, so no Python is needed).

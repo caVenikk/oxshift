@@ -1,4 +1,4 @@
-//! The mapping tables from PyCharm keys to Pyoxide tokens. The key names are
+//! The mapping tables from PyCharm keys to Oxshift tokens. The key names are
 //! format identifiers of the colour scheme and UI theme files; no values are
 //! stored here. `docs/theme-mapping.md` documents the same tables, and a test
 //! checks that the document mentions every key.

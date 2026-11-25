@@ -102,7 +102,7 @@ def sweep(root, avoid=(), domains=(), colors=(), include_replica=False, max_size
                 continue
             path = os.path.join(dirpath, fn)
             rel = os.path.normpath(os.path.join(rel_dir, fn))
-            # Pyoxide: files where mentioning the original is intentional
+            # Oxshift: files where mentioning the original is intentional
             # (NOTICE, notices/, clean-room docs, the skills themselves).
             if any(fnmatch.fnmatch(rel.replace(os.sep, "/"), pat) for pat in allow):
                 continue

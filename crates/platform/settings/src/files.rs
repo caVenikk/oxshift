@@ -13,7 +13,7 @@ use crate::Section;
 /// The reference IDE has two of these settings: saving when its window is
 /// deactivated (on by default) and saving after the IDE has been idle for
 /// N seconds (off by default, N = 15, 1 to 300), idle meaning no keyboard
-/// or mouse input. Pyoxide turns the idle save on with N = 2 and also saves
+/// or mouse input. Oxshift turns the idle save on with N = 2 and also saves
 /// a file when its tab is left; a tab that is closed is always saved, and
 /// so are the open files when the application quits. A file that changed
 /// or went away on disk is not written over (see `SyncSettings`).

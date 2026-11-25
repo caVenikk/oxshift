@@ -21,7 +21,7 @@ pub fn env(key: &str, default: &str) -> String {
 }
 
 pub fn password() -> Secret {
-    Secret::new(env("DB_PASSWORD", "pyoxide"))
+    Secret::new(env("DB_PASSWORD", "oxshift"))
 }
 
 /// Opens connections with one driver and fixed parameters, and counts them.

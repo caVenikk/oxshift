@@ -1735,7 +1735,7 @@ impl VariablesView {
     /// The items, as the reference shows them for a value and a watch:
     /// the watches' actions, a line, the value's group (Customize Data View
     /// and Show Referring Objects where the product's values have them,
-    /// Inspect and Compare Value with Clipboard, which Pyoxide does not
+    /// Inspect and Compare Value with Clipboard, which Oxshift does not
     /// offer yet, shown disabled), View as for a type with renderers.
     fn menu_items(&self, row: Option<&Row>, rows: bool) -> Vec<MenuItem> {
         let watch = row.and_then(|r| match &r.kind {

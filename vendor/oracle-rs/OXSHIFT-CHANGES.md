@@ -1,6 +1,6 @@
 # Changes in this copy of oracle-rs 0.1.7
 
-Used by Pyoxide through `[patch.crates-io]`; see notices/db-oracle-rs-vendored.md.
+Used by Oxshift through `[patch.crates-io]`; see notices/db-oracle-rs-vendored.md.
 The base is the package published on crates.io as 0.1.7 (MIT OR Apache-2.0).
 Upstream: https://github.com/stiang/oracle-rs (its main branch is at 0.1.6,
 the 0.1.7 package was never pushed there). Contributions to an
@@ -12,7 +12,7 @@ the driver tests in `crates/platform/db-oracle-thin/tests/it/`.
 
 ## Changes
 
-1. Last row per cursor across fetch round trips (Pyoxide issue #334).
+1. Last row per cursor across fetch round trips (Oxshift issue #334).
    A column equal to the one in the previous row is sent without data (the
    duplicate-column bit vector). The first row of every fetch round trip after
    the first was decoded against no previous row, so its repeated columns became

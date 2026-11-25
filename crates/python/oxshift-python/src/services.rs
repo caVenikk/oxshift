@@ -46,7 +46,7 @@ ui::ui_commands! {
 }
 
 /// The servers' icons: ruff's and basedpyright's from IntelliJ Community
-/// (Apache-2.0, see NOTICE), a neutral placeholder of Pyoxide's for ty.
+/// (Apache-2.0, see NOTICE), a neutral placeholder of Oxshift's for ty.
 pub const RUFF_ICON: IconName = IconName("python/ruff");
 pub const TY_ICON: IconName = IconName("python/ty");
 pub const BASEDPYRIGHT_ICON: IconName = IconName("python/basedpyright");

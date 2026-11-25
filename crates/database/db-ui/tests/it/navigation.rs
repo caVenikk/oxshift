@@ -53,7 +53,7 @@ fn a_table_is_selected_in_the_database_tool_window(cx: &mut TestAppContext) {
         json!({ "text": "select * from demo.customers" }),
     );
     let row = go_to_declaration_selects(&mut h, "/tables/customers");
-    assert_eq!(row, format!("{SOURCE}/pyoxide/demo/tables/customers"));
+    assert_eq!(row, format!("{SOURCE}/oxshift/demo/tables/customers"));
     // The tool window came up with the object in it.
     assert_eq!(state(&mut h)["explorer"]["selected"], SOURCE);
 }
@@ -71,7 +71,7 @@ fn a_column_is_selected_under_its_table(cx: &mut TestAppContext) {
     let row = go_to_declaration_selects(&mut h, "/columns/full_name");
     assert_eq!(
         row,
-        format!("{SOURCE}/pyoxide/demo/tables/customers/columns/full_name")
+        format!("{SOURCE}/oxshift/demo/tables/customers/columns/full_name")
     );
 }
 

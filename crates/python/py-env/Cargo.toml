@@ -1,6 +1,6 @@
 [package]
 name = "py-env"
-description = "Python environments for Pyoxide IDE: interpreter discovery, project model, uv and pip operations, PyPI lookup and the env.* commands"
+description = "Python environments for Oxshift Python IDE: interpreter discovery, project model, uv and pip operations, PyPI lookup and the env.* commands"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

@@ -360,7 +360,7 @@ fn bash() {
 #[test]
 #[ignore = "needs /bin/sh (bash) of macOS"]
 fn sh_on_macos() {
-    // bash in POSIX mode: it reads $ENV (Pyoxide's script), which reads the
+    // bash in POSIX mode: it reads $ENV (Oxshift's script), which reads the
     // profile files and then the user's own ENV (named by .profile here).
     let mut sh = start(
         "/bin/sh",

@@ -1,6 +1,6 @@
 [package]
 name = "debugger"
-description = "The debugger model of Pyoxide IDE without a UI toolkit: debug sessions over DAP, threads, frames, variables, breakpoints, watches, their storage and import, the debug.* commands"
+description = "The debugger model of Oxshift Python IDE without a UI toolkit: debug sessions over DAP, threads, frames, variables, breakpoints, watches, their storage and import, the debug.* commands"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

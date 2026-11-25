@@ -3,7 +3,7 @@
 //! The look is an extension point: the reference lets a theme or a plugin
 //! replace the progress bar's UI (`ProgressBarUI`; "Nyan Progress Bar" style
 //! plugins do), so the bar is drawn by the [`ProgressBarPainter`] set with
-//! [`set_painter`]. Pyoxide ships the reference's look,
+//! [`set_painter`]. Oxshift ships the reference's look,
 //! [`ReferencePainter`] (`DarculaProgressBarUI`): a 4 px stripe with round
 //! ends, the done part in the theme's progress colour over the track, and
 //! when the amount is not known a gradient between two colours that moves

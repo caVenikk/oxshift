@@ -1,6 +1,6 @@
 [package]
 name = "syntax"
-description = "Language-agnostic syntax layer of Pyoxide IDE: incremental tree-sitter parsing and highlight spans resolved to theme text roles"
+description = "Language-agnostic syntax layer of Oxshift Python IDE: incremental tree-sitter parsing and highlight spans resolved to theme text roles"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

@@ -47,7 +47,7 @@ async fn introspects_a_test_schema() {
 
     let intro = introspector(&*c);
     let schema = intro.current_schema().await.unwrap();
-    assert_eq!(schema, "PYOXIDE");
+    assert_eq!(schema, params().user.to_ascii_uppercase());
 
     let schemas = intro.schemas().await.unwrap();
     let me = schemas.iter().find(|s| s.name == schema).unwrap();
@@ -161,7 +161,7 @@ async fn introspects_a_test_schema() {
     };
     let view = src("V", ObjectKind::View).await.unwrap();
     assert!(
-        view.starts_with("CREATE OR REPLACE VIEW \"PYOXIDE\"."),
+        view.starts_with(&format!("CREATE OR REPLACE VIEW \"{schema}\".")),
         "{view}"
     );
     assert!(view.contains("SELECT id, name"), "{view}");
@@ -183,7 +183,7 @@ async fn introspects_a_test_schema() {
     assert!(src("T", ObjectKind::Type).await.unwrap().contains("OBJECT"));
     let syn = src("SYN", ObjectKind::Synonym).await.unwrap();
     assert!(
-        syn.contains(&format!("FOR \"PYOXIDE\".\"{p}CHILD\"")),
+        syn.contains(&format!("FOR \"{schema}\".\"{p}CHILD\"")),
         "{syn}"
     );
     let seq = src("SEQ", ObjectKind::Sequence).await.unwrap();

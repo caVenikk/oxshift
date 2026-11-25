@@ -1,4 +1,4 @@
-//! Personal project state (ADR 0009): `workspace.toml` in Pyoxide's
+//! Personal project state (ADR 0009): `workspace.toml` in Oxshift's
 //! project folder ([`crate::store::store_dir`]) holds what belongs to one person on one
 //! machine, such as the chosen interpreter. It is never meant to be
 //! committed, like the reference IDE's `.idea/workspace.xml`.
@@ -17,7 +17,7 @@
 //! no language: tables and keys are the callers' (a product uses its own
 //! table, `[python]` for the Python product).
 //!
-//! When Pyoxide creates the file it also writes `.oxshift/.gitignore`
+//! When Oxshift creates the file it also writes `.oxshift/.gitignore`
 //! ignoring it, as the reference IDE writes `.idea/.gitignore` for
 //! `workspace.xml`, but only when that `.gitignore` does not exist: a file
 //! that is there is never rewritten.
@@ -37,7 +37,7 @@ use crate::store::{
 pub const WORKSPACE_FILE: &str = "workspace.toml";
 /// Version of the personal state format this build reads and writes.
 pub const WORKSPACE_VERSION: i64 = 1;
-/// The ignore file Pyoxide writes next to [`WORKSPACE_FILE`].
+/// The ignore file Oxshift writes next to [`WORKSPACE_FILE`].
 pub const GITIGNORE_FILE: &str = ".gitignore";
 
 fn header() -> String {
@@ -47,7 +47,7 @@ fn header() -> String {
     )
 }
 
-/// What `.oxshift/.gitignore` holds when Pyoxide creates it: the reference
+/// What `.oxshift/.gitignore` holds when Oxshift creates it: the reference
 /// IDE's group comment and the entry relative to the folder.
 pub const GITIGNORE_TEXT: &str = "# Default ignored files\n/workspace.toml\n";
 

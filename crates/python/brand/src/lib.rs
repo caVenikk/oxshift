@@ -2,16 +2,15 @@
 //!
 //! Every other crate of the product layer takes the name from here, and the
 //! platform gets it at startup through [`install`] (`app-info`). The
-//! values below are what existing users have on disk (settings and cache
-//! folders, keychain items, the project folder, environment variables), so
-//! changing one is a migration, not an edit. `scripts/check-brand.py` fails
+//! values below define the canonical runtime and storage namespaces. Retired
+//! credential namespaces are not read or migrated automatically. `scripts/check-brand.py` fails
 //! on the name anywhere else in the code.
 
 use app_info::AppInfo;
 
 macro_rules! slug {
     () => {
-        "pyoxide"
+        "oxshift"
     };
 }
 
@@ -40,11 +39,11 @@ pub const PRODUCT_NAME: &str = "Oxshift Python";
 /// Full name, in window titles and user agents.
 pub const PRODUCT_FULL_NAME: &str = "Oxshift Python IDE";
 
-/// Stable, case-sensitive identity used by existing KeePass groups.
-/// Unlike display names, changing this requires a compatibility migration.
-pub const IDENTITY_NAME: &str = "Pyoxide";
+/// Case-sensitive group for this product in a KeePass database.
+/// Retired groups are left untouched; passwords can be entered again.
+pub const IDENTITY_NAME: &str = "Oxshift";
 
-/// Stable technical name for database sessions and the keychain service prefix.
+/// Technical name for database sessions, threads and new theme identifiers.
 pub const SLUG: &str = slug!();
 
 /// Prefix of the environment variables (`<ENV_PREFIX>_CONFIG_DIR`, ...).
@@ -57,7 +56,7 @@ pub const PROFILE_DIR: &str = "oxshift-python";
 pub const PROJECT_DIR: &str = ".oxshift";
 
 /// Identifier of the application bundle.
-pub const BUNDLE_ID: &str = "dev.pyoxide.ide";
+pub const BUNDLE_ID: &str = "dev.oxshift.python";
 
 /// The command-line program.
 pub const CLI_NAME: &str = "oxshift";
@@ -105,11 +104,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn canonical_interfaces_keep_stable_credential_identity() {
-        assert_eq!(IDENTITY_NAME, "Pyoxide");
-        assert_eq!(BUNDLE_ID, "dev.pyoxide.ide");
+    fn canonical_interfaces_use_the_product_identity() {
+        assert_eq!(IDENTITY_NAME, "Oxshift");
+        assert_eq!(BUNDLE_ID, "dev.oxshift.python");
         assert_eq!(CLI_NAME, "oxshift");
-        assert_eq!(SLUG, "pyoxide");
+        assert_eq!(SLUG, "oxshift");
         assert_eq!(INFO.profile_dir, "oxshift-python");
         assert_eq!(ENV_PREFIX, "OXSHIFT");
         assert_eq!(PROJECT_DIR, ".oxshift");
@@ -125,7 +124,7 @@ mod tests {
     fn display_names_are_independent_of_the_persistent_identity() {
         assert_eq!(PRODUCT_NAME, "Oxshift Python");
         assert_eq!(PRODUCT_FULL_NAME, "Oxshift Python IDE");
-        assert_eq!(INFO.identity_name, "Pyoxide");
+        assert_eq!(INFO.identity_name, "Oxshift");
         assert_ne!(INFO.name, INFO.identity_name);
     }
 

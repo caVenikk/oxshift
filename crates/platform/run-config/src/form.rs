@@ -37,7 +37,7 @@ pub struct Field {
     pub value: String,
     /// Shown while the field is empty.
     pub placeholder: Option<String>,
-    /// A note under the field (a path variable Pyoxide does not expand on
+    /// A note under the field (a path variable Oxshift does not expand on
     /// another machine).
     pub note: Option<String>,
     /// In the head of the form, without a label: the reference's fragments
@@ -90,7 +90,7 @@ pub struct OptionItem {
     /// A flag shown under the form as a tag with a remove button while it
     /// is on (the reference's tag fragments).
     pub tag: bool,
-    /// Pyoxide cannot do it yet: shown, not chosen.
+    /// Oxshift cannot do it yet: shown, not chosen.
     pub enabled: bool,
 }
 
@@ -106,7 +106,7 @@ impl OptionItem {
         }
     }
 
-    /// A row of the reference Pyoxide does not support yet.
+    /// A row of the reference Oxshift does not support yet.
     pub fn unavailable(group: &str, id: &str, label: &str) -> Self {
         Self {
             enabled: false,

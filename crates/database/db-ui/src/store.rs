@@ -585,7 +585,7 @@ pub mod fake {
             let connect = self.connect(&source, password);
             Box::pin(async move {
                 connect.await?;
-                Ok(vec!["postgres".into(), "pyoxide".into()])
+                Ok(vec!["postgres".into(), "oxshift".into()])
             })
         }
 

@@ -1,6 +1,6 @@
 [package]
 name = "console-ui"
-description = "The console view of Pyoxide IDE on GPUI, shared by the Run and Debug tool windows: a process's output in a read-only editor with colours and links, typed input sent to its standard input"
+description = "The console view of Oxshift Python IDE on GPUI, shared by the Run and Debug tool windows: a process's output in a read-only editor with colours and links, typed input sent to its standard input"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

@@ -1,6 +1,6 @@
 [package]
 name = "project-search"
-description = "Find in Files of Pyoxide IDE: searching the files of a project (scopes, file masks, open documents) in parallel, streaming the matching lines, and replacing in files"
+description = "Find in Files of Oxshift Python IDE: searching the files of a project (scopes, file masks, open documents) in parallel, streaming the matching lines, and replacing in files"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

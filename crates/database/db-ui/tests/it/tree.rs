@@ -16,7 +16,7 @@ use workbench::test_support::keymap::Harness;
 
 use super::*;
 
-const NAME: &str = "pyoxide-local";
+const NAME: &str = "oxshift-local";
 
 fn open<'a>(cx: &'a mut TestAppContext, store: Arc<FakeStore>, root: &Path) -> Harness<'a> {
     store.add(root, NAME, pg());
@@ -84,17 +84,17 @@ fn a_cached_model_opens_without_the_database(cx: &mut TestAppContext) {
     });
     h.invoke(
         "db.explorer.expand",
-        json!({ "path": format!("{NAME}/pyoxide/demo/tables/customers/columns") }),
+        json!({ "path": format!("{NAME}/oxshift/demo/tables/customers/columns") }),
     );
     h.invoke(
         "db.explorer.expand",
-        json!({ "path": format!("{NAME}/pyoxide/demo/tables/customers/indexes") }),
+        json!({ "path": format!("{NAME}/oxshift/demo/tables/customers/indexes") }),
     );
     let got = rows(&mut h);
-    let p = |s: &str| format!("{NAME}/pyoxide/demo/{s}");
+    let p = |s: &str| format!("{NAME}/oxshift/demo/{s}");
     let want = [
         NAME.to_owned(),
-        format!("{NAME}/pyoxide"),
+        format!("{NAME}/oxshift"),
         p("").trim_end_matches('/').to_owned(),
         p("tables 6"),
         p("tables/audit_log"),
@@ -122,7 +122,7 @@ fn a_cached_model_opens_without_the_database(cx: &mut TestAppContext) {
         p("routines 3"),
         p("sequences 1"),
         p("object types 1"),
-        format!("{NAME}/pyoxide/public"),
+        format!("{NAME}/oxshift/public"),
     ];
     assert_eq!(got, want);
     // Opening nodes asked the database nothing.
@@ -131,7 +131,7 @@ fn a_cached_model_opens_without_the_database(cx: &mut TestAppContext) {
     // Closing a node hides its rows; the selection stays on it.
     h.invoke(
         "db.explorer.collapse",
-        json!({ "path": format!("{NAME}/pyoxide/demo/tables") }),
+        json!({ "path": format!("{NAME}/oxshift/demo/tables") }),
     );
     assert_eq!(rows(&mut h).len(), 10);
     assert_eq!(server.opened(), 0);
@@ -184,7 +184,7 @@ fn the_data_source_and_database_rows_count_what_is_shown(cx: &mut TestAppContext
     h.invoke("db.explorer.expand", json!({ "path": NAME }));
     h.invoke(
         "db.explorer.expand",
-        json!({ "path": format!("{NAME}/pyoxide") }),
+        json!({ "path": format!("{NAME}/oxshift") }),
     );
     // One of the server's two databases, two of its four schemas.
     wait_for(&mut h, "the counters", |s| {
@@ -303,16 +303,16 @@ fn double_click_and_enter_open_and_close_nodes(cx: &mut TestAppContext) {
     assert_eq!(rows(&mut h).len(), 2);
 
     // A double click on a database opens it; on a leaf nothing happens.
-    click_row(&mut h, "pyoxide", 2);
+    click_row(&mut h, "oxshift", 2);
     assert_eq!(rows(&mut h).len(), 4);
     h.invoke(
         "db.explorer.expand",
-        json!({ "path": format!("{NAME}/pyoxide/demo/tables") }),
+        json!({ "path": format!("{NAME}/oxshift/demo/tables") }),
     );
-    let leaf = format!("{NAME}/pyoxide/demo/tables/audit_log");
+    let leaf = format!("{NAME}/oxshift/demo/tables/audit_log");
     h.invoke(
         "db.explorer.collapse",
-        json!({ "path": format!("{NAME}/pyoxide/demo/tables/audit_log") }),
+        json!({ "path": format!("{NAME}/oxshift/demo/tables/audit_log") }),
     );
     click_row(&mut h, "audit_log", 1);
     assert_eq!(selected(&mut h).as_deref(), Some(leaf.as_str()));
@@ -337,18 +337,18 @@ fn arrow_keys_walk_the_tree(cx: &mut TestAppContext) {
     assert_eq!(selected(&mut h).as_deref(), Some(NAME));
     // Right on an open node goes to its first child, then opens it.
     h.press("right");
-    assert_eq!(selected(&mut h), Some(format!("{NAME}/pyoxide")));
+    assert_eq!(selected(&mut h), Some(format!("{NAME}/oxshift")));
     h.press("right");
     h.press("down");
-    assert_eq!(selected(&mut h), Some(format!("{NAME}/pyoxide/demo")));
+    assert_eq!(selected(&mut h), Some(format!("{NAME}/oxshift/demo")));
     // Left closes an open node, then goes to the parent.
     h.press("right");
     let open = rows(&mut h).len();
     h.press("left");
     assert!(rows(&mut h).len() < open);
-    assert_eq!(selected(&mut h), Some(format!("{NAME}/pyoxide/demo")));
+    assert_eq!(selected(&mut h), Some(format!("{NAME}/oxshift/demo")));
     h.press("left");
-    assert_eq!(selected(&mut h), Some(format!("{NAME}/pyoxide")));
+    assert_eq!(selected(&mut h), Some(format!("{NAME}/oxshift")));
     h.press("left");
     h.press("left");
     assert_eq!(selected(&mut h).as_deref(), Some(NAME));
@@ -393,7 +393,7 @@ fn a_cut_row_shows_its_rest_and_the_tree_scrolls_sideways(cx: &mut TestAppContex
     });
     h.invoke(
         "db.explorer.expand",
-        json!({ "path": format!("{NAME}/pyoxide/demo/tables/customers/indexes") }),
+        json!({ "path": format!("{NAME}/oxshift/demo/tables/customers/indexes") }),
     );
     h.draw();
     let long = "database-row:customers_email_lower_idx";
@@ -406,7 +406,7 @@ fn a_cut_row_shows_its_rest_and_the_tree_scrolls_sideways(cx: &mut TestAppContex
     assert_eq!(
         shown(&mut h),
         json!(format!(
-            "{NAME}/pyoxide/demo/tables/customers/indexes/customers_email_lower_idx"
+            "{NAME}/oxshift/demo/tables/customers/indexes/customers_email_lower_idx"
         ))
     );
     let rest = drawn(&mut h, "row-expansion").expect("the rest of the row shows");
@@ -487,11 +487,11 @@ fn set_color_paints_the_rows_and_is_saved_with_the_data_source(cx: &mut TestAppC
     });
     h.invoke(
         "db.explorer.expand",
-        json!({ "path": format!("{NAME}/pyoxide/demo") }),
+        json!({ "path": format!("{NAME}/oxshift/demo") }),
     );
     h.invoke(
         "db.explorer.expand",
-        json!({ "path": format!("{NAME}/pyoxide/demo/tables") }),
+        json!({ "path": format!("{NAME}/oxshift/demo/tables") }),
     );
     let saved = |store: &Arc<FakeStore>| store.sources(&root)[0].profile.gui_options();
     assert!(colors(&mut h).is_empty());

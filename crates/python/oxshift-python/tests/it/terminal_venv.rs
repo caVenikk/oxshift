@@ -2,7 +2,7 @@
 //! (tests/scenarios/terminal/open-and-venv.md, steps 1 and 2): a session
 //! planned with the Python product's customizer in a project with a uv
 //! environment shows the environment's prompt prefix and runs its Python,
-//! in a shell with Pyoxide's integration (zsh: the `activate` script is
+//! in a shell with Oxshift's integration (zsh: the `activate` script is
 //! sourced) and in one without (tcsh: the variables are merged).
 //!
 //! Ignored: they need zsh, tcsh and uv (macOS has the shells); run them with

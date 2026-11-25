@@ -1,4 +1,4 @@
-//! Debugger UI of Pyoxide IDE on GPUI (ADR 0015). It knows the debugger
+//! Debugger UI of Oxshift Python IDE on GPUI (ADR 0015). It knows the debugger
 //! model (`debugger`), never the DAP client.
 //!
 //! - [`DebuggerView`]: the window's controller of the project's debugger:

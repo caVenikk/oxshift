@@ -232,7 +232,7 @@ pub struct OpenContext {
 pub enum ScopeKind {
     /// The whole project.
     Project,
-    /// A module: a Pyoxide project is one module, the project itself.
+    /// A module: a Oxshift project is one module, the project itself.
     Module,
     /// A folder, with or without its subfolders.
     Directory,

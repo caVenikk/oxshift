@@ -1,6 +1,6 @@
 [package]
 name = "code-intel"
-description = "Code intelligence model of Pyoxide IDE: documents, diagnostics, completion, documentation, signatures, locations, edits, code actions, server status and the CodeIntel trait"
+description = "Code intelligence model of Oxshift Python IDE: documents, diagnostics, completion, documentation, signatures, locations, edits, code actions, server status and the CodeIntel trait"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

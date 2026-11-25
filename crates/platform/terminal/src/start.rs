@@ -533,14 +533,14 @@ mod tests {
     #[test]
     fn working_directory_rules() {
         let dir = std::env::temp_dir();
-        let missing = dir.join("pyoxide-terminal-missing-dir");
-        let file = dir.join("pyoxide-terminal-missing-dir").join("file.txt");
+        let missing = dir.join("oxshift-terminal-missing-dir");
+        let file = dir.join("oxshift-terminal-missing-dir").join("file.txt");
         assert_eq!(
             working_directory(Some(&dir), None, None, None, None),
             Some(dir.clone())
         );
         // A path inside an existing folder that is not a folder: its parent.
-        let inside = dir.join("pyoxide-terminal-no-such-file.py");
+        let inside = dir.join("oxshift-terminal-no-such-file.py");
         assert_eq!(
             working_directory(Some(&inside), None, None, None, None),
             Some(dir.clone())

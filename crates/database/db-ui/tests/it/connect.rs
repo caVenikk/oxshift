@@ -129,7 +129,7 @@ fn a_never_data_source_asks_on_every_connect_and_disconnects(cx: &mut TestAppCon
         wait(&mut h, "the prompt", asking);
         let prompt = state(&mut h)["prompt"].clone();
         assert_eq!(prompt["name"], SOURCE, "round {round}");
-        assert_eq!(prompt["user"], "pyoxide", "round {round}");
+        assert_eq!(prompt["user"], "oxshift", "round {round}");
         assert_eq!(prompt["save"], "never", "the data source's choice shows");
         type_password(&mut h);
         wait(&mut h, "the connection", connected);

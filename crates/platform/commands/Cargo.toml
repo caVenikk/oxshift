@@ -1,6 +1,6 @@
 [package]
 name = "commands"
-description = "Command registry: every user-visible action of Pyoxide IDE, callable from the UI, the CLI and the JSON control channel"
+description = "Command registry: every user-visible action of Oxshift Python IDE, callable from the UI, the CLI and the JSON control channel"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

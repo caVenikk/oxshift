@@ -99,7 +99,7 @@ pub(super) struct OpenMenu {
 
 impl Workbench {
     /// The file Run runs and whether the product can run it: the active
-    /// editor's file (Pyoxide shows one editor at a time, so it is the
+    /// editor's file (Oxshift shows one editor at a time, so it is the
     /// reference's single visible editor even without the focus).
     pub(super) fn current_run_file(&self, cx: &App) -> Option<(PathBuf, bool)> {
         self.run_file_of(None, cx)

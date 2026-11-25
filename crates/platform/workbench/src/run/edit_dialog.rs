@@ -8,7 +8,7 @@
 //! fragmented editor draws it (the head fields without labels, the
 //! labelled rows, the options that are on as tags), and Run, Cancel, Apply
 //! and OK. It edits a copy of the configurations; Apply and OK hand the
-//! copy back. A configuration of a type Pyoxide does not support is shown
+//! copy back. A configuration of a type Oxshift does not support is shown
 //! read-only.
 
 use std::collections::{BTreeSet, HashMap, HashSet};

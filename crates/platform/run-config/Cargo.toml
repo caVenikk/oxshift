@@ -1,6 +1,6 @@
 [package]
 name = "run-config"
-description = "Run configurations of Pyoxide IDE: the language-neutral model, its storage in the project folder (shared and personal), the Shell Script type and the one-time import of the reference IDE's run configurations"
+description = "Run configurations of Oxshift Python IDE: the language-neutral model, its storage in the project folder (shared and personal), the Shell Script type and the one-time import of the reference IDE's run configurations"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

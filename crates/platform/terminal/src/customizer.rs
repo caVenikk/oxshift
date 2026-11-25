@@ -23,7 +23,7 @@ pub struct ShellContext<'a> {
     /// The "Shell integration" setting is on. The reference activates a
     /// virtual environment only then.
     pub shell_integration: bool,
-    /// The shell runs Pyoxide's integration, which sources
+    /// The shell runs Oxshift's integration, which sources
     /// [`Customization::source`] before the first prompt; otherwise only
     /// [`Customization::env`] reaches it (cmd.exe and other shells).
     pub sources_scripts: bool,
@@ -78,7 +78,7 @@ pub struct StartRequest {
     pub size: TerminalSize,
     /// Lines of scrollback; 0: [`crate::DEFAULT_SCROLLBACK`].
     pub scrollback_lines: usize,
-    /// The "Shell integration" setting (on by default): the shells Pyoxide
+    /// The "Shell integration" setting (on by default): the shells Oxshift
     /// has scripts for ([`integration::supports`]) report the working
     /// directory, the prompt and the commands, and source what the
     /// customizers ask for.
@@ -115,7 +115,7 @@ pub struct StartPlan {
     pub kind: ShellKind,
     /// The scripts the customizers asked to source.
     pub sources: Vec<SourceScript>,
-    /// The shell runs Pyoxide's integration: it reports its working
+    /// The shell runs Oxshift's integration: it reports its working
     /// directory (OSC 7) and its prompt and commands (OSC 133).
     pub shell_integration: bool,
 }
@@ -289,7 +289,7 @@ mod tests {
         // The project's own variables win.
         assert_eq!(get(&plan, "VIRTUAL_ENV"), Some("/override"));
         assert_eq!(*venv.seen.lock().unwrap(), [(true, true)]);
-        // The integration: bash reads Pyoxide's rcfile, which sources the
+        // The integration: bash reads Oxshift's rcfile, which sources the
         // activation.
         assert!(plan.shell_integration);
         let dir = scripts.path().join(integration::version());

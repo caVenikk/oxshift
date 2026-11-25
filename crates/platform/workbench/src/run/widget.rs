@@ -30,7 +30,7 @@ pub const TEMPORARY_ICON_ALPHA: f32 = 0.45;
 #[derive(Debug, Clone, PartialEq)]
 pub struct SelectedConfig {
     pub name: String,
-    /// The type's icon; `None` for a type Pyoxide does not know.
+    /// The type's icon; `None` for a type Oxshift does not know.
     pub icon: Option<IconName>,
     /// Drawn at [`TEMPORARY_ICON_ALPHA`].
     pub temporary: bool,

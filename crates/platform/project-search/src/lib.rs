@@ -1,4 +1,4 @@
-//! Find in Files of Pyoxide IDE: searching the files of a project.
+//! Find in Files of Oxshift Python IDE: searching the files of a project.
 //!
 //! A [`FileSearch`] looks for a compiled query (`search::Matcher`) in a
 //! [`Scope`] (a folder, recursively or not, or a list of files). Everything

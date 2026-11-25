@@ -25,7 +25,7 @@
 //!
 //! Names are unique. A write reads the file again and applies only its
 //! changes to it, so two windows keep each other's; keys and comments
-//! Pyoxide does not know survive, and a file of a newer version is read
+//! Oxshift does not know survive, and a file of a newer version is read
 //! and never rewritten. The reference IDE's interpreters are imported once:
 //! from the snapshot of the settings import (`import`, `[import.applied]`
 //! of `settings.toml`), else, when the file does not exist yet, from the
@@ -692,7 +692,7 @@ mod tests {
     }
 
     #[test]
-    fn round_trip_keeps_what_pyoxide_does_not_know() {
+    fn round_trip_keeps_what_oxshift_does_not_know() {
         let dir = tempfile::tempdir().unwrap();
         let file = dir.path().join(FILE);
         let text = "version = 1\n# mine\nfuture = \"x\"\n\n[[interpreter]]\n# the work one\nname = \"~/proj/.venv\"\npython = \"/home/u/proj/.venv/bin/python\"\nkind = \"uv\"\nversion = \"3.13.14\"\nassociated-project = \"/home/u/proj\"\nuv = \"/home/u/.local/bin/uv\"\nworking-dir = \"/home/u/proj\"\ncolour = \"red\"\n";

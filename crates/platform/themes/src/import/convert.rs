@@ -1,5 +1,5 @@
 //! Turns a resolved set of inputs (a UI theme chain and/or a scheme chain)
-//! into a Pyoxide theme and a report.
+//! into a Oxshift theme and a report.
 
 use std::collections::{BTreeMap, HashSet};
 

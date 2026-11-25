@@ -16,8 +16,8 @@ fn params() -> ConnectParams {
     ConnectParams {
         host: env("TEST_PG_HOST", "localhost"),
         port: env("TEST_PG_PORT", "55432").parse().expect("port"),
-        database: "pyoxide".into(),
-        user: "pyoxide".into(),
+        database: env("PG_DATABASE", "oxshift"),
+        user: env("DB_USER", "oxshift"),
         password: password(),
         ..ConnectParams::default()
     }

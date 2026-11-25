@@ -1,6 +1,6 @@
 [package]
 name = "workbench"
-description = "Main window of Pyoxide IDE: toolbar, tool window stripes, project tool window, editor tabs, status bar, keymaps and application start-up"
+description = "Main window of Oxshift Python IDE: toolbar, tool window stripes, project tool window, editor tabs, status bar, keymaps and application start-up"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

@@ -478,7 +478,7 @@ fn manual_unknown_source_keeps_its_folder_identity_and_snapshot(cx: &mut TestApp
     );
     assert!(h.window().is_none());
     assert_eq!(h.get("import.source"), json!("my-settings"));
-    assert_eq!(h.get("import.version"), json!(""));
+    assert_eq!(h.get("import.version"), Value::Null);
     assert!(
         h.config()
             .join("imported/my-settings/options/other.xml")

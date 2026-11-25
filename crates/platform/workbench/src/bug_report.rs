@@ -204,13 +204,13 @@ fn notify(owner: AnyWindowHandle, kind: &str, title: &str, content: String, cx: 
             // First-run/Welcome hosts may have no Workbench notification stack.
             // The native reveal API has no result; always retain the full path
             // in a visible message rather than claiming the file manager opened.
-            let _ = window.prompt(
+            drop(window.prompt(
                 gpui::PromptLevel::Info,
                 title,
                 action.content.as_deref(),
                 &["OK"],
                 cx,
-            );
+            ));
         }
     });
 }

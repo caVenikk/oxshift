@@ -273,9 +273,8 @@ fn report_shortcut_in_modal_settings(cx: &mut TestAppContext, keymap: &str, keys
     })
     .unwrap();
     h.cx.run_until_parked();
-    assert_eq!(
-        h.cx.read(|cx| ui::dialog_window::modal_of(h.window.into(), cx)),
-        Some(dialog.into())
+    assert!(
+        h.cx.read(|cx| ui::dialog_window::modal_of(h.window.into(), cx)) == Some(dialog.into())
     );
     h.cx.simulate_keystrokes(dialog.into(), keys);
     h.cx.run_until_parked();

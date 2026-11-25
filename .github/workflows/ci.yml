@@ -338,7 +338,8 @@ jobs:
           if-no-files-found: error
 
   required:
-    name: CI required
+    # A skipped manual job must never share the protected PR check name.
+    name: ${{ github.event_name == 'workflow_dispatch' && inputs.desktop_preview && 'Preview validation guard' || 'CI required' }}
     if: always() && (github.event_name != 'workflow_dispatch' || !inputs.desktop_preview)
     needs: [scope, check, progress, integration, binaries]
     runs-on: ubuntu-latest

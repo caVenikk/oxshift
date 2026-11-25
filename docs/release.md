@@ -143,8 +143,8 @@ For macOS, drag the app from the DMG to Applications. These builds are not
 notarized: macOS can block a quarantined download. Use the operating system's
 Privacy & Security **Open Anyway** flow after checking the source and checksum.
 The alternative per-product install script checks the archive checksum and
-installs into `~/Applications` (Linux: `~/.local/share`). Inspect it first: it
-removes quarantine only from the installed app, with an explicit message.
+installs into `~/Applications` (Linux: `~/.local/share`). It preserves macOS quarantine. The installer records ownership so that a later
+update or uninstall can identify its application and launchers.
 Homebrew formulas are rendered for each product; no tap is created or updated
 automatically.
 

@@ -2,6 +2,7 @@
   "bundle_sha256": "1a6770ca974e1f52b432da1d42170c5f473d056d0bf3ddfcdb99dc17fbd48853",
   "generator": "cargo-about 0.9.3",
   "inputs": {
+    ".gitattributes": "ec0c0dcf35fce1514b781075a446c33a44f32fbdef7695cb5052d2de00346e30",
     "Cargo.lock": "79ef0e0ae2d6788191f0c1ddc1e11a7a575843d3681578e4ff978d80088a83a4",
     "Cargo.toml": "3ecc0854540c53d671a9a5e980e20275bde86f94a118af493881352d2820424a",
     "crates/database/db-model/Cargo.toml": "3024bf41eaa08beadd656ad08d2899b25be7a077ad2b9993b63f24cb5684d6eb",
@@ -120,7 +121,7 @@
     "packaging/runtime/upstream/xim-ctext-0.3.0.txt": "efa1224931b98468f5005f77285457f8d2eab0a77a15941aa10abbab1ae9a74e",
     "packaging/runtime/upstream/xim-parser-0.2.2.txt": "efa1224931b98468f5005f77285457f8d2eab0a77a15941aa10abbab1ae9a74e",
     "packaging/runtime/upstream/zune-inflate-0.2.54.txt": "ab06c4120a17af4c930cde89c9a9087e2b6e8be08ed21652f32d2cbd7d890dc4",
-    "scripts/runtime-notices.py": "2cfd307d43a99a198d1357e7cf14a898c51b51e71764d4a1e0309ff82855c5b0",
+    "scripts/runtime-notices.py": "b44e02d2f5215470ee6b6fde7d931a472132d1aa01389b53500cde61df2392c4",
     "vendor/oracle-rs/Cargo.toml": "e1bf826e1c8b2d744dc7856ba121c9ece95e9b77b6a3418dff03efeb8dba54ea"
   },
   "packages": [

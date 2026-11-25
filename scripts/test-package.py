@@ -76,6 +76,21 @@ class PackagingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             package.validate_icons(resources, 'platform', {'CFBundleIconName': 'Oxshift', 'CFBundleIconFile': 'Oxshift.icns'})
 
+    def test_runtime_license_windows_paths(self):
+        from pathlib import PureWindowsPath
+        spec = importlib.util.spec_from_file_location(
+            'runtime_notices', Path(__file__).resolve().with_name('runtime-notices.py'))
+        runtime = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(runtime)
+        root = PureWindowsPath('C:/checkout')
+        self.assertEqual(runtime.relative_name(root / 'crates/ui/Cargo.toml', root),
+                         'crates/ui/Cargo.toml')
+        self.assertTrue(runtime.external_package({
+            'source': None, 'manifest_path': str(root / 'vendor/oracle/Cargo.toml')}))
+        self.assertFalse(runtime.external_package({
+            'source': None, 'manifest_path': str(root / 'crates/ui/Cargo.toml')}))
+        self.assertEqual(runtime.check(), runtime.BUNDLE.read_bytes())
+
     def test_runtime_license_bytes_are_required(self):
         resources = self.root / 'licenses-test'
         package.put_notices(resources)

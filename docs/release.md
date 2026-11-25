@@ -50,7 +50,9 @@ format is described as tested.
 and can also be dispatched manually. Its jobs have `contents: read`, build the
 five targets, check packaging fixtures, verify archive contents/checksums and
 inspect DMG, Debian and AppImage containers. It uploads **Actions artifacts**,
-not release assets. It never creates a tag, GitHub Release, tap commit or public
+not release assets. Windows archive smoke reports are separate sanitized JSON
+in `evidence-<prefix>-windows`; absence of a desktop/GPU is reported as unavailable,
+not as a successful GUI test. It never creates a tag, GitHub Release, tap commit or public
 package registry entry.
 
 Inputs:

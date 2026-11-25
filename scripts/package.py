@@ -168,13 +168,13 @@ def put_debugpy(dest, given):
     if given:
         for marker in ("debugpy/adapter/__main__.py", "debugpy-1.8.21.dist-info/RECORD",
                        "debugpy-1.8.21.dist-info/licenses/LICENSE"):
-            if not (given / marker).is_file():
+            if not (given / marker).is_file() or not (given / marker).stat().st_size:
                 fail(f"{given} is not a debugpy helper folder ({marker} is missing)")
         # A folder that was used has bytecode in it, which is not the wheel's.
         shutil.copytree(given, dest, ignore=shutil.ignore_patterns("__pycache__"))
     else:
         run([python(), str(ROOT / "scripts" / "fetch-debugpy.py"), "--dest", str(dest)])
-    if not (dest / "debugpy" / "ThirdPartyNotices.txt").is_file():
+    if not (dest / "debugpy" / "ThirdPartyNotices.txt").is_file() or not (dest / "debugpy" / "ThirdPartyNotices.txt").stat().st_size:
         fail("the debugpy helper has no debugpy/ThirdPartyNotices.txt; its notices must ship")
 
 

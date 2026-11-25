@@ -115,6 +115,27 @@ jobs:
               for package in dist/*.deb; do dpkg-deb --info "$package"; dpkg-deb --contents "$package"; done
               for package in dist/*.AppImage; do chmod +x "$package"; "$package" --appimage-offset; done ;;
           esac
+      - name: Windows packaged desktop smoke
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $versionLine = python scripts/package.py names --product python | Select-String '^VERSION='
+          $version = ($versionLine.ToString() -split '=', 2)[1]
+          New-Item -ItemType Directory -Force smoke-reports | Out-Null
+          foreach ($archive in Get-ChildItem dist/*-windows-x86_64.zip) {
+            $expanded = Join-Path $env:RUNNER_TEMP ("smoke-" + $archive.BaseName)
+            Expand-Archive -Path $archive.FullName -DestinationPath $expanded
+            $payload = Join-Path $expanded $archive.BaseName
+            python scripts/smoke-windows-desktop.py --package "$payload" --version "$version" --runtime auto --report "smoke-reports/$($archive.BaseName).json"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+      - uses: actions/upload-artifact@v4
+        if: always() && runner.os == 'Windows'
+        with:
+          name: evidence-${{ inputs.artifact_prefix }}-windows
+          path: smoke-reports/*.json
+          if-no-files-found: warn
+          retention-days: ${{ inputs.retention_days }}
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact_prefix }}-${{ matrix.target }}

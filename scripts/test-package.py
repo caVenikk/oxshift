@@ -8,11 +8,14 @@ from pathlib import Path
 import plistlib
 import re
 import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
 import zipfile
+
+sys.dont_write_bytecode = True
 
 spec = importlib.util.spec_from_file_location('release_package', Path(__file__).with_name('package.py'))
 package = importlib.util.module_from_spec(spec)
@@ -167,6 +170,18 @@ class PackagingTests(unittest.TestCase):
         archive.write_bytes(archive.read_bytes() + b'changed')
         with self.assertRaises(SystemExit):
             self.verify(archive, 'platform', 'linux')
+
+    def test_unsafe_tar_link_is_rejected_before_extraction(self):
+        archive = self.root / 'unsafe.tar.gz'
+        with tarfile.open(archive, 'w:gz') as tf:
+            member = tarfile.TarInfo('payload/escape')
+            member.type = tarfile.SYMTYPE
+            member.linkname = '../../outside'
+            tf.addfile(member)
+        package.checksum(archive)
+        with self.assertRaises(SystemExit):
+            self.verify(archive, 'platform', 'linux')
+        self.assertFalse((self.root / 'outside').exists())
 
     def test_missing_binary_and_unsupported_arch_fail(self):
         (self.binaries / 'oxshift-platform').unlink()

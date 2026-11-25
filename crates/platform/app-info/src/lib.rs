@@ -11,6 +11,23 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
+/// Calendar version for product interfaces. Cargo stores an explicit patch zero
+/// for the first release of a line. Later patches and prereleases keep the
+/// complete package version.
+pub fn release_version() -> &'static str {
+    match (
+        env!("CARGO_PKG_VERSION_PATCH"),
+        env!("CARGO_PKG_VERSION_PRE"),
+    ) {
+        ("0", "") => concat!(
+            env!("CARGO_PKG_VERSION_MAJOR"),
+            ".",
+            env!("CARGO_PKG_VERSION_MINOR")
+        ),
+        _ => env!("CARGO_PKG_VERSION"),
+    }
+}
+
 /// The names of a product. Every field is a plain value the product owns.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct AppInfo {

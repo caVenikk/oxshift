@@ -16,6 +16,8 @@ import tempfile
 import zipfile
 from pathlib import Path
 
+from macos_icons import compile_icons, validate_icons
+
 ROOT = Path(__file__).resolve().parent.parent
 BRAND = ROOT / "crates" / "python" / "brand" / "src" / "lib.rs"
 PACKAGING = ROOT / "packaging"
@@ -254,12 +256,11 @@ def make_app(names, version, bin_dir, root, args):
         "CFBundlePackageType": "APPL",
         "CFBundleVersion": names.package_version,
         "CFBundleShortVersionString": version,
-        "CFBundleIconFile": names.icon + ".icns",
         "LSMinimumSystemVersion": MACOS_MINIMUM,
         "NSHighResolutionCapable": True,
         "LSApplicationCategoryType": "public.app-category.developer-tools",
     }
-    shutil.copy2(ROOT / "assets/brand" / (names.icon + ".icns"), resources)
+    info.update(compile_icons(ROOT, resources, names.kind, root, MACOS_MINIMUM))
     with open(contents / "Info.plist", "wb") as fh:
         plistlib.dump(info, fh)
     sign_bundle(names, app, args.sign_identity, args.sign_keychain)
@@ -537,6 +538,7 @@ def cmd_verify(args):
             fail("bytecode cache in payload")
         if os_name == "macos":
             info = plistlib.loads((top / "Contents/Info.plist").read_bytes())
+            validate_icons(resources, names.kind, info)
             if info["CFBundleIdentifier"] != names.bundle_id or info["CFBundleShortVersionString"] != requested_version(names, args.version):
                 fail("bundle identity/version mismatch")
             if host_os() == "macos":
@@ -548,6 +550,44 @@ def cmd_verify(args):
             if requested_version(names, args.version) not in shown.stdout:
                 fail("CLI version mismatch")
     print(f"{archive.name}: checksum and payload verified")
+    return 0
+
+
+def cmd_verify_dmg(args):
+    names = Names(args.product)
+    if host_os() != "macos":
+        fail("DMG bundle verification requires macOS")
+    digest = read_sums(args.archive.with_name(args.archive.name + ".sha256")).get(args.archive.name)
+    if digest != sha256_of(args.archive):
+        fail("DMG checksum mismatch")
+    run(["hdiutil", "verify", str(args.archive)])
+    with tempfile.TemporaryDirectory(prefix="verify-dmg-") as temporary:
+        mount = Path(temporary) / "mounted"
+        mount.mkdir()
+        run(["hdiutil", "attach", "-readonly", "-nobrowse", "-mountpoint", str(mount), str(args.archive)])
+        try:
+            bundle = mount / names.app
+            resources = bundle / "Contents/Resources"
+            info = plistlib.loads((bundle / "Contents/Info.plist").read_bytes())
+            validate_icons(resources, names.kind, info)
+            if (info["CFBundleIdentifier"] != names.bundle_id
+                    or info["CFBundleExecutable"] != names.ide
+                    or info["CFBundleShortVersionString"] != requested_version(names, args.version)
+                    or info["CFBundleVersion"] != names.package_version
+                    or info.get("LSMinimumSystemVersion") != MACOS_MINIMUM):
+                fail("DMG application identity/version/minimum OS mismatch")
+            for binary in names.binaries:
+                if not (bundle / "Contents/MacOS" / binary).is_file():
+                    fail(f"DMG missing {binary}")
+            for name in ("NOTICE.txt", "LICENSE-MIT", "LICENSE-APACHE"):
+                if not (resources / name).is_file():
+                    fail(f"DMG missing {name}")
+            if names.kind == "python" and not (resources / "helpers/debugpy/debugpy/adapter/__main__.py").is_file():
+                fail("DMG missing Python debugger helper")
+            run(["codesign", "--verify", "--strict", "--deep", str(bundle)])
+            print(f"{args.archive.name}: signed app identity, Icon Composer assets and payload verified")
+        finally:
+            run(["hdiutil", "detach", str(mount)])
     return 0
 
 
@@ -618,6 +658,11 @@ def main():
     verify.add_argument("--version")
     verify.add_argument("--smoke-cli", action="store_true")
     verify.set_defaults(run=cmd_verify)
+    dmg = sub.add_parser("verify-dmg")
+    dmg.add_argument("archive", type=Path)
+    dmg.add_argument("--product", choices=["platform", "python"], required=True)
+    dmg.add_argument("--version")
+    dmg.set_defaults(run=cmd_verify_dmg)
     names = sub.add_parser("names")
     names.add_argument("--product", choices=["platform", "python"], default="python")
     names.set_defaults(run=cmd_names)

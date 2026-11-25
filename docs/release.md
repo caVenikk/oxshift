@@ -15,7 +15,15 @@ Every target builds both products once:
 | Oxshift | `oxshift-platform` | `oxshift-platform` | `Oxshift.app` |
 | Oxshift Python | `oxshift-python` | `oxshift-python`, `oxshift-db`, `oxshift` | `Oxshift Python.app` |
 
-Each uses its own canonical `.icns`, `.ico` or `.png` artwork from `assets/brand/`.
+Each uses its own canonical artwork from `assets/brand/`. Both macOS packagers
+call the same `macos_icons.py` Icon Composer function: `.icon` input, `Assets.car`
+and `.icns` output, and `CFBundleIconName` metadata. No static-icon fallback is
+allowed. The two macOS 15 runner images explicitly select Xcode 26.3 with Icon
+Composer support; a missing toolchain fails the job. Availability is recorded in
+the official [Intel](https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md)
+and [Apple silicon](https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md)
+runner image inventories. Windows/Linux use the
+canonical `.ico`/`.png` artwork.
 The macOS bundle identifiers are `dev.oxshift.platform` and `dev.oxshift.python`.
 Only the Python product includes the pinned, unmodified debugpy helper and its
 third-party notices. Both Windows products include the pinned ConPTY runtime

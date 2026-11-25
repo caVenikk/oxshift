@@ -64,6 +64,17 @@ class PackagingTests(unittest.TestCase):
         with patch.object(package, 'host_os', return_value='linux'):
             self.assertEqual(package.cmd_verify(args), 0)
 
+    def test_local_and_release_use_same_icon_composer_function(self):
+        spec = importlib.util.spec_from_file_location('local_package', Path(__file__).with_name('package-macos.py'))
+        local = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(local)
+        self.assertIs(local.compile_icons, package.compile_icons)
+        resources = self.root / 'resources'
+        resources.mkdir()
+        (resources / 'Oxshift.icns').write_bytes(b'only-static-icon')
+        with self.assertRaises(ValueError):
+            package.validate_icons(resources, 'platform', {'CFBundleIconName': 'Oxshift', 'CFBundleIconFile': 'Oxshift.icns'})
+
     def test_calendar_versions_and_distinct_products(self):
         platform, python = package.Names('platform'), package.Names('python')
         self.assertEqual(platform.version, '2026.1')
@@ -130,7 +141,17 @@ class PackagingTests(unittest.TestCase):
         with patch.object(package, 'run', side_effect=native), patch.object(
                 package.subprocess, 'run', wraps=subprocess.run) as process:
             # codesign's informational display call is also a native boundary.
-            process.side_effect = lambda command, **kw: subprocess.CompletedProcess(command, 0, '', '') if command[0] == 'codesign' else original(command, **kw)
+            def process_call(command, **kw):
+                if command[0] == 'codesign':
+                    return subprocess.CompletedProcess(command, 0, '', '')
+                if command[:2] == ['xcrun', 'actool']:
+                    resources = Path(command[command.index('--compile') + 1])
+                    name = command[command.index('--app-icon') + 1]
+                    (resources / 'Assets.car').write_bytes(b'fixture car')
+                    (resources / (name + '.icns')).write_bytes(b'fixture icon')
+                    return subprocess.CompletedProcess(command, 0)
+                return original(command, **kw)
+            process.side_effect = process_call
             paths = self.build('macos', 'tar.gz,dmg')
         for product in ('platform', 'python'):
             names = package.Names(product)
@@ -139,7 +160,9 @@ class PackagingTests(unittest.TestCase):
             with tarfile.open(archive) as tf:
                 info = plistlib.loads(tf.extractfile(names.app + '/Contents/Info.plist').read())
                 self.assertEqual(info['CFBundleVersion'], '2026.1.0')
-                self.assertEqual(info['CFBundleIconFile'], names.icon + '.icns')
+                self.assertEqual(info['CFBundleIconFile'], ('Oxshift' if product == 'platform' else 'OxshiftPython') + '.icns')
+                self.assertEqual(info['CFBundleIconName'], 'Oxshift' if product == 'platform' else 'OxshiftPython')
+                self.assertTrue(tf.getmember(names.app + '/Contents/Resources/Assets.car').size)
             self.assertTrue(any(names.bundle_id in command for command in signed))
 
     def test_native_linux_layouts_and_explicit_runtime(self):

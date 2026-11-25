@@ -19,9 +19,11 @@ import subprocess
 import sys
 import tempfile
 
+from macos_icons import compile_icons
+
 PRODUCTS = {
-    "platform": ("Oxshift", "Oxshift", "dev.oxshift.platform", ("oxshift-platform",)),
-    "python": ("Oxshift Python", "OxshiftPython", "dev.oxshift.python",
+    "platform": ("Oxshift", "dev.oxshift.platform", ("oxshift-platform",)),
+    "python": ("Oxshift Python", "dev.oxshift.python",
                ("oxshift-python", "oxshift", "oxshift-db")),
 }
 
@@ -33,7 +35,7 @@ def sign(path: Path, identifier: str, identity: str) -> None:
 
 def package_product(source: Path, binaries: Path, output: Path, product: str,
                     identity: str = "-") -> Path:
-    display, icon_name, bundle_id, programs = PRODUCTS[product]
+    display, bundle_id, programs = PRODUCTS[product]
     destination = output / (display + ".app")
     if destination.exists():
         raise FileExistsError(f"Bundle already exists: {destination}; choose an empty output directory")
@@ -55,26 +57,13 @@ def package_product(source: Path, binaries: Path, output: Path, product: str,
         resources = bundle / "Contents" / "Resources"
         macos.mkdir(parents=True)
         resources.mkdir()
-        icon = stage / (icon_name + ".icon")
-        # Resolve artwork symlinks into the temporary Icon Composer document.
-        shutil.copytree(source / "assets" / "brand" / icon.name, icon)
-        env = os.environ.copy()
-        xcode = Path("/Applications/Xcode.app/Contents/Developer")
-        if xcode.is_dir():
-            env.setdefault("DEVELOPER_DIR", str(xcode))
-        subprocess.run(["xcrun", "actool", "--compile", str(resources), "--app-icon", icon_name,
-                        "--platform", "macosx", "--minimum-deployment-target", "11.0",
-                        "--output-partial-info-plist", str(stage / "icon.plist"), str(icon)],
-                       env=env, stdout=subprocess.DEVNULL, check=True)
-        for name in ("Assets.car", icon_name + ".icns"):
-            if not (resources / name).stat().st_size:
-                raise ValueError(f"Empty icon resource: {name}")
+        icon_info = compile_icons(source, resources, product, stage)
         info = dict(CFBundleName=display, CFBundleDisplayName=display,
                     CFBundleExecutable=programs[0], CFBundleIdentifier=bundle_id,
                     CFBundlePackageType="APPL", CFBundleVersion=version,
                     CFBundleShortVersionString=version.removesuffix(".0") if version.startswith("20") else version,
-                    CFBundleInfoDictionaryVersion="6.0", CFBundleIconFile=icon_name + ".icns",
-                    CFBundleIconName=icon_name, NSHighResolutionCapable=True,
+                    CFBundleInfoDictionaryVersion="6.0", LSMinimumSystemVersion="13.0",
+                    NSHighResolutionCapable=True, **icon_info,
                     LSApplicationCategoryType="public.app-category.developer-tools")
         (bundle / "Contents" / "Info.plist").write_bytes(plistlib.dumps(info))
         for program in programs:

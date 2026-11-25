@@ -80,6 +80,13 @@ jobs:
             libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libx11-xcb-dev \
             libxcb1-dev libfontconfig-dev libfreetype-dev libvulkan1 squashfs-tools
           python scripts/fetch-appimage-tools.py --dest build-tools --arch '${{ matrix.arch }}'
+      - name: Select Xcode with Icon Composer support
+        if: runner.os == 'macOS'
+        run: |
+          developer=/Applications/Xcode_26.3.app/Contents/Developer
+          test -d "$developer"
+          echo "DEVELOPER_DIR=$developer" >> "$GITHUB_ENV"
+          DEVELOPER_DIR="$developer" xcodebuild -version
       - name: Build both desktop products and Python command-line tools
         run: cargo build --release --locked -p oxshift-platform -p oxshift-python -p oxshift-cli -p oxshift-db
       - name: Package macOS applications and disk images
@@ -110,7 +117,13 @@ jobs:
       - name: Inspect native package containers
         run: |
           case '${{ runner.os }}' in
-            macOS) for package in dist/*.dmg; do hdiutil verify "$package"; done ;;
+            macOS)
+              for product in platform python; do
+                slug=$(python scripts/package.py names --product "$product" | sed -n 's/^SLUG=//p')
+                for package in dist/"$slug"-*.dmg; do
+                  python scripts/package.py verify-dmg "$package" --product "$product" --version "$RELEASE_VERSION"
+                done
+              done ;;
             Linux)
               for package in dist/*.deb; do dpkg-deb --info "$package"; dpkg-deb --contents "$package"; done
               for package in dist/*.AppImage; do chmod +x "$package"; "$package" --appimage-offset; done ;;

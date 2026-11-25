@@ -186,7 +186,9 @@ pub fn portable_data_dir() -> Option<&'static Path> {
 #[cfg(any(windows, test))]
 fn portable_dir_for(executable: &Path) -> Option<PathBuf> {
     let data = executable.parent()?.join("data");
-    data.join(".oxshift-portable").is_file().then_some(data)
+    data.join(format!("{}-portable", project_dir()))
+        .is_file()
+        .then_some(data)
 }
 
 fn default_config_dir() -> Option<PathBuf> {
@@ -256,7 +258,7 @@ mod tests {
         let exe = temp.path().join("desktop.exe");
         std::fs::create_dir(&data).unwrap();
         assert_eq!(portable_dir_for(&exe), None);
-        std::fs::write(data.join(".oxshift-portable"), b"").unwrap();
+        std::fs::write(data.join(".app-portable"), b"").unwrap();
         assert_eq!(portable_dir_for(&exe), Some(data));
         assert_eq!(portable_dir_for(&temp.path().join("other/app.exe")), None);
     }

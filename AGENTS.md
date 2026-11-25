@@ -95,16 +95,16 @@ Rules for AI agents and human contributors. Read this file, then
 `skills/` holds the Replica skill pack (MIT, modified, see [notices/](notices/)).
 Install locally for Claude Code with `mkdir -p .claude && cp -r skills .claude/skills`
 (`skills/` is the source of truth; `.claude/` is git-ignored). Read
-`skills/PYOXIDE.md` first. Per feature area the loop is
+`skills/OXSHIFT.md` first. Per feature area the loop is
 `/replica-recon` -> `/replica-architect` -> `/replica-design` -> `/replica-build`
 -> `/replica-backend` -> `/replica-test` -> `/replica-diff` -> `/replica-entrepreneur`;
 release work uses `/replica-brand` (sweep), `/replica-launch`, `/replica-deploy`.
 Artifacts go to `replica/`. Reference screenshots of proprietary products stay
 local in `replica/screens/` (git-ignored) and are never published.
 
-Work with sub-agents uses two more skills in `skills/`: `pyoxide-lead` (the
+Work with sub-agents uses two more skills in `skills/`: `oxshift-lead` (the
 lead's procedures: briefs, model choice, review, merge, builds to try, usage
-pauses, status reports) and `pyoxide-agent` (rules for a sub-agent working on
+pauses, status reports) and `oxshift-agent` (rules for a sub-agent working on
 one issue in its own git worktree, including the report format).
 
 ## Private files

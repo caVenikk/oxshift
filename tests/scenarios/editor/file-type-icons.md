@@ -49,6 +49,6 @@ env-files-support,git4idea,hg4idea}`, `platform/vcs-impl`,
 `python/pluginResources`; `GitlabCiIconProvider`,
 `GithubYamlIconProvider` / `githubYamlFileDetection.kt`. Observed in
 PyCharm 2026.2.3 on a project root: the Docker, Docker Compose,
-`.dockerignore` and INI icons (closed-source plugins; Pyoxide
+`.dockerignore` and INI icons (closed-source plugins; Oxshift Python
 draws its own; the YAML icon is drawn anew too), pre-commit files with the
 plain YAML icon, `Dockerfile.*` drawn as text.

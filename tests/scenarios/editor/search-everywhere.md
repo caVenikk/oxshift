@@ -184,7 +184,7 @@ scenario, `recent-files.md`. The preview is the one of Find in Files
 ## Notes
 - The reference sorts its Files tab with a machine-learning model by
   default (Settings | Advanced Settings | Search Everywhere: "Sort results
-  in the Files tab based on machine learning", on by default). Pyoxide
+  in the Files tab based on machine learning", on by default). Oxshift Python
   uses the fixed rule of step 5, which gives the top results the reference
   shows; without that setting the reference orders by its own weights,
   where the folder part's match counts and folders go last.

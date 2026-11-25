@@ -44,7 +44,7 @@ too. When a folder first opens as a project, PyCharm marks `src` and the
 root package folder of `setup.py` as sources roots
 (`PythonSourceRootConfigurator`).
 
-Pyoxide found the same roots (`NavigationHooks::source_roots`) for Go to
+Oxshift Python found the same roots (`NavigationHooks::source_roots`) for Go to
 File and runs, but did not show them, could not change them and ignored
 the source folders a project marks in `.idea`. The project tree showed
 every folder alike. Platform crates know no language (ADR 0005).
@@ -54,7 +54,7 @@ every folder alike. Platform crates know no language (ADR 0005).
    rejected for the reasons of ADR 0008 (the format and the files belong
    to the reference).
 2. Keep roots out of the project settings and detect them every time:
-   marks made in Pyoxide would not survive, and a detected root could not
+   marks made in Oxshift Python would not survive, and a detected root could not
    be unmarked.
 3. Store the roots in `.oxshift/project.toml` next to the exclusions, with
    the detected roots and the reference's source folders in effect until

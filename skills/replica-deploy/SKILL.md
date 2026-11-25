@@ -12,10 +12,11 @@ description: >-
 
 # replica-deploy
 
-## Pyoxide override (read first; see `../PYOXIDE.md`)
+## Oxshift Python override (read first; see `../OXSHIFT.md`)
 
 - Read as **release**. Preflight: fmt, clippy, tests on 3 OSes, parity must-haves done, brand sweep clean, `cargo about`/`cargo deny` licence report matches the assembled NOTICE (`python3 scripts/notice.py --out <file>`), no secrets, reference screenshots not in the repo.
-- Packaging: Windows (MSI/portable zip), macOS (universal DMG, notarization), Linux (AppImage/deb/rpm), via CI (cargo-dist or cargo-packager). Checksums (SHA256SUMS), changelog, GitHub Release, optional docs site on GitHub Pages.
+- Packaging: Windows (MSI/portable zip), Linux (AppImage/deb/rpm), and macOS as a real `Oxshift Python.app` bundle containing `Contents/MacOS/oxshift-python`, an `Info.plist` with bundle ID `dev.oxshift.python`, and the product icon in `Contents/Resources/` referenced by `CFBundleIconFile`. Use the approved product assets from `assets/brand/`; a renamed executable or directory alone is not an application bundle. Verify Finder and Dock show the product icon and launching the `.app` opens the IDE. Sign the nested executables and bundle, notarize and staple the distribution; ship a DMG for supported architectures. See `docs/code-signing.md` for credential-access requirements.
+- CI packaging may use cargo-dist or cargo-packager. Publish checksums (`SHA256SUMS`), changelog and GitHub Release; the optional docs site uses GitHub Pages.
 - Signing keys, notarization credentials and tokens are **the maintainers' to enter**; Claude writes the workflow and the instructions, never types or stores secrets.
 - Skip Step 5 (mobile) and Stripe/domain-email parts. Auto-update is a later milestone.
 

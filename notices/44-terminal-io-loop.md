@@ -6,6 +6,6 @@
   reader and forced at a full buffer; the queued writes; the poller
   registration with write interest; the child exit with a final read).
   Changes: no ref-test recording; the output is pre-scanned for OSC 7,
-  OSC 133 and Pyoxide's own events and parsed in pieces at their ends;
+  OSC 133 and Oxshift's own events and parsed in pieces at their ends;
   hang-up, kill and shutdown with a grace period; the lock is released
   fairly after each batch; the PTY is resized with its own ioctl on Unix.

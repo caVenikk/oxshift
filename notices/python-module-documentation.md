@@ -1,4 +1,4 @@
-- crates/python/pyoxide-ide/src/module_doc.rs (the table of standard
+- crates/python/oxshift-python/src/module_doc.rs (the table of standard
   library pages and the docs.python.org link of a module)
   Closely adapted from IntelliJ Community (Apache-2.0),
   https://github.com/JetBrains/intellij-community @ pycharm/2026.2.3

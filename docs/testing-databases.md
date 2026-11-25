@@ -17,13 +17,20 @@ cargo test -p db-session -- --ignored     # sessions: cancel, savepoints, read-o
 
 | service | address | database | user | password |
 |---|---|---|---|---|
-| PostgreSQL 18 | `localhost:55432` | `pyoxide` | `pyoxide` | `$OXSHIFT_DB_PASSWORD`, default `pyoxide` |
-| Oracle Database Free 23 | `localhost:1521` | service `FREEPDB1` | `pyoxide` | `$OXSHIFT_DB_PASSWORD`, default `pyoxide` |
+| PostgreSQL 18 | `localhost:55432` | `oxshift` | `oxshift` | `$OXSHIFT_DB_PASSWORD`, default `oxshift` |
+| Oracle Database Free 23 | `localhost:1521` | service `FREEPDB1` | `oxshift` | `$OXSHIFT_DB_PASSWORD`, default `oxshift` |
 
 The default password only protects throw-away local containers. Override any
-value with `OXSHIFT_TEST_PG_HOST`, `OXSHIFT_TEST_PG_PORT`,
+server address with `OXSHIFT_TEST_PG_HOST`, `OXSHIFT_TEST_PG_PORT`,
 `OXSHIFT_TEST_ORACLE_HOST`, `OXSHIFT_TEST_ORACLE_PORT`,
 `OXSHIFT_TEST_ORACLE_SERVICE`.
+
+The compose fixtures use `OXSHIFT_DB_USER`, `OXSHIFT_PG_DATABASE` and
+`OXSHIFT_DB_PASSWORD`, all defaulting to `oxshift`. These defaults apply to
+new local volumes. For an existing volume, set those variables to its current
+user, database and password before starting the containers or tests. Changing
+the environment does not change credentials inside an initialized database;
+keep the volume and use its existing credentials.
 
 Oracle introspection tokens cover the whole fixture schema. Unique object
 prefixes prevent name collisions, but concurrent DDL still invalidates those

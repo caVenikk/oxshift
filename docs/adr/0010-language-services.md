@@ -10,7 +10,7 @@ fixes and reformats code. For Python most of this comes from its own
 engine; external tools (ruff, ty, Pyright, Basedpyright, Pyrefly) run as
 language servers next to it, are off by default, and add diagnostics,
 quick fixes, formatting and some completion and documentation results
-(`replica/recon.md`, area python-intel). Pyoxide has no such engine. It
+(`replica/recon.md`, area python-intel). Oxshift Python has no such engine. It
 keeps the reference's editor behaviour and takes the data from language
 servers: ruff and one type server (ADR 0011).
 
@@ -144,7 +144,7 @@ Executable lookup follows the reference: `sdk` tries the folder of the
 project interpreter (`bin`, `Scripts` on Windows), then a custom path or
 PATH and per-user tool folders, then `uvx`; `path` skips the interpreter;
 `uvx` always runs `uvx <tool>`. Tools that are on only because they are
-Pyoxide's defaults (ruff, the type server) do not download anything
+Oxshift Python's defaults (ruff, the type server) do not download anything
 without asking: when lookup would end at `uvx`, the Language Services
 widget offers to run the tool through uv once and remembers the answer in
 the personal state. Tools enabled in the settings or imported from the

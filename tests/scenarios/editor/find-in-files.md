@@ -207,7 +207,7 @@ replacing in files).
       it was.
 
 ## Notes
-- A Pyoxide project is one module, so the Module tab lists the project.
+- A Oxshift Python project is one module, so the Module tab lists the project.
 - The reference undoes a Replace All over several files as one global
-  step ("Undo Replace?"); Pyoxide undoes it per open file, and a file
+  step ("Undo Replace?"); Oxshift Python undoes it per open file, and a file
   changed on disk is not undone from the editor.

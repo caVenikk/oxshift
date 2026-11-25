@@ -10,7 +10,7 @@ with a diff viewer, rollback, and the branch widget with checkout, new
 branch, update and push (#91, #28). The reference runs the `git` program
 for every operation and reads a few files of `.git` itself for cheap
 repository state (`GitRepositoryReader`). People use the reference and
-Pyoxide on the same repositories, with their own git configuration:
+Oxshift Python on the same repositories, with their own git configuration:
 hooks, signing, filters and LFS, credential helpers, ssh configuration,
 fsmonitor.
 
@@ -38,7 +38,7 @@ Line diff for gutter markers and the diff viewer: `imara-diff` 0.2
 cost-limited and not enough.
 
 ## Decision
-The `git` executable for every operation, Pyoxide's own readers for
+The `git` executable for every operation, Oxshift Python's own readers for
 repository state, and `imara-diff` for line diffs: it implements git's
 histogram algorithm, so markers match the hunks of `git diff`, and it is
 built for speed on large files (word-level highlights run it on word
@@ -85,7 +85,7 @@ notification.
   `git rm --cached -f` for added ones (and the file deleted when asked).
   Rollback Lines is an undoable edit of the buffer, not a git command.
 - Authentication: credential helpers and ssh-agent only; a failure is an
-  error notification with git's message. An askpass helper (the Pyoxide
+  error notification with git's message. An askpass helper (the Oxshift Python
   binary in a helper mode, as the `process` crate's interrupt helper)
   comes later.
 
@@ -102,7 +102,7 @@ The file watcher's batches (`file-watcher`, `workbench::file_sync`) let the
 everything under `.git` is dropped) and skip `objects/**`, `logs/**` and
 `*.lock`. Changed paths are marked dirty; status runs 300 ms after the last
 batch; results are merged into the status map within 100 ms and repainted
-(the reference's queues). Events caused by Pyoxide's own commands are
+(the reference's queues). Events caused by Oxshift Python's own commands are
 suppressed while they run and followed by one refresh. An edited, unsaved
 document of a clean tracked file is "modified" at once
 (`FileStatusManagerImpl`); its change markers come from its text against

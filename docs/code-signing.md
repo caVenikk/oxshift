@@ -1,10 +1,10 @@
 # Code signing and keychain prompts (macOS)
 
-The OS credential store keeps data source passwords (service `pyoxide-db`).
+The OS credential store keeps data source passwords (service `oxshift-db`).
 On macOS a keychain item can be read without a prompt only by the code that
 created it and by the applications in the item's access list. Any other
 reader makes the system ask for the login password ("... wants to use
-confidential information stored in pyoxide-db"). Three things decide how
+confidential information stored in oxshift-db"). Three things decide how
 often that happens.
 
 ## 1. How often the application reads
@@ -40,8 +40,9 @@ PyCharm creates its items with the default list and is the only reader, so it
 is not prompted once its signature is stable. Oxshift Python has three programs that
 share items, hence the explicit list.
 
-The local signing helper retains the signing identifiers `pyoxide-ide`,
-`pyoxide-db`, and `pyoxide` for the corresponding renamed executables.
+The local signing helper retains the signing identifiers `oxshift-python`,
+`oxshift-db`, and `oxshift` for the corresponding renamed executables. Use
+these identifiers consistently between local builds.
 
 ## 3. Whether the code identity is stable
 
@@ -58,7 +59,7 @@ Every build has another hash, so every build is a stranger to every item, and
 fixed identifier, the requirement does not depend on the build:
 
 ```
-designated => identifier "pyoxide-ide" and certificate leaf = H"50d4..."
+designated => identifier "oxshift-python" and certificate leaf = H"50d4..."
 ```
 
 ### Local builds
@@ -67,8 +68,8 @@ Sign every local build with one self-signed identity. It lives in a keychain
 file of its own, never in the login keychain.
 
 1. `scripts/sign-local.sh --setup` prints the one-time commands: they create
-   `~/Library/Keychains/pyoxide-signing.keychain-db` and the certificate
-   "Pyoxide Local Dev" in it. Run them once.
+   `~/Library/Keychains/oxshift-signing.keychain-db` and the certificate
+   "Oxshift Local Dev" in it. Run them once.
 2. After each build: `scripts/sign-local.sh` (signs `target/release/oxshift-python`,
    `oxshift-db` and `oxshift`; pass other paths to sign those). A rebuild
    replaces the signature, so sign again after every build you run.
@@ -93,7 +94,7 @@ that holds them), with a fixed identifier each:
 ```bash
 codesign --force --timestamp --options runtime \
   --sign "Developer ID Application: <Name> (<TEAMID>)" \
-  --identifier pyoxide-ide --entitlements release.entitlements oxshift-python
+  --identifier dev.oxshift.python --entitlements release.entitlements oxshift-python
 ```
 
 - The same certificate for every binary: the access list of an item names
@@ -101,7 +102,7 @@ codesign --force --timestamp --options runtime \
   partition list on the item (`teamid:<TEAMID>` for items created by code
   signed with a Team ID). Binaries of one team share it. Not yet checked on a
   Developer ID build: if an item created by one binary still prompts the
-  other, `security set-generic-password-partition-list -S teamid:<TEAMID> -s pyoxide-db`
+  other, `security set-generic-password-partition-list -S teamid:<TEAMID> -s oxshift-db`
   fixes existing items (it asks for the login password once).
 - The requirement survives updates: an item a user allowed once stays allowed
   in every later release signed with the same certificate and identifier.

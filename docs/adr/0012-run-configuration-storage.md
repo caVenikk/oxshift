@@ -27,9 +27,9 @@ path variables). Environment variables of a configuration are written in
 the same file as the configuration, so the values of a shared one are
 committed with it.
 
-People who use the reference IDE and Pyoxide on the same project already
+People who use the reference IDE and Oxshift Python on the same project already
 have configurations in `.idea`. ADR 0008 and ADR 0009 set the pattern:
-Pyoxide keeps its own settings in `.oxshift/`, shared ones in a committed
+Oxshift Python keeps its own settings in `.oxshift/`, shared ones in a committed
 file and personal ones in `.oxshift/workspace.toml`, imports the reference's
 once and never writes `.idea`. Environment values may be secrets
 (tokens, passwords) and must not end up in a committed file by accident.
@@ -74,7 +74,7 @@ Option 3. The model, storage and import are the platform crate
   settings, and an `[options]` table owned by the type:
 
   ```toml
-  # Pyoxide run configuration, shared with the project. Paths are relative to the project folder.
+  # Oxshift Python run configuration, shared with the project. Paths are relative to the project folder.
   version = 1
   name = "server"
   type = "python"
@@ -180,7 +180,7 @@ Option 3. The model, storage and import are the platform crate
   `workspace.toml`, so a clone has the shared configurations and none of
   the personal values.
 - There is no two-way sync: configurations changed in the reference after
-  the import do not reach Pyoxide, and Pyoxide's do not reach the
+  the import do not reach Oxshift Python, and Oxshift Python's do not reach the
   reference.
 - A variable that becomes shared writes its value into a committed file;
   turning on "Store as project file" asks about the personal values

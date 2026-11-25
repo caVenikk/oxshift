@@ -29,7 +29,7 @@ The reference, 2026.2:
   `filetypes.xml`, `jdk.table.xml`, ...).
 
 People who use the reference want their theme, keymap, font and similar
-choices in Pyoxide without redoing them, as with exclusions, interpreters
+choices in Oxshift Python without redoing them, as with exclusions, interpreters
 and run configurations.
 
 Sources: IntelliJ Community (Apache-2.0),
@@ -70,7 +70,7 @@ Storage option 2, window option 2, a `settings-ui` crate.
   `version = 1`, tables by area (`[appearance]`, `[keymap]`,
   `[editor.font]`, `[editor.soft-wraps]`, `[system.files]`, `[terminal]`,
   `[git]`, `[debugger]`, `[import]`). The conventions of ADR 0008 hold:
-  `toml_edit`, keys and comments Pyoxide does not know survive, a newer
+  `toml_edit`, keys and comments Oxshift Python does not know survive, a newer
   version is read and never rewritten, writes replace the file at once,
   defaults are not written.
 - Growing data in dedicated files next to it: `interpreters.toml` (#75),
@@ -108,7 +108,7 @@ Storage option 2, window option 2, a `settings-ui` crate.
   pages through `workbench::Product` (`settings_pages`):
   the Python product adds Python > Interpreter, Type Engine, Debugger and
   Tools > External Tools, in a top-level "Python" group as the reference.
-- Only pages Pyoxide implements are listed. Forms use `ui::form`
+- Only pages Oxshift Python implements are listed. Forms use `ui::form`
   (architecture.md, "Cross-cutting foundations").
 
 ### Window
@@ -147,7 +147,7 @@ Storage option 2, window option 2, a `settings-ui` crate.
 - Read once, data files only: `laf.xml` and `colors.scheme.xml` (+ the
   named `colors/*.icls`) for the theme and scheme, `keymap.xml` (+ the
   active `keymaps/*.xml`), `editor-font.xml`, `editor.xml` (soft wraps),
-  `ui.lnf.xml` (the options Pyoxide honours), `ide.general.xml`
+  `ui.lnf.xml` (the options Oxshift Python honours), `ide.general.xml`
   (autosave), `filetypes.xml` (associations), `jdk.table.xml`
   (interpreters that still exist). The reference's files are never written.
 - A theme from a plugin is named in `laf.xml` by an id declared only in the
@@ -169,7 +169,7 @@ Storage option 2, window option 2, a `settings-ui` crate.
 - On acceptance, `docs/clean-room.md` names plugin descriptors
   (`META-INF/plugin.xml`) among the data resources that may be extracted.
 - No two-way sync: changes in the reference after the import do not reach
-  Pyoxide.
+  Oxshift Python.
 - Not in the first version: the spotlight overlay, the pin toggle, the
   reference's advanced settings page, Plugins, Version Control and
   Languages & Frameworks pages, the packages table (an issue of its own).

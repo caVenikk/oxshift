@@ -1,5 +1,5 @@
 - crates/platform/ui/assets/icons/nodes/sourceRoot.svg, testRoot.svg
-  (with their `_dark.svg` variants), crates/python/pyoxide-ide/assets/
+  (with their `_dark.svg` variants), crates/python/oxshift-python/assets/
   icons/pyProjectModule.svg, pyProjectModule_dark.svg
   Icons of the IntelliJ Platform Community (Apache-2.0, license text in
   LICENSE-APACHE), https://github.com/JetBrains/intellij-community @

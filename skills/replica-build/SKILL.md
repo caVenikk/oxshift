@@ -11,7 +11,7 @@ description: >-
 
 # replica-build
 
-## Pyoxide override (read first; see `../PYOXIDE.md`)
+## Oxshift Python override (read first; see `../OXSHIFT.md`)
 
 - "Shell" = main window: menus, command palette, dockable tool-window layout, status bar, editor tabs, wired to the command registry. "Screens" = panels, dialogs, settings pages.
 - Vertical slice first: open project -> open file -> edit with highlighting -> diagnostics -> run script -> output panel. Then DB console, debugger, VCS.

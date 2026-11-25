@@ -1,4 +1,4 @@
-- crates/python/pyoxide-ide/src/interpreter.rs and interpreter/widget.rs,
+- crates/python/oxshift-python/src/interpreter.rs and interpreter/widget.rs,
   crates/python/py-env/src/venv.rs, crates/platform/ui/src/menu.rs (list
   popups, speed search), crates/platform/project/src/workspace.rs and
   idea.rs (the project's SDK, the SDK table)

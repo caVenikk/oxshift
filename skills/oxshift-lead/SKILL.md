@@ -1,15 +1,15 @@
 ---
-name: pyoxide-lead
-description: The lead's procedures for Pyoxide IDE development with sub-agents - running issues (brief, model choice, checkpoints), reviewing and merging PRs, release builds for the maintainer to try, usage-limit pauses, status reports. Use at the start of every Pyoxide lead session and whenever spawning, resuming, reviewing or merging agent work.
+name: oxshift-lead
+description: The lead's procedures for Oxshift Python IDE development with sub-agents - running issues (brief, model choice, checkpoints), reviewing and merging PRs, release builds for the maintainer to try, usage-limit pauses, status reports. Use at the start of every Oxshift Python lead session and whenever spawning, resuming, reviewing or merging agent work.
 ---
 
-# Pyoxide lead procedures
+# Oxshift Python lead procedures
 
-The lead is the session that plans, delegates and reviews; sub-agents implement in their own git worktrees and follow the `pyoxide-agent` skill. Project rules: `AGENTS.md`, `docs/clean-room.md`, `docs/architecture.md`, `skills/PYOXIDE.md`. Machine-specific facts (paths, test projects, where builds for the maintainer go) and the maintainer's standing decisions are kept in the lead's local notes, not here.
+The lead is the session that plans, delegates and reviews; sub-agents implement in their own git worktrees and follow the `oxshift-agent` skill. Project rules: `AGENTS.md`, `docs/clean-room.md`, `docs/architecture.md`, `skills/OXSHIFT.md`. Machine-specific facts (paths, test projects, where builds for the maintainer go) and the maintainer's standing decisions are kept in the lead's local notes, not here.
 
 ## Spawning an agent
 - One issue = one background agent in its own git worktree; independent issues start in parallel (one message, several agent calls). Prefer plain agents over a scripted workflow unless the work is a large fan-out.
-- Prompt = short: issue number, branch `feat/<n>-<slug>`, base, checkpoint yes/no, owned files and who else works in parallel (hot files), local reference screenshots to compare with, local paths the agent needs, and: "Follow the `pyoxide-agent` skill." Do not repeat the skill's rules in the prompt.
+- Prompt = short: issue number, branch `feat/<n>-<slug>`, base, checkpoint yes/no, owned files and who else works in parallel (hot files), local reference screenshots to compare with, local paths the agent needs, and: "Follow the `oxshift-agent` skill." Do not repeat the skill's rules in the prompt.
 - Model per task: the strongest model for implementation in Rust/GPUI, architecture and parity work; a mid-size model for research reading, recon docs, scenarios and issue drafts; the smallest model for mechanical work (bookkeeping, code search, small edits, CI log triage).
 - Follow-ups go to a fresh agent with a short brief (or a small fix by the lead). Resuming an agent re-reads its whole context: resume only for an agreed checkpoint or continuation.
 - Keep a local list of running agents with their issues, so a pause or a context compaction does not lose them.

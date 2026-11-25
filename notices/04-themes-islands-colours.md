@@ -9,6 +9,6 @@
   expUI_lightScheme.xml; platform/platform-resources/src/themes/darcula.theme.json,
   intellijlaf.theme.json; platform/platform-resources/src/DefaultColorSchemesManager.xml;
   python/pluginResources/colorSchemes/PythonDarcula.xml, PythonDefault.xml.
-  Changes: converted by the importer of the themes crate into Pyoxide's theme
+  Changes: converted by the importer of the themes crate into Oxshift's theme
   model (only the mapped keys, see docs/theme-mapping.md), renamed ids;
   regenerated with `cargo run -p themes --example builtin_islands`.

@@ -40,7 +40,7 @@
   XDebugger.JumpToTypeSource, EvaluateExpression, EditSource, $Delete and $Copy of
   platform/platform-resources/src/keymaps ($default.xml, Mac OS X 10.5+.xml).
   Changes: reimplemented in Rust with GPUI; the histories and the watches are kept
-  in `.oxide/workspace.toml`; Evaluate Expression of a value puts it into the
+  in `.oxshift/workspace.toml`; Evaluate Expression of a value puts it into the
   evaluate field (there is no Evaluate dialog); the declaration of a Python name
   and the names an expression does not declare are found by a scan of the frame's
   scope and the module instead of the reference's resolver; Jump To Type Source

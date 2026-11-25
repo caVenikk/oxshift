@@ -1,4 +1,4 @@
-- crates/python/pyoxide-ide/src/debugger_settings.rs,
+- crates/python/oxshift-python/src/debugger_settings.rs,
   crates/python/py-debug/src/settings.rs
   The page Settings > Python > Debugger, its options and defaults follow
   IntelliJ Community (Apache-2.0), https://github.com/JetBrains/intellij-community
@@ -10,6 +10,6 @@
   response timeout), python/ide/customization.frontend/src/
   PyCharmProjectConfigurableStartupActivity.kt (the page's place in the
   Python group), and the strings of python/pluginResources/messages/
-  PyBundle.properties. Reimplemented in Rust with GPUI over Pyoxide's own
+  PyBundle.properties. Reimplemented in Rust with GPUI over Oxshift's own
   project state; the options pydevd needs and the Mode switch are drawn
   without effect.

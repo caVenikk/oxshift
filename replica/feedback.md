@@ -97,7 +97,7 @@ managers (1 item), Windows-specific and startup-specific database complaints
 Three comments from one source (thin) value the breadth of supported
 databases, schema-aware completion, many export options, result diffing,
 inline results and the depth of the tool, and one says it made Oracle work
-bearable. Whatever Pyoxide does better on speed has to keep schema-aware
+bearable. Whatever Oxshift Python does better on speed has to keep schema-aware
 completion usable, or users will treat it as a downgrade.
 
 ## Already addressed upstream (do not treat as open)
@@ -125,7 +125,7 @@ completion usable, or users will treat it as a downgrade.
 - Most comments are not measurements. Where numbers appear (idle memory over
   2 GB, 14,000-table schemas), they are single reports.
 
-## Implications for Pyoxide
+## Implications for Oxshift Python
 
 ### Existing rows in `replica/features/`
 
@@ -164,7 +164,7 @@ completion usable, or users will treat it as a downgrade.
 
 ## Positioning for the README (draft)
 
-Pyoxide is a native IDE for Python with a built-in database client for Oracle,
+Oxshift Python is a native IDE for Python with a built-in database client for Oracle,
 PostgreSQL and SQLite, built for people who want database work to stay out of
 their way. It runs without a Java runtime, so there is no driver download, no
 Java version to match with an Oracle server, and no heap limit to tune. The

@@ -4,7 +4,7 @@
 - Date: 2026-10-14
 
 ## Context
-Without its own engine (ADR 0010) Pyoxide needs one language server that
+Without its own engine (ADR 0010) Oxshift Python needs one language server that
 answers completion, documentation, signatures, navigation, references and
 type diagnostics for Python, next to ruff for lint, quick fixes and
 formatting. The reference integrates ty, Pyright, Basedpyright and Pyrefly
@@ -53,7 +53,7 @@ ty#3909).
 
 ## Decision
 ty is the default type server (`[python.type-engine] name = "ty"`), for its
-speed and memory and because Pyoxide's Python toolchain is Astral's
+speed and memory and because Oxshift Python's Python toolchain is Astral's
 throughout: uv for environments, ruff for lint and formatting, ty for
 types, with the same configuration conventions (`pyproject.toml`).
 
@@ -68,7 +68,7 @@ basedpyright is offered as an alternative from the first version
 pyrefly can follow through a server spec without changes to the platform
 crates.
 
-- ruff and the type server are enabled by default: Pyoxide has no engine
+- ruff and the type server are enabled by default: Oxshift Python has no engine
   of its own, so without them a Python file gets no code intelligence (the
   reference runs its own engine and leaves its LSP tools off).
 - A minimum ty version is checked at start (`ty --version`); an older one
@@ -80,7 +80,7 @@ crates.
   explicit action.
 
 ## Consequences
-- Pyoxide follows ty's releases closely; behaviour changes in 0.0.x show
+- Oxshift Python follows ty's releases closely; behaviour changes in 0.0.x show
   up in the integration test.
 - Completion asks again as the prefix grows (ty marks results
   incomplete); broad prefixes are cancelled when the user keeps typing.

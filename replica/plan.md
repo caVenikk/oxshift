@@ -50,7 +50,7 @@ reference them with `Refs #N`, pull requests with `Closes #N`.
 | #11 Reference baseline | lead | `scripts/perf/`, `replica/perf.md` | - | startup, indexing, memory done; typing latency and large files open |
 | #12 UI toolkit decision (prototypes + ADR 0006) | sub-agent ui | `docs/adr/0006-ui-toolkit.md` | - | done: GPUI (ADR 0006); prototypes not kept |
 | #13 Control channel and headless UI tests | - | - | #12 | todo |
-| #14 Theme import and Pyoxide theme model | sub-agent themes | `crates/platform/themes`, `docs/theme-mapping.md` | - | merged (importer; settings UI later) |
+| #14 Theme import and Oxshift Python theme model | sub-agent themes | `crates/platform/themes`, `docs/theme-mapping.md` | - | merged (importer; settings UI later) |
 | #15 Python environments engine (uv) | sub-agent py-env | `crates/python/py-env`, `crates/python/oxshift-cli` | - | merged (engine and CLI; UI later) |
 
 | #18 Application shell and editor MVP on GPUI | sub-agent shell | `crates/platform/{text,syntax,project,ui,editor,workbench}`, `crates/python/{py-syntax,oxshift-python}`, ADR 0007 | #12 | done (PR #22) |
@@ -70,7 +70,7 @@ reference them with `Refs #N`, pull requests with `Closes #N`.
 Recon: `replica/recon.md` (area python-intel), scenarios in
 `tests/scenarios/python-intel/`, ADR 0010 (language services over LSP) and
 ADR 0011 (type server: ty by default, basedpyright as an option), both
-accepted. Defaults: ruff and ty on (Pyoxide has no engine of its own). Milestone "M3 Python
+accepted. Defaults: ruff and ty on (Oxshift Python has no engine of its own). Milestone "M3 Python
 intelligence".
 
 | issue | owner | crates / files | depends on | status |
@@ -148,4 +148,4 @@ Queue: MVP (M3 first version first), then #13 control channel, then #50 (find fi
 literals, which need the Python syntax layer). Follow-ups of #18 are #24-#42;
 of the search work #48-#53 and #65-#69.
 
-Typing latency and the 10 MB file are measured for the reference and Pyoxide (replica/perf.md).
+Typing latency and the 10 MB file are measured for the reference and Oxshift Python (replica/perf.md).

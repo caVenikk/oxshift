@@ -56,7 +56,7 @@
   at and the project tree and the file index are made again.
 - Step 12: the file is saved on quit.
 - Differences from the reference: an editor with changes whose file was
-  deleted stays open (the reference closes it; Pyoxide has no Local
+  deleted stays open (the reference closes it; Oxshift Python has no Local
   History yet to get the changes back); the conflict dialog has no Show
   Difference button (no diff viewer yet).
 

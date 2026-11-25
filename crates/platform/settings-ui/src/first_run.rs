@@ -65,7 +65,7 @@ ui::ui_commands! {
         r#"{"path": "/path/to/PyCharm2025.3"}"#;
     /// Import the newest folder.
     Continue => "first-run.continue", "Continue",
-        "Imports the newest configuration folder found, as its button does (Enter on the import page).";
+        "Activates the suggested source button (Enter): opens the version list when several sources are available, otherwise imports its configuration folder.";
     /// Close the window.
     Cancel => "first-run.cancel", "Close",
         "Closes the window as its close button does and goes on to the main window; an import not decided yet counts as skipped.";

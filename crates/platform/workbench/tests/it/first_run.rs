@@ -62,6 +62,13 @@ impl H<'_> {
         out
     }
 
+    fn press(&mut self, keys: &str) {
+        let owner = self.window().expect("the first-run window");
+        let target = self.cx.update(|cx| ui::dialog_window::innermost(owner, cx));
+        self.cx.simulate_keystrokes(target, keys);
+        self.settle();
+    }
+
     fn state(&mut self) -> Value {
         self.invoke("first-run.state", json!(null))
     }
@@ -217,10 +224,15 @@ fn reference(root: &Path) {
 }
 
 fn open(cx: &mut TestAppContext, with_reference: bool) -> H<'_> {
-    open_for_product(cx, with_reference, true)
+    open_for_product(cx, with_reference, true, false)
 }
 
-fn open_for_product(cx: &mut TestAppContext, with_reference: bool, enabled: bool) -> H<'_> {
+fn open_for_product(
+    cx: &mut TestAppContext,
+    with_reference: bool,
+    enabled: bool,
+    community: bool,
+) -> H<'_> {
     let dir = tempfile::tempdir().unwrap();
     let config = dir.path().join("config");
     let file = config.join("settings.toml");
@@ -228,6 +240,12 @@ fn open_for_product(cx: &mut TestAppContext, with_reference: bool, enabled: bool
     std::fs::create_dir_all(&root).unwrap();
     if with_reference {
         reference(&root);
+    }
+    if community {
+        write(
+            &root.join("PyCharmCE2025.3/options/other.xml"),
+            "<application/>",
+        );
     }
     let product = Product {
         name: "Test IDE",
@@ -266,7 +284,7 @@ fn open_for_product(cx: &mut TestAppContext, with_reference: bool, enabled: bool
 
 #[gpui::test]
 fn neutral_product_does_not_detect_or_brand_pycharm(cx: &mut TestAppContext) {
-    let mut h = open_for_product(cx, true, false);
+    let mut h = open_for_product(cx, true, false, false);
     assert!(h.window().is_none());
     assert!(h.done.get());
     h.cx.update(|cx| {
@@ -465,6 +483,60 @@ fn other_options_list_older_folders_and_refuse_other_folders(cx: &mut TestAppCon
     assert!(h.window().is_none());
     assert_eq!(h.get("import.source"), json!("PyCharm"));
     assert_eq!(h.get("import.version"), json!("2025.1"));
+}
+
+#[gpui::test]
+fn enter_opens_multiple_sources_and_arrows_choose_without_implicit_import(cx: &mut TestAppContext) {
+    let mut h = open_for_product(cx, true, true, true);
+    assert_eq!(h.state()["main"].as_array().unwrap().len(), 2);
+    h.press("enter");
+    assert!(!h.state()["popup"].is_null());
+    assert_eq!(h.get("import.source"), Value::Null);
+    h.press("down");
+    let popup = h.state()["popup"].clone();
+    assert_eq!(popup["levels"][0]["selected"], json!(1));
+    assert_eq!(
+        popup["levels"][0]["items"][1]["label"],
+        json!("PyCharm 2026.2")
+    );
+    h.press("escape");
+    assert!(h.state()["popup"].is_null());
+    assert_eq!(h.get("import.source"), Value::Null);
+    assert!(!h.config().join("imported").exists());
+    h.press("enter");
+    h.press("down");
+    h.press("enter");
+    assert!(h.window().is_none());
+    assert_eq!(h.get("import.source"), json!("PyCharm"));
+    assert_eq!(h.get("import.version"), json!("2026.2"));
+}
+
+#[gpui::test]
+fn other_options_keyboard_selects_an_older_version_and_escape_keeps_it_undecided(
+    cx: &mut TestAppContext,
+) {
+    let mut h = open(cx, true);
+    h.invoke("first-run.other-options", json!(null));
+    h.press("down");
+    h.press("up");
+    assert_eq!(h.state()["popup"]["levels"][0]["selected"], json!(1));
+    h.press("escape");
+    assert!(h.state()["popup"].is_null());
+    assert_eq!(h.get("import.source"), Value::Null);
+    h.invoke("first-run.other-options", json!(null));
+    h.press("down");
+    h.press("up");
+    h.press("enter");
+    assert!(h.window().is_none());
+    assert_eq!(h.get("import.version"), json!("2025.1"));
+}
+
+#[gpui::test]
+fn enter_still_imports_a_single_suggested_source(cx: &mut TestAppContext) {
+    let mut h = open(cx, true);
+    h.press("enter");
+    assert!(h.window().is_none());
+    assert_eq!(h.get("import.version"), json!("2026.2"));
 }
 
 #[gpui::test]

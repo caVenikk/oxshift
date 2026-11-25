@@ -106,6 +106,7 @@ mod tests {
         let settings_file = config.join("settings.toml");
         cx.update(|cx| {
             first_run::init(cx);
+            first_run::enable_pycharm(cx);
             register(cx);
             store::load(cx, settings_file);
             let mut record = ImportSettings::imported("PyCharm", "2026.2", SystemTime::now())

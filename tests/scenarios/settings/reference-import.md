@@ -78,3 +78,9 @@ pick-up retain the behavior above. The application title remains Oxshift Python.
 The Python product explicitly enables the PyCharm source in its init hook. A
 neutral workbench host with the same fixture folders finds no automatic import
 source and registers no PyCharm icon; manually requested imports are refused.
+
+With several suggested sources, Enter opens their selector just like a click;
+Down/Up changes the selected version, Enter imports it, and Escape closes only
+the selector without recording a decision or creating a snapshot. Other Options
+supports the same keys for older versions. With one suggested source, Enter
+continues to import it directly.

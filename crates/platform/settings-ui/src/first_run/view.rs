@@ -385,11 +385,14 @@ impl FirstRunWindow {
 
     // ---- closing ----------------------------------------------------------------
 
-    /// Enter: the newest folder is imported, as its button does.
-    fn on_continue(&mut self, _: &Continue, _: &mut Window, cx: &mut Context<Self>) {
-        if self.page == Page::Import
-            && let Some(folder) = self.folder(None)
-        {
+    /// Enter activates the main button: choose among several sources, or import one.
+    fn on_continue(&mut self, _: &Continue, window: &mut Window, cx: &mut Context<Self>) {
+        if self.page != Page::Import {
+            return;
+        }
+        if self.found.main.len() > 1 {
+            self.open_main_list(window, cx);
+        } else if let Some(folder) = self.folder(None) {
             self.import(folder, cx);
         }
     }

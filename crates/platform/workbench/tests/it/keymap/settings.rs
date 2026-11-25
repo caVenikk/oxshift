@@ -8,7 +8,10 @@ area_tests!("settings");
 /// with nothing to import: it opens on the import page, where Enter
 /// imports the newest folder (there is none) and Escape closes it.
 fn check_first_run(h: &mut H, command: &str, keys: &str, what: &str) {
-    h.cx.update(|cx| settings_ui::first_run::set_reference_root(cx, None));
+    h.cx.update(|cx| {
+        settings_ui::first_run::enable_pycharm(cx);
+        settings_ui::first_run::set_reference_root(cx, None);
+    });
     h.invoke("settings.import-reference", json!(null));
     let dialog =
         h.cx.update(|cx| ui::dialog_window::child_of(h.window.into(), cx))

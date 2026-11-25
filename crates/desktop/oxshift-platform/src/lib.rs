@@ -29,6 +29,9 @@ pub fn product() -> Product {
 /// Start the standalone desktop using the same folder/file arguments as the workbench.
 pub fn launch() {
     app_info::install(brand::INFO);
+    // Windows sends Ctrl+C through this executable before any UI starts.
+    process::run_interrupt_helper_if_requested();
+    process::set_interrupt_helper(process::InterruptHelper::current_exe());
     let paths = std::env::args_os().skip(1).map(Into::into).collect();
     workbench::run(product(), paths);
 }

@@ -5010,6 +5010,7 @@ dependencies = [
  "app-info",
  "embed-resource",
  "gpui",
+ "process",
  "sql-highlight",
  "syntax-pack",
  "ui",

@@ -121,7 +121,6 @@ fn hooks(cx: &mut App) -> &mut Hooks {
 pub fn init(cx: &mut App) {
     ui::command::register(cx, COMMANDS);
     ui::command::register(cx, QUERY_COMMANDS);
-    ui::command::register(cx, WORKBENCH_COMMANDS);
     crate::store::register::<ImportSettings>(cx);
     crate::store::register::<settings::FileTypeSettings>(cx);
     crate::store::register::<settings::TerminalFontSettings>(cx);
@@ -135,6 +134,7 @@ pub fn init(cx: &mut App) {
 /// Neutral hosts discover no source and register no source branding.
 pub fn enable_pycharm(cx: &mut App) {
     hooks(cx).pycharm = true;
+    ui::command::register(cx, WORKBENCH_COMMANDS);
     view::register_source_icon(cx);
 }
 
@@ -272,6 +272,10 @@ fn open_window(
 /// `settings.import-reference`: the window over a main window, modal to
 /// it; the import's balloon shows in the main window.
 pub fn open_over(parent: &mut gpui::Window, start: Start, cx: &mut App) {
+    // Direct action dispatch must respect the same source capability as Find Action.
+    if !supports_pycharm(cx) {
+        return;
+    }
     let found = find(&start, cx);
     let parent_handle = parent.window_handle();
     cx.spawn(async move |cx| {

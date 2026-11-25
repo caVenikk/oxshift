@@ -220,13 +220,28 @@ Platform (`crates/platform/`, language-agnostic):
   feature, the keymap harness (`test_support::keymap`) a module's crate
   checks its key bindings with.
 
+Shared language module (`crates/languages/`):
+- `py-syntax`: the Python grammar, highlight query and line lexer for `syntax`.
+- `syntax-pack`: syntax-only Python file types, editing rules and icons, composed
+  by each desktop product independently of interpreter, run, debug and LSP tools.
+  `with_shared_syntax` installs missing Python and SQL defaults after product
+  modules, preserving their enhanced types, icons, order and file associations.
+  Products supply the SQL default factory to keep language and database modules
+  independent.
+
+The database module also provides `sql-highlight`: the shared SQL lexer and
+background tree highlighting. Its generic file type needs no database services;
+`db-ui` supplies per-file dialects through `DialectSource` for its enhanced type.
+JSON, shell, TOML and other built-in file types currently provide associations and
+editing defaults, not grammars. Additional languages belong in syntax modules and
+are registered at the product entrypoint; the platform remains language-agnostic.
+
 Python product (`crates/python/`):
 - `py-env`: interpreter and virtualenv discovery, project model
   (`pyproject.toml`, `uv.lock`, PEP 723), uv and pip operations, `env.*`
   commands.
 - `oxshift-cli`: `oxshift`, the product's command line over the platform and
   Python command registries.
-- `py-syntax`: the Python grammar and highlight query for `syntax`.
 - `py-lsp`: Python language services (ADR 0010, 0011): the tools (ruff,
   ty, basedpyright), their lookup modes, settings and server specs, the
   import of the reference's tool settings. A skeleton.

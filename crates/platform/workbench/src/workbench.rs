@@ -2176,19 +2176,21 @@ impl Workbench {
             .tooltip(Tooltip::text("Search Everywhere", None));
         let mut left_group = vec![project_widget];
         left_group.extend(self.vcs_toolbar_widget(&measure, cx));
-        let groups = [
-            left_group,
-            file_widget.into_iter().collect(),
-            vec![
-                run_selector,
-                run_buttons,
-                Widget::space(TOOLBAR_RUN_GAP),
-                Widget::fixed(button, search),
-                Widget::space(TOOLBAR_BUTTON_GAP),
-                Widget::fixed(button, self.render_gear(button, cx)),
-                Widget::space(TOOLBAR_END),
-            ],
-        ];
+        let mut right_group = Vec::new();
+        if self.product.run.is_some()
+            || self.product.debug.is_some()
+            || run.configuration.as_ref().is_some_and(|c| c.supported)
+            || !run.running.is_empty()
+        {
+            right_group.extend([run_selector, run_buttons, Widget::space(TOOLBAR_RUN_GAP)]);
+        }
+        right_group.extend([
+            Widget::fixed(button, search),
+            Widget::space(TOOLBAR_BUTTON_GAP),
+            Widget::fixed(button, self.render_gear(button, cx)),
+            Widget::space(TOOLBAR_END),
+        ]);
+        let groups = [left_group, file_widget.into_iter().collect(), right_group];
         let width = window.viewport_size().width - left;
         let project_color = self.toolbar_project_color(height, cx);
         let background = self.frame_part_background(UiRole::Toolbar, cx);

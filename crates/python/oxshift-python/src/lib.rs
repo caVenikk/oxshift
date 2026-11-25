@@ -17,9 +17,7 @@ pub mod terminal;
 pub mod type_engine;
 
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 
-use editor::{SyntaxHighlighter, WrapCondition, WrapRule};
 use ui::icons::{IconName, IconSvg};
 use workbench::{
     AutoExclusions, FileAssociation, FileType, NavigationHooks, Product, RootKind, RunHook,
@@ -29,11 +27,6 @@ use workbench::{
 /// Icons of the Python product (IntelliJ Platform Community, Apache-2.0,
 /// see NOTICE).
 const ICONS: &[IconSvg] = &[
-    IconSvg {
-        name: "python/file",
-        light: include_bytes!("../assets/icons/python.svg"),
-        dark: Some(include_bytes!("../assets/icons/python_dark.svg")),
-    },
     IconSvg {
         name: "python/packages",
         light: include_bytes!("../assets/icons/pythonPackages@20x20.svg"),
@@ -85,42 +78,6 @@ fn tree() -> TreeHooks {
         module_icon: Some(IconName("python/pyProjectModule")),
     }
 }
-
-/// Python source files (and `#!` scripts naming Python).
-fn python() -> FileType {
-    FileType {
-        hash_bangs: &["python"],
-        // A block opens after a colon at the end of a line and ends after
-        // a statement that leaves it.
-        indent_after: &[':'],
-        dedent_after: &["return", "pass", "break", "continue", "raise"],
-        line_comment: Some("# "),
-        quotes: &['"', '\''],
-        triple_quotes: true,
-        // String prefixes: raw, bytes, formatted, template, unicode.
-        string_prefixes: &['r', 'R', 'b', 'B', 'f', 'F', 't', 'T', 'u', 'U'],
-        highlighter: Some(Arc::new(SyntaxHighlighter::factory(py_syntax::language()))),
-        language_id: Some("python"),
-        wrap_rules: PYTHON_WRAP_RULES,
-        ..FileType::plain("Python", &["py", "pyi", "pyw"], IconName("python/file"))
-    }
-}
-
-/// Where a soft-wrapped Python line may wrap when no space is near: after
-/// a comma (preferred a little) or an opening bracket, around spaces and
-/// tabs (the reference's Python line wrap strategy).
-const PYTHON_WRAP_RULES: &[WrapRule] = &[
-    WrapRule::weighted(
-        ',',
-        WrapCondition::After,
-        WrapRule::DEFAULT_WEIGHT * 11 / 10,
-    ),
-    WrapRule::new(' ', WrapCondition::Both),
-    WrapRule::new('\t', WrapCondition::Both),
-    WrapRule::new('(', WrapCondition::After),
-    WrapRule::new('[', WrapCondition::After),
-    WrapRule::new('{', WrapCondition::After),
-];
 
 /// The other file types of the reference's Python plugin: requirements
 /// files and the `py.typed` marker, both drawn as text.
@@ -259,10 +216,10 @@ pub fn launch() {
 
 /// The Python product for the workbench.
 pub fn product() -> Product {
-    Product {
+    let product = Product {
         name: brand::PRODUCT_NAME,
         app_info: brand::INFO,
-        file_types: [python()].into_iter().chain(python_files()).collect(),
+        file_types: python_files().into(),
         file_associations: FILE_ASSOCIATIONS.to_vec(),
         icons: ICONS.to_vec(),
         left_stripe_bottom: vec![
@@ -313,7 +270,8 @@ pub fn product() -> Product {
     }
     // The database module (ADR 0022): the Database tool window and the
     // data sources of the project.
-    .with_module(database::module())
+    .with_module(database::module());
+    syntax_pack::with_shared_syntax(product, sql_highlight::file_type)
 }
 
 /// The product with its language services finding tools only in the
@@ -348,6 +306,75 @@ fn welcome_tiles() -> Vec<workbench::welcome::WelcomeTile> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn shared_syntax_keeps_database_sql_and_standalone_defaults_distinct() {
+        let python = product();
+        let standalone =
+            syntax_pack::with_shared_syntax(Product::default(), sql_highlight::file_type);
+        for (product, key_context) in [
+            (&python, Some(db_ui::sql::KEY_CONTEXT)),
+            (&standalone, None),
+        ] {
+            let sql: Vec<_> = product
+                .file_types
+                .iter()
+                .filter(|ty| ty.name == "SQL")
+                .collect();
+            assert_eq!(sql.len(), 1);
+            assert_eq!(sql[0].language_id, Some("sql"));
+            assert_eq!(sql[0].key_context, key_context);
+            assert!(sql[0].highlighter.is_some());
+            assert_eq!(sql[0].decorator.is_some(), key_context.is_some());
+            assert_eq!(sql[0].context_menu.is_some(), key_context.is_some());
+            let py: Vec<_> = product
+                .file_types
+                .iter()
+                .filter(|ty| ty.name == "Python")
+                .collect();
+            assert_eq!(py.len(), 1);
+            assert_eq!(py[0].language_id, Some("python"));
+            assert_eq!(py[0].key_context, None);
+            assert!(py[0].highlighter.is_some());
+        }
+        assert_eq!(
+            python
+                .file_types
+                .iter()
+                .take(3)
+                .map(|ty| ty.name)
+                .collect::<Vec<_>>(),
+            ["Python", "Requirements", "PyTyped"]
+        );
+        assert_eq!(python.file_associations.len(), FILE_ASSOCIATIONS.len());
+        for (actual, expected) in python
+            .file_associations
+            .iter()
+            .zip(FILE_ASSOCIATIONS.iter())
+        {
+            assert_eq!(actual.mask, expected.mask);
+            assert_eq!(actual.file_type, expected.file_type);
+        }
+        let names: Vec<_> = python.file_types.iter().map(|ty| ty.name).collect();
+        let icon_names: Vec<_> = python.icons.iter().map(|icon| icon.name).collect();
+        let reapplied = syntax_pack::with_shared_syntax(python, || panic!("existing SQL must win"));
+        assert_eq!(
+            reapplied
+                .file_types
+                .iter()
+                .map(|ty| ty.name)
+                .collect::<Vec<_>>(),
+            names
+        );
+        assert_eq!(
+            reapplied
+                .icons
+                .iter()
+                .map(|icon| icon.name)
+                .collect::<Vec<_>>(),
+            icon_names
+        );
+    }
 
     #[test]
     fn source_roots_as_the_reference_marks_them() {

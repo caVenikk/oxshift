@@ -128,7 +128,8 @@ pub struct Product {
     /// workbench's.
     pub keymaps: Vec<KeymapFiles>,
     /// Runs files of the product's languages (the run widget, the Run tool
-    /// window and the `run.*` commands); without it nothing can be run.
+    /// window and the `run.*` commands); without it only the platform's
+    /// Shell Script configurations can run.
     pub run: Option<RunHook>,
     /// Language services of the product's languages and its modules'
     /// (ADR 0010, 0022), the product's first: editor tabs of file types
@@ -177,6 +178,7 @@ pub fn init(cx: &mut App, product: &Product) {
     ui::command::register(cx, commands::GO_TO_LINE_COMMANDS);
     ui::command::register(cx, crate::notifications::COMMANDS);
     crate::background_tasks::init(cx);
+    crate::bug_report::init(cx);
     ui::command::register(cx, project_panel::COMMANDS);
     ui::command::register(cx, project_panel::FILE_COMMANDS);
     ui::command::register(cx, project_panel::NEW_ITEM_COMMANDS);

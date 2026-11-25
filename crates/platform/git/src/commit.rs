@@ -59,7 +59,14 @@ impl TempFile {
     fn new(purpose: &str, content: &[u8]) -> Result<Self, VcsError> {
         static NEXT: AtomicU64 = AtomicU64::new(0);
         let n = NEXT.fetch_add(1, Ordering::Relaxed);
-        let path = std::env::temp_dir().join(format!(
+        let directory = if let Some(data) = app_info::portable_data_dir() {
+            let directory = data.join("tmp");
+            std::fs::create_dir_all(&directory).map_err(|e| VcsError::failed(e.to_string()))?;
+            directory
+        } else {
+            std::env::temp_dir()
+        };
+        let path = directory.join(format!(
             "{}-{purpose}-{}-{n}.txt",
             app_info::slug(),
             std::process::id()

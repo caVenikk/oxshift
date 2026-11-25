@@ -63,7 +63,8 @@ Crates live in `crates/platform/` (language-agnostic) and `crates/python/`
 | `ui` | Component layer on GPUI: theme, fonts, icons, UI commands |
 | `editor` | The code editor view: layout, carets, selections, input, editing commands |
 | `workbench` | Main window: toolbar, tool windows, tabs, status bar, keymaps |
-| `py-syntax` (python) | Python grammar, highlight query and editing rules |
+| `py-syntax`, `syntax-pack` (languages) | Shared Python grammar, highlight query, file types and editing rules |
+| `sql-highlight` (database) | Shared SQL highlighting, with database dialect context supplied by `db-ui` |
 | `oxshift-python` (python) | `oxshift-python`, the Python product's application |
 | `py-env` (python) | Interpreters, virtualenvs, uv and pip integration, `env.*` commands |
 | `oxshift-cli` (python) | `oxshift`, the Python product's command line (`env`, plus all `db.*` commands) |

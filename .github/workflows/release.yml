@@ -1,0 +1,61 @@
+name: Release draft
+on:
+  push:
+    tags: ['v20*']
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  preflight:
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Tag matches the release and repository rules hold
+        run: |
+          version=$(python3 scripts/package.py names | sed -n 's/^VERSION=//p')
+          test "$GITHUB_REF_NAME" = "v$version"
+          python3 scripts/check-layers.py
+          python3 scripts/check-brand.py
+          python3 scripts/notice.py --check
+          python3 scripts/progress.py --check-data
+      - name: Require current CI acceptance on the tagged commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 scripts/release-preflight.py --sha "$(git rev-parse HEAD)" --repository "$GITHUB_REPOSITORY"
+
+  packages:
+    needs: preflight
+    uses: ./.github/workflows/desktop-packages.yml
+    with:
+      artifact_prefix: release-packages
+  publish-draft:
+    if: github.ref_type == 'tag'
+    needs: packages
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-packages-*
+          path: dist
+          merge-multiple: true
+      - name: Verify final files and create a draft only
+        run: |
+          (cd dist && sha256sum --check SHA256SUMS)
+          cat dist/*-notes.md > notes.md
+          gh release create "$GITHUB_REF_NAME" dist/* --draft --verify-tag \
+            --title "$GITHUB_REF_NAME" --notes-file notes.md

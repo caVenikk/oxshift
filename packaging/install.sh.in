@@ -1,0 +1,248 @@
+#!/bin/sh
+# Installs the IDE from a GitHub Release (macOS and Linux). docs/release.md.
+#
+#   curl -fsSL https://github.com/@REPOSITORY@/releases/latest/download/install-@SLUG@.sh | sh
+#   sh install-@SLUG@.sh [--version YEAR.RELEASE] [--prefix DIR] [--bin-dir DIR] [--uninstall]
+#
+# What it does:
+#   1. finds the release (the latest one, or --version),
+#   2. downloads the archive for this OS and CPU and the release's SHA256SUMS,
+#   3. checks the archive's SHA-256 against SHA256SUMS and stops on a mismatch,
+#   4. installs it: macOS  <prefix>/<Product>.app   (default prefix ~/Applications)
+#                   Linux  <prefix>/<slug>/          (default prefix ~/.local/share)
+#      and puts launchers for the command-line programs in --bin-dir
+#      (default ~/.local/bin),
+# It writes nowhere else and never asks for administrator rights.
+# macOS quarantine is preserved. For an app you trust, use System Settings >
+# Privacy & Security > Open Anyway as described in docs/release.md.
+#
+# For testing, the environment overrides the source:
+#   OXSHIFT_VERSION      the version to install (same as --version)
+#   OXSHIFT_BASE_URL     where the archive and SHA256SUMS are, instead of the
+#                        release's download folder; file:// works
+#   OXSHIFT_OS, OXSHIFT_ARCH   macos|linux, aarch64|x86_64 instead of detection
+set -eu
+
+# The brand module is the source of these (scripts/package.py check compares).
+PRODUCT="@PRODUCT_NAME@"
+SLUG="@SLUG@"
+REPOSITORY="@REPOSITORY@"
+CLI="@CLI@"
+DB_CLI="@DB_CLI@"
+IDE="@IDE@"
+
+say() { printf '%s\n' "$*"; }
+die() {
+    printf 'install.sh: %s\n' "$*" >&2
+    exit 1
+}
+
+version="${OXSHIFT_VERSION:-}"
+prefix=""
+bin_dir="${HOME:?HOME is not set}/.local/bin"
+uninstall=0
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --version)
+            [ $# -ge 2 ] || die "--version needs a value"
+            version="$2"
+            shift 2
+            ;;
+        --prefix)
+            [ $# -ge 2 ] || die "--prefix needs a value"
+            prefix="$2"
+            shift 2
+            ;;
+        --bin-dir)
+            [ $# -ge 2 ] || die "--bin-dir needs a value"
+            bin_dir="$2"
+            shift 2
+            ;;
+        --uninstall)
+            uninstall=1
+            shift
+            ;;
+        -h | --help)
+            sed -n '2,/^set -eu/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'
+            exit 0
+            ;;
+        *) die "unknown argument '$1' (see --help)" ;;
+    esac
+done
+version="${version#v}"
+
+os="${OXSHIFT_OS:-}"
+if [ -z "$os" ]; then
+    case "$(uname -s)" in
+        Darwin) os=macos ;;
+        Linux) os=linux ;;
+        MINGW* | MSYS* | CYGWIN*) die "on Windows download the .zip from https://github.com/$REPOSITORY/releases and unpack it" ;;
+        *) die "no release for $(uname -s)" ;;
+    esac
+fi
+arch="${OXSHIFT_ARCH:-}"
+if [ -z "$arch" ]; then
+    case "$(uname -m)" in
+        arm64 | aarch64) arch=aarch64 ;;
+        x86_64 | amd64) arch=x86_64 ;;
+        *) die "no release for the CPU $(uname -m)" ;;
+    esac
+fi
+
+if [ -z "$prefix" ]; then
+    case "$os" in
+        macos) prefix="$HOME/Applications" ;;
+        *) prefix="$HOME/.local/share" ;;
+    esac
+fi
+
+case "$os" in
+    macos) app_dir="$prefix/$PRODUCT.app" ;;
+    *) app_dir="$prefix/$SLUG" ;;
+esac
+case "$os" in
+    macos) program_rel="/Contents/MacOS" ;;
+    *) program_rel="" ;;
+esac
+program_dir="$app_dir$program_rel"
+
+# Keep the ownership receipt outside the signed macOS bundle.
+receipt="$app_dir.oxshift-install"
+receipt_text() { printf 'Oxshift shell installer v1\n%s\n%s\n' "$SLUG" "$app_dir"; }
+owned_install() {
+    [ ! -L "$app_dir" ] && [ -d "$app_dir" ] &&
+        [ ! -L "$receipt" ] && [ -f "$receipt" ] && receipt_text | cmp -s - "$receipt"
+}
+launcher_text() {
+    # Quote paths as literal shell strings, including apostrophes and dollars.
+    quoted=$(printf '%s' "$program_dir/$1" | sed "s/'/'\\\\''/g")
+    printf '#!/bin/sh\n# Managed by the Oxshift shell installer.\nexec '\''%s'\'' "$@"\n' "$quoted"
+}
+owned_launcher() {
+    [ ! -L "$bin_dir/$1" ] && [ -f "$bin_dir/$1" ] &&
+        launcher_text "$1" | cmp -s - "$bin_dir/$1"
+}
+launcher() {
+    # Rename replaces a symlink itself; redirection must never follow its target.
+    temporary_launcher=$(mktemp "$bin_dir/.oxshift-launcher.XXXXXX")
+    launcher_text "$1" >"$temporary_launcher"
+    chmod 755 "$temporary_launcher"
+    mv -f "$temporary_launcher" "$bin_dir/$1"
+}
+
+if [ "$uninstall" -eq 1 ]; then
+    owned_install || die "refusing to remove an installation without its ownership receipt: $app_dir"
+    rm -rf "$app_dir"
+    rm -f "$receipt"
+    for name in @BINARIES@; do
+        if owned_launcher "$name"; then
+            rm -f "$bin_dir/$name"
+        fi
+    done
+    say "Removed $app_dir and its owned launchers in $bin_dir."
+    say "Settings and caches stay; they are in the folders named $SLUG under your configuration and cache folders."
+    exit 0
+fi
+
+# Check all destinations before replacing any installed files.
+if [ -e "$app_dir" ] || [ -L "$app_dir" ] || [ -e "$receipt" ] || [ -L "$receipt" ]; then
+    owned_install || die "refusing to replace an installation without its ownership receipt: $app_dir"
+fi
+for name in @BINARIES@; do
+    if [ -e "$bin_dir/$name" ] || [ -L "$bin_dir/$name" ]; then
+        if [ -L "$bin_dir/$name" ] && [ "$(readlink "$bin_dir/$name")" = "$program_dir/$name" ]; then
+            : # An existing link to this installation can be replaced safely.
+        else
+            owned_launcher "$name" || die "refusing to replace an unrelated launcher: $bin_dir/$name"
+        fi
+    fi
+done
+
+command -v curl >/dev/null 2>&1 || die "curl is needed"
+command -v tar >/dev/null 2>&1 || die "tar is needed"
+if command -v sha256sum >/dev/null 2>&1; then
+    sha256() { sha256sum "$1" | cut -d ' ' -f 1; }
+elif command -v shasum >/dev/null 2>&1; then
+    sha256() { shasum -a 256 "$1" | cut -d ' ' -f 1; }
+else
+    die "sha256sum or shasum is needed to check the download"
+fi
+
+if [ -z "$version" ] && [ -z "${OXSHIFT_BASE_URL:-}" ]; then
+    # The newest non-prerelease: GitHub redirects /releases/latest to its tag.
+    say "Looking for the latest release..."
+    final=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$REPOSITORY/releases/latest") ||
+        die "could not reach GitHub"
+    version="${final##*/}"
+    version="${version#v}"
+    case "$version" in
+        latest | "") die "no release found; pass --version for a prerelease" ;;
+    esac
+fi
+[ -n "$version" ] || die "OXSHIFT_BASE_URL needs a version: pass --version"
+
+archive="$SLUG-$version-$os-$arch.tar.gz"
+base="${OXSHIFT_BASE_URL:-https://github.com/$REPOSITORY/releases/download/v$version}"
+
+work=$(mktemp -d "${TMPDIR:-/tmp}/$SLUG-install.XXXXXX")
+trap 'rm -rf "$work"' EXIT INT TERM
+
+say "Installing $PRODUCT $version for $os $arch."
+say "Downloading $archive"
+curl -fSL --progress-bar -o "$work/$archive" "$base/$archive" || die "download failed: $base/$archive"
+curl -fsSL -o "$work/SHA256SUMS" "$base/SHA256SUMS" || die "download failed: $base/SHA256SUMS"
+
+expected=$(awk -v name="$archive" '{ f = $2; sub(/^\*/, "", f); if (f == name) print $1 }' "$work/SHA256SUMS")
+[ -n "$expected" ] || die "SHA256SUMS has no entry for $archive"
+actual=$(sha256 "$work/$archive")
+if [ "$actual" != "$expected" ]; then
+    die "checksum mismatch for $archive: expected $expected, got $actual; nothing was installed"
+fi
+say "SHA-256 matches ($actual)."
+
+mkdir "$work/unpacked"
+tar -xzf "$work/$archive" -C "$work/unpacked"
+case "$os" in
+    macos) unpacked="$work/unpacked/$PRODUCT.app" ;;
+    *) unpacked="$work/unpacked/$SLUG-$version-$os-$arch" ;;
+esac
+[ -d "$unpacked" ] || die "the archive does not hold $(basename "$unpacked")"
+[ -x "$unpacked$program_rel/$IDE" ] || die "the archive has no $IDE"
+
+mkdir -p "$prefix" "$bin_dir"
+if [ -e "$app_dir" ]; then
+    # Replace in two renames, so a failure leaves the old copy in place.
+    old=$(mktemp -d "$prefix/.oxshift-old.XXXXXX")
+    rmdir "$old"
+    mv "$app_dir" "$old"
+    if mv "$unpacked" "$app_dir"; then
+        rm -rf "$old"
+    else
+        mv "$old" "$app_dir"
+        die "could not install into $app_dir"
+    fi
+else
+    mv "$unpacked" "$app_dir"
+fi
+
+temporary_receipt=$(mktemp "$prefix/.oxshift-install.XXXXXX")
+receipt_text >"$temporary_receipt"
+mv -f "$temporary_receipt" "$receipt"
+
+for name in @BINARIES@; do
+    launcher "$name"
+done
+
+say ""
+say "Installed: $app_dir"
+say "Command-line programs: $bin_dir/$CLI, $bin_dir/$DB_CLI, $bin_dir/$IDE"
+case ":$PATH:" in
+    *":$bin_dir:"*) ;;
+    *) say "Add $bin_dir to your PATH to run them by name." ;;
+esac
+if [ "$os" = macos ]; then
+    say "If macOS blocks this trusted app, use System Settings > Privacy & Security > Open Anyway. Quarantine is preserved."
+    say "Start the IDE from $prefix (Finder, Launchpad, Spotlight) or with:  open \"$app_dir\""
+fi
+say "Uninstall:  sh install-@SLUG@.sh --uninstall"

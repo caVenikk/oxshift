@@ -1,0 +1,19 @@
+[package]
+name = "sql-highlight"
+description = "Reusable SQL editor highlighting without database services"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+editor.workspace = true
+sql-syntax.workspace = true
+syntax.workspace = true
+text.workspace = true
+themes.workspace = true
+ui.workspace = true
+workbench.workspace = true
+
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+gpui = { workspace = true, features = ["runtime_shaders"] }

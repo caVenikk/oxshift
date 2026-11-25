@@ -174,6 +174,15 @@ fn setup<'a>(cx: &'a mut TestAppContext, root: &Path) -> H<'a> {
 
 /// The window with the keymap in `text`.
 fn setup_with<'a>(cx: &'a mut TestAppContext, root: &Path, text: &str) -> H<'a> {
+    setup_with_provider(cx, root, text, Some(support::run_hook()))
+}
+
+fn setup_with_provider<'a>(
+    cx: &'a mut TestAppContext,
+    root: &Path,
+    text: &str,
+    run: Option<workbench::RunHook>,
+) -> H<'a> {
     support::allow_processes(cx);
     let product = Product {
         name: "Test IDE",
@@ -182,7 +191,7 @@ fn setup_with<'a>(cx: &'a mut TestAppContext, root: &Path, text: &str) -> H<'a> 
             &["py"],
             ui::icons::IconName::FILE_TEXT,
         )],
-        run: Some(support::run_hook()),
+        run,
         ..Product::default()
     };
     let window = cx.update(|cx| {
@@ -378,6 +387,15 @@ fn run_runs_the_selected_configuration(cx: &mut TestAppContext) {
 /// tool window with its variables.
 #[gpui::test]
 fn a_shell_script_configuration_runs_in_the_run_tool_window(cx: &mut TestAppContext) {
+    check_shell_script_configuration(cx, Some(support::run_hook()));
+}
+
+#[gpui::test]
+fn a_shell_script_configuration_runs_without_a_product_provider(cx: &mut TestAppContext) {
+    check_shell_script_configuration(cx, None);
+}
+
+fn check_shell_script_configuration(cx: &mut TestAppContext, run: Option<workbench::RunHook>) {
     let dir = tempfile::tempdir().unwrap();
     let root = native_path::canonicalize(dir.path()).unwrap();
     let text = script("echo shell-$MODE", "echo shell-%MODE%");
@@ -401,7 +419,12 @@ fn a_shell_script_configuration_runs_in_the_run_tool_window(cx: &mut TestAppCont
 "#
         ),
     );
-    let mut h = setup(cx, &root);
+    let mut h = setup_with_provider(
+        cx,
+        &root,
+        if MAC { keymap::MACOS } else { keymap::DEFAULT },
+        run,
+    );
     let s = h.loaded();
     assert_eq!(names(&s), ["inline"]);
     let w = h.widget();

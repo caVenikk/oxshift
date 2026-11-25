@@ -503,6 +503,7 @@ fn help_menu() -> Menu {
         "Help",
         vec![
             cmd("Welcome", "welcome.open"),
+            cmd("Create Local Bug Report", "help.create-local-bug-report"),
             cmd("Find Action\u{2026}", "search-everywhere.go-to-action"),
         ],
     )

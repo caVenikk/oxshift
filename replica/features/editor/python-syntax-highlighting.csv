@@ -1,2 +1,2 @@
 feature,area,priority,original,clone,notes
-Python syntax highlighting,editor,must,yes,yes,tree-sitter off the UI thread mapped to theme text roles
+Python syntax highlighting,editor,must,yes,yes,"Shared by Oxshift and Oxshift Python through the syntax pack; tree-sitter and the existing line lexer mapped to theme text roles, without interpreter or language-tool requirements; common composition preserves product file types and associations"

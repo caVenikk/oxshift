@@ -5,7 +5,12 @@ editor, workbench, project model, command registry, settings, version control,
 terminal and database services used by language-specific products. The UI uses
 GPU rendering through GPUI, with no JVM or web view.
 
-## Current product
+## Desktop products
+
+**Oxshift** is also available as a standalone desktop app. It includes the editor,
+project tree, Git, terminal, shell run configurations and Python and SQL syntax
+highlighting. Run it alongside the Python IDE with its own preferences. Both
+products share the 2026.1 release line.
 
 [**Oxshift Python IDE**](docs/oxshift-python.md) is the first product built on
 Oxshift. It combines Python tools, debugging, test execution and database
@@ -13,20 +18,46 @@ workflows. It is **pre-alpha**: check the [feature matrix](replica/features/) an
 [roadmap](docs/ROADMAP.md) for the current implementation and planned work.
 Other language IDEs are not currently available.
 
+### Install
+
+Download the package for your product and operating system from
+[GitHub Releases](https://github.com/caVenikk/oxshift/releases).
+On macOS, open the DMG and drag the application into Applications. On Windows
+x64, use the installer or extract the ZIP and run the product executable.
+Linux packages are available for x86_64 and arm64. See the
+[release guide](docs/release.md) for package formats, checksums and signing.
+
+To run either product from source:
+
 ```bash
 git clone https://github.com/caVenikk/oxshift && cd oxshift
+cargo run --release -p oxshift-platform -- path/to/project
 cargo run --release -p oxshift-python -- path/to/project
 ```
 
-The current programs are `oxshift-python` (Python IDE), `oxshift` (its CLI),
+The GUI binaries are `oxshift-platform` and `oxshift-python`. The additional programs are `oxshift` (Python IDE CLI)
 and `oxshift-db` (database CLI). See the [Python IDE guide](docs/oxshift-python.md)
 for build instructions and usage, and the [database CLI guide](docs/oxshift-db.md)
 for database commands.
 
+## Local bug reports
+
+In either desktop app, choose **Help → Create Local Bug Report**. The shortcut is
+**⌘⌥⇧B** on macOS and **Ctrl+Alt+Shift+B** on Windows. The app reveals a ZIP in
+the product’s local data folder. On Windows this is
+`%LOCALAPPDATA%/<profile>/bug-reports` and on macOS it is
+`~/Library/Application Support/<profile>/bug-reports`. The profile is
+`oxshift-platform` or `oxshift-python`. The ZIP contains diagnostic metadata
+and, when available, images of the requesting window and its open dialogs or
+popups. The notification indicates if a capture failed. Images can show code
+and other visible information. You choose whether to share the archive.
+
 ## Platform and products
 
 - `crates/platform/`: language-independent engine services and desktop UI.
-- `crates/python/`: Python-specific tools, grammar, product branding and entry points.
+- `crates/python/`: Python-specific tools, product branding and entry points.
+- `crates/languages/`: shared syntax support.
+- `crates/desktop/`: the standalone desktop product.
 - `crates/database/`: the database module shared through platform interfaces.
 
 Platform crates do not depend on product crates. Products compose the shared

@@ -7,6 +7,7 @@
 //! on the name anywhere else in the code.
 
 use app_info::AppInfo;
+pub use app_info::release_version;
 
 macro_rules! slug {
     () => {

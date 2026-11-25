@@ -1,0 +1,212 @@
+name: Desktop packages
+on:
+  workflow_call:
+    inputs:
+      release_version:
+        type: string
+        default: ''
+      artifact_prefix:
+        type: string
+        default: desktop-packages
+      retention_days:
+        type: number
+        default: 14
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: Calendar version (empty uses workspace)
+        type: string
+        default: ''
+      artifact_prefix:
+        type: string
+        default: desktop-packages
+      retention_days:
+        type: number
+        default: 14
+permissions:
+  contents: read
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Packaging fixtures and repository data
+        run: |
+          python scripts/test-package.py
+          python scripts/package.py check
+          python scripts/notice.py --check
+          python scripts/progress.py --check-data
+      - name: Validate requested release version
+        env:
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        run: python scripts/package.py notes --version "$RELEASE_VERSION" --out /tmp/notes.md
+  build:
+    needs: preflight
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Avoid the macOS 15 ARM asset runtime crash when compiling Icon Composer icons.
+          - { target: macos-aarch64, os: macos-26, arch: aarch64 }
+          - { target: macos-x86_64, os: macos-15-intel, arch: x86_64 }
+          - { target: linux-x86_64, os: ubuntu-24.04, arch: x86_64 }
+          - { target: linux-aarch64, os: ubuntu-24.04-arm, arch: aarch64 }
+          - { target: windows-x86_64, os: windows-2022, arch: x86_64 }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    env:
+      CARGO_INCREMENTAL: '0'
+      RELEASE_VERSION: ${{ inputs.release_version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: 'false'
+          shared-key: desktop-release-${{ matrix.target }}
+      - name: Linux native dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pkg-config \
+            libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libx11-xcb-dev \
+            libxcb1-dev libfontconfig-dev libfreetype-dev libvulkan1 squashfs-tools
+          python scripts/fetch-appimage-tools.py --dest build-tools --arch '${{ matrix.arch }}'
+      - name: Select Xcode with Icon Composer support
+        if: runner.os == 'macOS'
+        run: |
+          developer=/Applications/Xcode_26.3.app/Contents/Developer
+          test -d "$developer"
+          echo "DEVELOPER_DIR=$developer" >> "$GITHUB_ENV"
+          echo "MACOSX_DEPLOYMENT_TARGET=13.0" >> "$GITHUB_ENV"
+          DEVELOPER_DIR="$developer" xcodebuild -version
+      - name: Verify Icon Composer runtime before building
+        if: runner.os == 'macOS'
+        run: |
+          python - <<'PYTHON'
+          from pathlib import Path
+          import sys
+          import tempfile
+          sys.path.insert(0, "scripts")
+          from macos_icons import compile_icons
+          for product in ("platform", "python"):
+              with tempfile.TemporaryDirectory(prefix="icon-preflight-") as directory:
+                  stage = Path(directory)
+                  resources = stage / "Resources"
+                  resources.mkdir()
+                  compile_icons(Path.cwd(), resources, product, stage)
+                  print(f"Icon Composer runtime verified: {product}")
+          PYTHON
+      - name: Build both desktop products and Python command-line tools
+        run: cargo build --release --locked -p oxshift-platform -p oxshift-python -p oxshift-cli -p oxshift-db
+      - name: Package macOS applications and disk images
+        if: runner.os == 'macOS'
+        run: python scripts/package.py build --product all --version "$RELEASE_VERSION" --arch '${{ matrix.arch }}' --out dist --formats tar.gz,dmg
+      - name: Package Linux archives, Debian packages and AppImages
+        if: runner.os == 'Linux'
+        run: |
+          python scripts/package.py build --product all --version "$RELEASE_VERSION" --arch '${{ matrix.arch }}' --out dist \
+            --formats tar.gz,deb,AppImage --appimagetool "$PWD/build-tools/appimagetool" --appimage-runtime "$PWD/build-tools/runtime"
+      - name: Package Windows archives and installers
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe'
+          if (!(Test-Path $iscc)) { throw 'Inno Setup 6 is required on this runner' }
+          python scripts/package.py build --product all --version "$env:RELEASE_VERSION" --out dist --formats zip,installer --iscc "$iscc"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify both archive payloads and checksums
+        run: |
+          for product in platform python; do
+            slug=$(python scripts/package.py names --product "$product" | sed -n 's/^SLUG=//p')
+            for archive in dist/"$slug"-*.tar.gz dist/"$slug"-*.zip; do
+              [ -f "$archive" ] || continue
+              python scripts/package.py verify "$archive" --product "$product" --version "$RELEASE_VERSION"
+            done
+          done
+      - name: Inspect native package containers
+        run: |
+          case '${{ runner.os }}' in
+            macOS)
+              for product in platform python; do
+                slug=$(python scripts/package.py names --product "$product" | sed -n 's/^SLUG=//p')
+                for package in dist/"$slug"-*.dmg; do
+                  python scripts/package.py verify-dmg "$package" --product "$product" --version "$RELEASE_VERSION"
+                done
+              done ;;
+            Linux)
+              for package in dist/*.deb; do dpkg-deb --info "$package"; dpkg-deb --contents "$package"; done
+              for package in dist/*.AppImage; do chmod +x "$package"; "$package" --appimage-offset; done ;;
+          esac
+      - name: Windows packaged desktop smoke
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $versionLine = python scripts/package.py names --product python | Select-String '^VERSION='
+          $version = ($versionLine.ToString() -split '=', 2)[1]
+          New-Item -ItemType Directory -Force smoke-reports | Out-Null
+          foreach ($archive in Get-ChildItem dist/*-windows-x86_64.zip) {
+            $expanded = Join-Path $env:RUNNER_TEMP ("smoke-" + $archive.BaseName)
+            Expand-Archive -Path $archive.FullName -DestinationPath $expanded
+            $payload = Join-Path $expanded $archive.BaseName
+            python scripts/smoke-windows-desktop.py --package "$payload" --version "$version" --runtime auto --report "smoke-reports/$($archive.BaseName).json"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+      - uses: actions/upload-artifact@v4
+        if: always() && runner.os == 'Windows'
+        with:
+          name: evidence-${{ inputs.artifact_prefix }}-windows
+          path: smoke-reports/*.json
+          if-no-files-found: warn
+          retention-days: ${{ inputs.retention_days }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact_prefix }}-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: ${{ inputs.retention_days }}
+  manifest:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ inputs.artifact_prefix }}-*
+          path: dist
+          merge-multiple: true
+      - name: Checksums and install metadata
+        env:
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        run: |
+          python scripts/package.py sums dist
+          for product in platform python; do
+            slug=$(python scripts/package.py names --product "$product" | sed -n 's/^SLUG=//p')
+            python scripts/package.py formula --product "$product" --version "$RELEASE_VERSION" --sums dist/SHA256SUMS --out "dist/$slug.rb"
+            python scripts/package.py install-script --product "$product" --out "dist/install-$slug.sh"
+            python scripts/package.py notes --product "$product" --version "$RELEASE_VERSION" --out "dist/$slug-notes.md"
+          done
+          python scripts/package.py sums dist
+          (cd dist && sha256sum --check SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact_prefix }}-manifest
+          path: |
+            dist/SHA256SUMS
+            dist/*.rb
+            dist/*.md
+            dist/install-*.sh
+          if-no-files-found: error
+          retention-days: ${{ inputs.retention_days }}

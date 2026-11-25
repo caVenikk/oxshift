@@ -1,0 +1,2 @@
+feature,area,priority,original,clone,notes
+Standalone Oxshift desktop,platform,must,no,yes,"Independent profile and app icon; shared editor, project tree, Git and terminal; Shell run configurations and shared syntax; no Python interpreter or tooling"

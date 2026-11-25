@@ -36,3 +36,8 @@ name = "Dialog"
 name = "ProcessesPopup"
 [context.bindings]
 "escape" = "background-tasks.hide"
+
+# Explicit local diagnostics; captures only IDE windows.
+[[context]]
+[context.bindings]
+"ctrl-alt-shift-b" = "help.create-local-bug-report"

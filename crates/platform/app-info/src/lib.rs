@@ -11,6 +11,23 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
+/// Calendar version for product interfaces. Cargo stores an explicit patch zero
+/// for the first release of a line. Later patches and prereleases keep the
+/// complete package version.
+pub fn release_version() -> &'static str {
+    match (
+        env!("CARGO_PKG_VERSION_PATCH"),
+        env!("CARGO_PKG_VERSION_PRE"),
+    ) {
+        ("0", "") => concat!(
+            env!("CARGO_PKG_VERSION_MAJOR"),
+            ".",
+            env!("CARGO_PKG_VERSION_MINOR")
+        ),
+        _ => env!("CARGO_PKG_VERSION"),
+    }
+}
+
 /// The names of a product. Every field is a plain value the product owns.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct AppInfo {
@@ -153,12 +170,37 @@ fn profile_in(base: &Path) -> PathBuf {
     base.join(get().profile_dir)
 }
 
+/// The Windows ZIP carries an explicit marker next to the executables.
+/// An ordinary installation ignores unrelated directories named "data".
+pub fn portable_data_dir() -> Option<&'static Path> {
+    #[cfg(windows)]
+    {
+        static ROOT: OnceLock<Option<PathBuf>> = OnceLock::new();
+        ROOT.get_or_init(|| portable_dir_for(&std::env::current_exe().ok()?))
+            .as_deref()
+    }
+    #[cfg(not(windows))]
+    None
+}
+
+#[cfg(any(windows, test))]
+fn portable_dir_for(executable: &Path) -> Option<PathBuf> {
+    let data = executable.parent()?.join("data");
+    data.join(format!("{}-portable", project_dir()))
+        .is_file()
+        .then_some(data)
+}
+
+fn default_config_dir() -> Option<PathBuf> {
+    portable_data_dir()
+        .map(|root| root.join("config"))
+        .or_else(|| dirs::config_dir().map(|base| profile_in(&base)))
+}
+
 /// Standard location for files such as the DB profiles and credential store
 /// configuration. Those files have their own explicit path overrides.
 pub fn default_config_dir_or_local() -> PathBuf {
-    dirs::config_dir()
-        .map(|base| profile_in(&base))
-        .unwrap_or_else(|| profile_in(Path::new(".")))
+    default_config_dir().unwrap_or_else(|| profile_in(Path::new(".")))
 }
 
 /// The application's configuration folder: the environment variable
@@ -166,7 +208,19 @@ pub fn default_config_dir_or_local() -> PathBuf {
 pub fn config_dir() -> Option<PathBuf> {
     match var_os("CONFIG_DIR").filter(|d| !d.is_empty()) {
         Some(dir) => Some(PathBuf::from(dir)),
-        None => dirs::config_dir().map(|base| profile_in(&base)),
+        None => default_config_dir(),
+    }
+}
+
+/// Persistent, machine-local product data. Isolated profiles keep this data
+/// below their explicit configuration root as well. On Windows, the default
+/// uses Local AppData even when the user's settings profile roams.
+pub fn local_data_dir() -> Option<PathBuf> {
+    match var_os("CONFIG_DIR").filter(|d| !d.is_empty()) {
+        Some(dir) => Some(PathBuf::from(dir)),
+        None => portable_data_dir()
+            .map(Path::to_path_buf)
+            .or_else(|| dirs::data_local_dir().map(|base| profile_in(&base))),
     }
 }
 
@@ -177,7 +231,9 @@ pub fn config_dir() -> Option<PathBuf> {
 pub fn cache_dir() -> Option<PathBuf> {
     match var_os("CACHE_DIR").filter(|d| !d.is_empty()) {
         Some(dir) => Some(PathBuf::from(dir)),
-        None => dirs::cache_dir().map(|base| profile_in(&base)),
+        None => portable_data_dir()
+            .map(|root| root.join("cache"))
+            .or_else(|| dirs::cache_dir().map(|base| profile_in(&base))),
     }
 }
 
@@ -193,6 +249,18 @@ mod tests {
             base.join(".app")
         );
         assert_eq!(profile_in(base), base.join("app"));
+    }
+
+    #[test]
+    fn portable_profile_requires_the_archive_marker_next_to_the_program() {
+        let temp = tempfile::tempdir().unwrap();
+        let data = temp.path().join("data");
+        let exe = temp.path().join("desktop.exe");
+        std::fs::create_dir(&data).unwrap();
+        assert_eq!(portable_dir_for(&exe), None);
+        std::fs::write(data.join(".app-portable"), b"").unwrap();
+        assert_eq!(portable_dir_for(&exe), Some(data));
+        assert_eq!(portable_dir_for(&temp.path().join("other/app.exe")), None);
     }
 
     #[test]

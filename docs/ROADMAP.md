@@ -1,5 +1,16 @@
 # Roadmap
 
+## Release versions
+
+Oxshift and Oxshift Python share a calendar release line. The first release
+in a year is `YYYY.1`, and each subsequent feature release increments the
+second number. Both products use the same version for a coordinated release.
+A maintenance release appends a patch number, such as `YYYY.1.1`.
+Cargo and machine-readable build metadata use three numeric components,
+including patch zero for the initial release of a line.
+
+## Milestones
+
 Status legend: [x] done, [ ] planned. Milestones are developed per feature area
 with the skill loop described in [agent-workflow.md](agent-workflow.md).
 

@@ -87,7 +87,13 @@ developer, as for any local build.
 
 ### Releases
 
-Release binaries are signed with one Developer ID Application certificate,
+The 2026.1 packaging path uses ad hoc signing by default and is not notarized.
+Both desktop products retain their distinct bundle identifiers. The optional
+local identity arguments and the weaker identifier-only ad hoc requirement are
+documented in [release.md](release.md) and [ADR 0023](adr/0023-release-distribution-without-notarization.md).
+
+When a paid certificate becomes available, release binaries can be signed with
+one Developer ID Application certificate,
 all of them (`oxshift-python`, `oxshift-db`, `oxshift`, and the `.app` bundle
 that holds them), with a fixed identifier each. The bare IDE executable uses
 `oxshift-python`; the `Oxshift Python.app` bundle uses `dev.oxshift.python`:

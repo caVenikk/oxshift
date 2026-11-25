@@ -175,4 +175,5 @@ Window
     Auto Show
 Help
   Welcome
+  Create Local Bug Report  ⌥⇧⌘B
   Find Action…  ⇧⌘A

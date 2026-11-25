@@ -317,9 +317,16 @@ impl RunToolWindow {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let Some(provider) = self.provider.clone() else {
-            saved.into_iter().for_each(Task::detach);
-            return;
+        let prepare = match (&request.configuration, self.provider.as_ref()) {
+            (Some(c), _) if c.type_id == run_config::shell::TYPE_ID => {
+                super::prepare_shell_script(request.clone(), cx)
+            }
+            (Some(_), Some(provider)) => provider.0.prepare_configuration(request.clone(), cx),
+            (None, Some(provider)) => provider.0.prepare(request.clone(), cx),
+            (_, None) => {
+                saved.into_iter().for_each(Task::detach);
+                return;
+            }
         };
         let tab_id = tab.and_then(|i| self.tabs.get(i)).map(|t| t.id);
         if let Some(i) = tab {
@@ -327,13 +334,6 @@ impl RunToolWindow {
         }
         let key = request.launch_key();
         self.launching.push(key.clone());
-        let prepare = match &request.configuration {
-            Some(c) if c.type_id == run_config::shell::TYPE_ID => {
-                super::prepare_shell_script(request.clone(), cx)
-            }
-            Some(_) => provider.0.prepare_configuration(request.clone(), cx),
-            None => provider.0.prepare(request.clone(), cx),
-        };
         cx.notify();
         cx.spawn_in(window, async move |this, cx| {
             let spec = prepare.await;

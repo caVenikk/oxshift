@@ -17,7 +17,6 @@ pub mod terminal;
 pub mod type_engine;
 
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 
 use ui::icons::{IconName, IconSvg};
 use workbench::{

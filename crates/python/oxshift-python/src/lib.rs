@@ -235,6 +235,7 @@ fn file_location(name: &str, folder: &str) -> Option<String> {
 /// Registers the product's commands, globals and icons (called by the
 /// workbench at the end of its `init`).
 fn init(cx: &mut gpui::App) {
+    settings_ui::first_run::enable_pycharm(cx);
     interpreter::init(cx);
     services::init(cx);
     type_engine::init(cx);
@@ -445,6 +446,15 @@ mod tests {
         assert_eq!(product().navigation.package_markers, ["__init__.py"]);
         let module = tree.module_icon.unwrap();
         assert!(ICONS.iter().any(|i| i.name == module.0));
+    }
+
+    #[gpui::test]
+    fn python_product_opts_into_pycharm_import(cx: &mut gpui::TestAppContext) {
+        cx.update(|cx| {
+            workbench::init(cx, &product_with_tools(Default::default()));
+            assert!(settings_ui::first_run::supports_pycharm(cx));
+            assert!(ui::icons::exists(cx, IconName("import/pycharm")));
+        });
     }
 
     /// Python files are highlighted off the UI thread, and highlighting

@@ -81,7 +81,7 @@ ui::ui_commands! {
 ui::ui_commands! {
     WORKBENCH_COMMANDS, scope = "Workbench";
     /// The import again.
-    ImportReference => "settings.import-reference", "Import Settings from the Reference IDE\u{2026}",
+    ImportReference => "settings.import-reference", "Import Settings\u{2026}",
         "Opens the first-run window over the main window, modal to it: import the reference IDE's settings from a configuration folder, or skip.";
 }
 
@@ -99,6 +99,7 @@ pub type Done = Box<dyn FnOnce(&mut App)>;
 
 #[derive(Default)]
 struct Hooks {
+    pycharm: bool,
     importers: Vec<Importer>,
     notify: Option<Notify>,
     /// The balloon of an import made before a main window was open.
@@ -128,6 +129,18 @@ pub fn init(cx: &mut App) {
         register_importer(cx, importer);
     }
     view::init(cx);
+}
+
+/// Opts a product into PyCharm settings (including Community Edition).
+/// Neutral hosts discover no source and register no source branding.
+pub fn enable_pycharm(cx: &mut App) {
+    hooks(cx).pycharm = true;
+    view::register_source_icon(cx);
+}
+
+/// Whether the product explicitly enabled the only currently supported source.
+pub fn supports_pycharm(cx: &App) -> bool {
+    cx.try_global::<Hooks>().is_some_and(|h| h.pycharm)
 }
 
 /// Adds an area's importer; importers run in the order they were added.
@@ -181,12 +194,13 @@ pub struct Start {
 
 /// Looks for the reference's configuration folders off the UI thread.
 fn find(start: &Start, cx: &mut App) -> gpui::Task<Found> {
+    let enabled = supports_pycharm(cx);
     let root = match hooks(cx).reference_root.clone() {
         Some(root) => root,
         None => start.reference_root.clone(),
     };
     cx.background_executor().spawn(async move {
-        match root {
+        match root.filter(|_| enabled) {
             Some(root) => options::find_config_folders(&root, SystemTime::now()),
             None => Found::default(),
         }
@@ -289,6 +303,9 @@ pub fn open_over(parent: &mut gpui::Window, start: Start, cx: &mut App) {
 /// without an import, a snapshot or such importers. Call it at start-up,
 /// after every area registered its importer.
 pub fn pick_up(cx: &mut App) {
+    if !supports_pycharm(cx) {
+        return;
+    }
     let record = crate::store::get::<ImportSettings>(cx);
     let Some(config_dir) = import::config_dir(cx) else {
         return;

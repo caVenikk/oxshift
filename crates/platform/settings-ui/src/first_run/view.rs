@@ -44,14 +44,15 @@ pub const LOCAL_SETTINGS: &str = "Local Settings";
 pub const CUSTOM_DIR: &str = "Config or Installation Directory";
 pub const IMPORTING: &str = "Importing settings\u{2026}";
 /// The products of the main choices under one button.
-pub const REFERENCE: &str = "Reference IDE";
+pub const REFERENCE: &str = "PyCharm";
 
 /// Metrics (`UiUtils`, `ProductChooserPage`).
 const BUTTON_WIDTH: f32 = 280.0;
 const BUTTON_HEIGHT: f32 = 40.0;
 const BUTTON_GAP: f32 = 4.0;
-/// The icons of the folders' rows (`ProductChooserRenderer`, 20 by 20).
-const ROW_ICON: f32 = 20.0;
+/// The source icon: the brand guidelines require at least 24 digital pixels.
+const ROW_ICON: f32 = 24.0;
+const SOURCE_ICON: IconName = IconName("import/pycharm");
 const TITLE_GAP: f32 = 26.0;
 const SOUTH_HEIGHT: f32 = 47.0;
 /// `JBFont.h1()`: the label font plus 9, bold.
@@ -59,6 +60,17 @@ const H1_PLUS: f32 = 9.0;
 /// `OnboardingDialogButtons.BUTTON_HOVER_BORDER_COLOR`.
 const HOVER_BORDER_LIGHT: u32 = 0xa8adbd;
 const HOVER_BORDER_DARK: u32 = 0x6f737a;
+
+pub(super) fn register_source_icon(cx: &mut App) {
+    ui::icons::register_original(
+        cx,
+        &[ui::icons::IconSvg {
+            name: SOURCE_ICON.0,
+            light: include_bytes!("../../assets/import/PyCharm_icon.svg"),
+            dark: None,
+        }],
+    );
+}
 
 pub(super) fn init(cx: &mut App) {
     // Commands that the window answers come through its handlers; the
@@ -208,6 +220,11 @@ impl FirstRunWindow {
 
     /// Imports `folder` in the background, then closes the window.
     fn import(&mut self, folder: ConfigFolder, cx: &mut Context<Self>) {
+        if !super::supports_pycharm(cx) {
+            self.error = Some("This product has no settings import source configured.".into());
+            cx.notify();
+            return;
+        }
         if self.page == Page::Progress {
             return;
         }
@@ -426,17 +443,21 @@ impl FirstRunWindow {
             json!({
                 "name": f.name,
                 "label": f.label(),
+                "source_product": f.source_name(),
+                "source_icon": source_icon(f).0,
                 "path": f.path.to_string_lossy(),
                 "used": used(f),
             })
         };
         json!({
             "page": self.page.name(),
+            "supported_source": super::supports_pycharm(cx).then_some(REFERENCE),
             "title": self.title.as_ref(),
             "main": self.found.main.iter().map(folder).collect::<Vec<_>>(),
             "other": self.found.other.iter().map(folder).collect::<Vec<_>>(),
             "error": self.error.as_ref().map(|e| e.to_string()),
             "importing": self.importing.as_ref().map(|f| f.name.clone()),
+            "importing_label": self.importing.as_ref().map(ConfigFolder::label),
             "progress": [self.progress.0, self.progress.1],
             "popup": self.popup.as_ref().map(|p| p.menu.read(cx).state_json()),
             "decided": crate::store::get::<ImportSettings>(cx).source,
@@ -476,14 +497,16 @@ impl FirstRunWindow {
                     .flex()
                     .items_center()
                     .justify_center()
-                    .gap(px(2.0))
-                    .w(px(BUTTON_WIDTH))
+                    .gap(px(8.0))
+                    .min_w(px(BUTTON_WIDTH))
+                    .px(px(12.0))
                     .h(px(BUTTON_HEIGHT))
                     .my(px(BUTTON_GAP))
                     .rounded(radius)
                     .border_1()
                     .border_color(border)
                     .hover(move |s| s.border_color(hover_border))
+                    .child(Icon::new(source_icon(&main[0])).size(px(ROW_ICON)))
                     .child(label)
                     .when(several, |d| d.child(Icon::new(IconName::CHEVRON_DOWN)))
                     .child(anchor_canvas(anchor))
@@ -546,7 +569,10 @@ impl FirstRunWindow {
                                     .mb(px(TITLE_GAP - BUTTON_GAP))
                                     .child(IMPORT_TITLE),
                             )
-                            .children(buttons),
+                            .children(buttons)
+                            .when(super::supports_pycharm(cx), |d| {
+                                d.child(source_attribution(cx))
+                            }),
                     ),
             )
             .child(
@@ -707,9 +733,7 @@ fn unrecognized(path: &str) -> String {
 }
 
 /// A folder's row in the lists of the main button and Other Options
-/// (`ProductChooserRenderer`): the product's icon (our settings icon in
-/// place of the reference's logo) at the top, the name over when it was
-/// used.
+/// (`ProductChooserRenderer`): the confirmed source icon and name over its last use.
 fn product_row(folder: &ConfigFolder) -> MenuItem {
     MenuItem::action(
         folder.label(),
@@ -717,9 +741,33 @@ fn product_row(folder: &ConfigFolder) -> MenuItem {
             folder: Some(folder.name.clone()),
         },
     )
-    .icon(IconName::SETTINGS)
+    .icon(source_icon(folder))
     .icon_size(ROW_ICON)
     .comment(used(folder))
+}
+
+fn source_attribution(cx: &App) -> impl IntoElement {
+    div()
+        .mt(px(18.0))
+        .flex()
+        .flex_col()
+        .items_center()
+        .text_size(px(10.0))
+        .child("Copyright © 2026 JetBrains s.r.o.")
+        .child("PyCharm and the PyCharm logo are trademarks of JetBrains s.r.o.")
+        .child(
+            ui::link::link("import-source-attribution", "JetBrains", cx)
+                .text_size(px(10.0))
+                .on_click(|_, _, cx| cx.open_url("https://www.jetbrains.com")),
+        )
+}
+
+fn source_icon(folder: &ConfigFolder) -> IconName {
+    if folder.source_name().is_some() {
+        SOURCE_ICON
+    } else {
+        IconName::CONFIG_FILE
+    }
 }
 
 /// When a folder was used last, as the reference says it

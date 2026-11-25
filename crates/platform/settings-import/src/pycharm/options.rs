@@ -1,6 +1,6 @@
 //! The reference IDE's application settings, read once for the first-run
 //! import (ADR 0017): its configuration folders, newest first, and the
-//! options Pyoxide has a place for in their data files.
+//! options the application has a place for in their data files.
 //!
 //! - `options/laf.xml`: the theme (`LafManager`, `<laf themeId>`);
 //! - `options/colors.scheme.xml`: the editor colour scheme
@@ -13,7 +13,7 @@
 //! - `options/terminal-font.xml`: the terminal font (`TerminalFontOptions`,
 //!   the keys of the editor font and `COLUMN_SPACING`);
 //! - `options/editor.xml`: soft wraps (`EditorSettings`);
-//! - `options/ui.lnf.xml`: the UI options Pyoxide honours (`UISettings`);
+//! - `options/ui.lnf.xml`: the UI options the application honours (`UISettings`);
 //! - `options/ide.general.xml`: autosave and synchronisation
 //!   (`GeneralSettings`);
 //! - `options/filetypes.xml`: file name associations (`FileTypeManager`);
@@ -65,16 +65,24 @@ pub struct ConfigFolder {
 }
 
 impl ConfigFolder {
-    /// The folder as the first-run window names it: the reference's
-    /// product names do not appear in the UI; a folder of another name is
-    /// named by its name.
+    /// The known import source, or the actual name of an unrecognized folder.
+    /// Persisted product/version identifiers are independent of this label.
     pub fn label(&self) -> String {
-        if self.version.is_empty() {
-            self.name.clone()
-        } else if self.product.ends_with("CE") {
-            format!("Reference IDE {} Community", self.version)
-        } else {
-            format!("Reference IDE {}", self.version)
+        match self.source_name() {
+            Some(product) => format!("{product} {}", self.version),
+            None => format!("Settings folder: {}", self.name),
+        }
+    }
+
+    /// Only the supported source family has a product identity and icon.
+    pub fn source_name(&self) -> Option<&'static str> {
+        if !self.version.starts_with(|c: char| c.is_ascii_digit()) {
+            return None;
+        }
+        match self.product.as_str() {
+            "PyCharm" => Some("PyCharm"),
+            "PyCharmCE" => Some("PyCharm Community Edition"),
+            _ => None,
         }
     }
 
@@ -218,7 +226,10 @@ pub fn custom_folder(path: &Path) -> Option<ConfigFolder> {
     }
     let name = path.file_name()?.to_string_lossy().into_owned();
     let root = path.parent().unwrap_or(path);
-    let (product, version) = match PRODUCTS.iter().find(|p| name.starts_with(**p)) {
+    let (product, version) = match PRODUCTS.iter().find(|p| {
+        name.strip_prefix(**p)
+            .is_some_and(|v| v.starts_with(|c: char| c.is_ascii_digit()))
+    }) {
         Some(p) => ((*p).to_owned(), name[p.len()..].to_owned()),
         None => (String::new(), String::new()),
     };
@@ -322,7 +333,7 @@ impl GeneralOptions {
     }
 }
 
-/// The UI options (`UISettings`) Pyoxide honours.
+/// The UI options (`UISettings`) the application honours.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct UiOptions {
     /// `SHOW_PREVIEW_IN_SEARCH_EVERYWHERE`.
@@ -378,7 +389,7 @@ pub fn project_terminal(text: &str) -> Result<Option<ProjectTerminalOptions>, St
     }))
 }
 
-/// What the reference's option files say, for the parts Pyoxide imports.
+/// What the reference's option files say, for the parts the application imports.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ReferenceOptions {
     /// The theme's id (`Islands Dark`, a plugin theme's UUID); `None`: the
@@ -796,9 +807,9 @@ mod tests {
                 "PyCharm2025.3"
             ]
         );
-        assert_eq!(found.main[0].label(), "Reference IDE 2026.2");
+        assert_eq!(found.main[0].label(), "PyCharm 2026.2");
         assert_eq!(found.other[2].product, "PyCharmCE");
-        assert_eq!(found.other[2].label(), "Reference IDE 2025.1 Community");
+        assert_eq!(found.other[2].label(), "PyCharm Community Edition 2025.1");
     }
 
     #[test]
@@ -822,7 +833,7 @@ mod tests {
     }
 
     #[test]
-    fn reads_the_options_pyoxide_imports() {
+    fn reads_the_options_the_application_imports() {
         let dir = tempfile::tempdir().unwrap();
         let o = dir.path().join("options");
         write(
@@ -1065,6 +1076,38 @@ mod tests {
         assert_eq!(
             keymap_file(dir.path(), "macOS copy"),
             Some(dir.path().join("keymaps/macOS copy.xml"))
+        );
+    }
+
+    #[test]
+    fn only_supported_sources_have_a_product_identity() {
+        let root = tempfile::tempdir().unwrap();
+        for name in [
+            "GoLand2026.2",
+            "IntelliJIdea2026.2",
+            "DataGrip2026.2",
+            "WebStorm2026.2",
+            "PyCharmBackup",
+            "my-settings",
+        ] {
+            let path = folder(root.path(), name, 0);
+            let custom = custom_folder(&path).unwrap();
+            assert_eq!(custom.source_name(), None, "{name}");
+            assert_eq!(custom.label(), format!("Settings folder: {name}"));
+        }
+        assert!(find_config_folders(root.path(), SystemTime::now()).is_empty());
+        for (name, label) in [
+            ("PyCharm2026.2", "PyCharm 2026.2"),
+            ("PyCharmCE2025.3", "PyCharm Community Edition 2025.3"),
+        ] {
+            let path = folder(root.path(), name, 0);
+            assert_eq!(custom_folder(&path).unwrap().label(), label);
+        }
+        assert_eq!(
+            find_config_folders(root.path(), SystemTime::now())
+                .main
+                .len(),
+            2
         );
     }
 

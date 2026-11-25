@@ -5,25 +5,21 @@ use workbench::Product;
 
 /// A desktop workbench with the platform's editor, project tree, Git and terminal.
 pub fn product() -> Product {
-    let mut icons = syntax_pack::icons();
-    icons.push(IconSvg {
-        name: "product/platform",
-        light: brand::ICON,
-        dark: None,
-    });
-    let mut file_types = syntax_pack::file_types();
-    file_types.push(sql_highlight::file_type());
-    Product {
+    let product = Product {
         name: brand::INFO.name,
         app_info: brand::INFO,
-        icons,
-        file_types,
+        icons: vec![IconSvg {
+            name: "product/platform",
+            light: brand::ICON,
+            dark: None,
+        }],
         welcome: workbench::welcome::WelcomeHook {
             icon: Some(IconName("product/platform")),
             ..Default::default()
         },
         ..Product::default()
-    }
+    };
+    syntax_pack::with_shared_syntax(product, sql_highlight::file_type)
 }
 
 /// Start the standalone desktop using the same folder/file arguments as the workbench.
@@ -43,6 +39,14 @@ mod tests {
     #[test]
     fn standalone_has_no_language_product_capabilities() {
         let product = product();
+        let file_types = workbench::file_types::FileTypes::new(&product.file_types);
+        for (file, expected) in [("demo.py", "python"), ("query.sql", "sql")] {
+            let ty = file_types.for_path(std::path::Path::new(file)).unwrap();
+            assert_eq!(ty.language_id, Some(expected));
+            assert!(ty.highlighter.is_some());
+            assert!(ty.key_context.is_none());
+            assert!(ty.context_menu.is_none());
+        }
         assert!(product.run.is_none());
         assert!(product.debug.is_none());
         assert!(product.code_intel.is_empty());

@@ -175,6 +175,7 @@ name = "app-info"
 version = "2026.1.0"
 dependencies = [
  "dirs 7.0.0",
+ "tempfile",
 ]
 
 [[package]]

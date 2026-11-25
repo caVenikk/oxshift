@@ -10,7 +10,7 @@
 //!
 //! `uvx` itself is found on `PATH` and in the per-user folders. A custom
 //! path that is not an executable file is passed over. Ending at `uvx`
-//! needs [`LookupContext::allow_uvx`]: Pyoxide's default tools do not
+//! needs [`LookupContext::allow_uvx`]: Oxshift's default tools do not
 //! download anything without asking (ADR 0010).
 //!
 //! The version check runs `<tool> --version` and reads the answer as the
@@ -516,7 +516,7 @@ fn shorten(text: &str) -> String {
     out
 }
 
-/// `version` is older than the oldest one Pyoxide is tested with
+/// `version` is older than the oldest one Oxshift is tested with
 /// ([`Tool::minimum_version`]). Versions that do not parse are not judged.
 pub fn below_minimum(tool: Tool, version: &str) -> bool {
     let minimum = tool.minimum_version().and_then(Version::parse);

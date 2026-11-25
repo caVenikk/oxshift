@@ -1,4 +1,4 @@
-//! The console's text model of Pyoxide IDE: what the Run tool window shows.
+//! The console's text model of Oxshift Python IDE: what the Run tool window shows.
 //!
 //! A [`Console`] is fed with raw bytes from a process (see the `process`
 //! crate) and with the IDE's own text (the command line, the exit line, echoed

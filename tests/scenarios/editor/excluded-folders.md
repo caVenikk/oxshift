@@ -13,7 +13,7 @@
 7. Open a folder that the reference IDE opened before, whose `.idea/x.iml`
    excludes `venv` (`<excludeFolder url="file://$MODULE_DIR$/venv" />`),
    and that has no `.oxshift` folder yet. Then mark `venv` as not excluded
-   in the reference IDE and open the folder in Pyoxide again.
+   in the reference IDE and open the folder in Oxshift Python again.
 8. Open a folder that has neither `.idea` nor `.oxshift` and no folder to
    exclude.
 
@@ -37,7 +37,7 @@
 - Step 6: `docs` is still excluded.
 - Step 7: `venv` is excluded as soon as the project opens and a
   `.oxshift/project.toml` lists it; `.idea` is unchanged. After the change in
-  the reference IDE `venv` stays excluded in Pyoxide: `.idea` is read only
+  the reference IDE `venv` stays excluded in Oxshift Python: `.idea` is read only
   once, when there is no `.oxshift` yet.
 - Step 8: no `.oxshift` folder is created.
 - A right click on `.venv` (excluded by the rule for virtual environments),

@@ -1,4 +1,4 @@
-//! The component layer of Pyoxide IDE on GPUI (ADR 0006, 0007).
+//! The component layer of Oxshift Python IDE on GPUI (ADR 0006, 0007).
 //!
 //! Everything toolkit-specific that is shared by the editor and the
 //! workbench lives here: the theme as GPUI colours and metrics, the bundled

@@ -198,9 +198,9 @@ fn attaching_a_data_source_gives_the_dialect_and_a_shared_mapping_goes_to_the_pr
         s["dialect-origin"],
         json!({"kind": "data-source", "name": "local"})
     );
-    assert_eq!(s["schema-text"], "pyoxide.public");
+    assert_eq!(s["schema-text"], "oxshift.public");
     assert_eq!(s["data-source-text"], "local");
-    assert_eq!(s["chips"], json!(["pyoxide.public", "local"]));
+    assert_eq!(s["chips"], json!(["oxshift.public", "local"]));
     assert_eq!(s["banner"], false);
 
     h.invoke("sql.attach-data-source", json!({}));

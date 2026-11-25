@@ -2,15 +2,18 @@
 # Host ports avoid the defaults so they do not clash with databases already
 # running on a developer machine. Tests read the same values (see
 # docs/testing-databases.md).
+# Existing data directories keep their initialized roles and passwords: set
+# OXSHIFT_DB_USER, OXSHIFT_PG_DATABASE and OXSHIFT_DB_PASSWORD explicitly;
+# these variables do not migrate an initialized PostgreSQL or Oracle database.
 services:
   oracle:
     image: gvenzl/oracle-free:23-slim-faststart
     ports:
       - "1521:1521"
     environment:
-      ORACLE_PASSWORD: ${OXSHIFT_DB_PASSWORD-pyoxide}
-      APP_USER: pyoxide
-      APP_USER_PASSWORD: ${OXSHIFT_DB_PASSWORD-pyoxide}
+      ORACLE_PASSWORD: ${OXSHIFT_DB_PASSWORD-oxshift}
+      APP_USER: ${OXSHIFT_DB_USER-oxshift}
+      APP_USER_PASSWORD: ${OXSHIFT_DB_PASSWORD-oxshift}
     healthcheck:
       test: ["CMD", "healthcheck.sh"]
       interval: 10s
@@ -22,11 +25,11 @@ services:
     ports:
       - "55432:5432"
     environment:
-      POSTGRES_USER: pyoxide
-      POSTGRES_PASSWORD: ${OXSHIFT_DB_PASSWORD-pyoxide}
-      POSTGRES_DB: pyoxide
+      POSTGRES_USER: ${OXSHIFT_DB_USER-oxshift}
+      POSTGRES_PASSWORD: ${OXSHIFT_DB_PASSWORD-oxshift}
+      POSTGRES_DB: ${OXSHIFT_PG_DATABASE-oxshift}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pyoxide -d pyoxide"]
+      test: ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
       interval: 5s
       timeout: 5s
       retries: 30

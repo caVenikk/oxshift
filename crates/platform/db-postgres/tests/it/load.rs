@@ -27,9 +27,9 @@ async fn connect() -> Box<dyn Connection> {
     let params = ConnectParams {
         host: env_or("TEST_PG_HOST", "localhost"),
         port: env_or("TEST_PG_PORT", "55432").parse().expect("port"),
-        database: "pyoxide".into(),
-        user: "pyoxide".into(),
-        password: Secret::new(env_or("DB_PASSWORD", "pyoxide")),
+        database: env_or("PG_DATABASE", "oxshift"),
+        user: env_or("DB_USER", "oxshift"),
+        password: Secret::new(env_or("DB_PASSWORD", "oxshift")),
         ..ConnectParams::default()
     };
     PostgresDriver
@@ -166,7 +166,10 @@ async fn details_of_every_kind() {
         .unwrap();
     let s = snapshot.schema(SCHEMA).unwrap();
     assert_eq!(s.info.comment.as_deref(), Some("load test"));
-    assert_eq!(s.info.owner.as_deref(), Some("pyoxide"));
+    assert_eq!(
+        s.info.owner.as_deref(),
+        Some(env_or("DB_USER", "oxshift").as_str())
+    );
 
     let object = |kind: ObjectKind, name: &str| {
         s.objects
@@ -181,7 +184,10 @@ async fn details_of_every_kind() {
 
     // Owner and comment of an object.
     let parent = object(ObjectKind::Table, "parent");
-    assert_eq!(parent.owner.as_deref(), Some("pyoxide"));
+    assert_eq!(
+        parent.owner.as_deref(),
+        Some(env_or("DB_USER", "oxshift").as_str())
+    );
     assert_eq!(parent.comment.as_deref(), Some("parent rows"));
 
     // Partitions with their parent and bounds.

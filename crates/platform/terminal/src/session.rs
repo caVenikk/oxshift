@@ -168,7 +168,7 @@ pub enum SessionEvent {
     WorkingDirectory(PathBuf),
     /// A prompt or command mark (OSC 133).
     Mark(ShellMark),
-    /// A Pyoxide integration event ([`crate::OWN_OSC`]) with its payload.
+    /// A Oxshift integration event ([`crate::OWN_OSC`]) with its payload.
     Integration(String),
     /// The shell exited; the last event.
     Exited(ExitStatus),

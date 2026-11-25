@@ -9,7 +9,7 @@ use serde::de::DeserializeOwned;
 use serde_json::{Map, Value as Json};
 use toml_edit::{DocumentMut, InlineTable, Item, Table, Value};
 
-/// The format version Pyoxide writes; a file of a newer one is read and
+/// The format version Oxshift writes; a file of a newer one is read and
 /// never rewritten.
 pub const VERSION: i64 = 1;
 const VERSION_KEY: &str = "version";
@@ -37,7 +37,7 @@ pub enum Problem {
     /// It could not be read as TOML: the defaults apply, and the file is
     /// not written over until a setting changes.
     Broken(String),
-    /// It was written by a newer Pyoxide: read, never rewritten.
+    /// It was written by a newer Oxshift: read, never rewritten.
     Newer(i64),
 }
 
@@ -49,7 +49,7 @@ fn validate<T: Section>(value: &Json) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
-/// The application settings: the file's document (with what Pyoxide does
+/// The application settings: the file's document (with what Oxshift does
 /// not know), the registered sections with their defaults, and the
 /// changes not saved yet.
 pub struct Store {

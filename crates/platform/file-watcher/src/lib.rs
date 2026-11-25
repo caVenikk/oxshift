@@ -1,4 +1,4 @@
-//! The file watcher of Pyoxide IDE: what changes on disk under watched
+//! The file watcher of Oxshift Python IDE: what changes on disk under watched
 //! folders, as the operating system reports it (FSEvents on macOS, inotify
 //! on Linux, ReadDirectoryChangesW on Windows, through `notify`).
 //!

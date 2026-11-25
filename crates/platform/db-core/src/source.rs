@@ -60,7 +60,7 @@ impl Purpose {
     pub const ALL: [Purpose; 3] = [Purpose::Console, Purpose::Data, Purpose::Meta];
 
     /// Stable lower-case name, also used in the session name a server shows
-    /// (`pyoxide:<data source>:meta`).
+    /// (`oxshift:<data source>:meta`).
     pub fn id(self) -> &'static str {
         match self {
             Purpose::Console => "console",

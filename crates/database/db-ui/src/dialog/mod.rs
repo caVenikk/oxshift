@@ -44,7 +44,7 @@ ui::ui_commands! {
     /// Select a data source.
     DialogSelect { name: String } => "db.data-sources.select", "Select Data Source",
         "Selects the data source `name` in the dialog's list.",
-        r#"{"name": "pyoxide-local"}"#;
+        r#"{"name": "oxshift-local"}"#;
     /// Show a tab.
     DialogTab { tab: String } => "db.data-sources.tab", "Select Tab",
         "Shows a tab of the selected data source: `general`, `options`, `ssh-ssl`, `schemas`.",
@@ -2109,7 +2109,7 @@ mod tests {
     #[test]
     fn failures_read_as_one_message_with_the_hint() {
         let f = Failure {
-            message: "FATAL: password authentication failed for user \"pyoxide\"".into(),
+            message: "FATAL: password authentication failed for user \"oxshift\"".into(),
             code: Some("28P01".into()),
             hint: Some("the server refused the user name or password".into()),
             next: Some("check them".into()),
@@ -2117,7 +2117,7 @@ mod tests {
         };
         assert_eq!(
             failure_text(&f),
-            "[28P01] FATAL: password authentication failed for user \"pyoxide\"\n\
+            "[28P01] FATAL: password authentication failed for user \"oxshift\"\n\
              The server refused the user name or password: check them."
         );
     }

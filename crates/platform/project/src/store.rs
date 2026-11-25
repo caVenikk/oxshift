@@ -1,4 +1,4 @@
-//! Pyoxide's own project folder ([`store_dir`] in the project root) and the
+//! Oxshift's own project folder ([`store_dir`] in the project root) and the
 //! shared project settings in it (ADR 0008). The personal project state
 //! next to them is [`crate::workspace`] (ADR 0009).
 //!

@@ -1,4 +1,4 @@
-//! The Debug Adapter Protocol client of Pyoxide IDE (ADR 0015).
+//! The Debug Adapter Protocol client of Oxshift Python IDE (ADR 0015).
 //!
 //! A [`Client`] talks to one debug adapter over a [`Transport`] (an adapter
 //! process's standard streams, or a socket to an adapter that listens):

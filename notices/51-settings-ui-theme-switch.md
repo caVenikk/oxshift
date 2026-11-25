@@ -24,5 +24,5 @@
   action.QuickChangeScheme.text), and the import balloon's title of
   platform/lang-api/resources/messages/LangBundle.properties
   (notification.title.color.scheme.added). Changes: reimplemented in Rust with
-  GPUI; "Import Theme…" (Pyoxide's theme import) takes the place of "Get
-  More Themes…"; imported themes are kept as Pyoxide theme files.
+  GPUI; "Import Theme…" (Oxshift's theme import) takes the place of "Get
+  More Themes…"; imported themes are kept as Oxshift theme files.

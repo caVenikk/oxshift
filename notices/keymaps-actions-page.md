@@ -29,7 +29,7 @@
   SchemesCombo.java (bold predefined schemes, indented custom ones), and the
   Keymap popup of platform/platform-impl/src/com/intellij/ide/actions/
   QuickChangeKeymapAction.java. Changes: reimplemented in Rust
-  with GPUI; only the actions Pyoxide has are listed, with the Pyoxide
+  with GPUI; only the actions Oxshift has are listed, with the Oxshift
   command each runs and, where one action is several commands, a key
   context; the tree is read-only; Import Keymap… takes the place of the
   link to the keymap plugins.

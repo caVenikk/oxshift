@@ -98,8 +98,8 @@ mod tests {
     fn masks_whole_words_only() {
         let mut r = Redactor::default();
         r.add("pg", "<profile>");
-        r.add("pyoxide", "<user>");
-        let s = r.apply("profile pg uses PXTEST_PG_PW and OXSHIFT_DB_PASSWORD as pyoxide");
+        r.add("oxshift", "<user>");
+        let s = r.apply("profile pg uses PXTEST_PG_PW and OXSHIFT_DB_PASSWORD as oxshift");
         assert_eq!(
             s,
             "profile <profile> uses PXTEST_PG_PW and OXSHIFT_DB_PASSWORD as <user>"

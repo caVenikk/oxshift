@@ -394,7 +394,7 @@ fn the_gear_menu_and_quick_switch_open_the_theme_popup(cx: &mut TestAppContext) 
 }
 
 #[gpui::test]
-fn the_stored_theme_is_used_at_start_and_pyoxide_theme_overrides_it(cx: &mut TestAppContext) {
+fn the_stored_theme_is_used_at_start_and_oxshift_theme_overrides_it(cx: &mut TestAppContext) {
     let mut h = open_with(cx, "[appearance]\ntheme = \"app-light\"\n");
     assert_eq!(h.shown(), "app-light");
     // `workbench.set-theme` stores the theme as the switchers do.

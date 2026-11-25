@@ -1,4 +1,4 @@
-//! Run configurations of Pyoxide IDE (ADR 0012): named, repeatable
+//! Run configurations of Oxshift Python IDE (ADR 0012): named, repeatable
 //! launches, as the reference IDE keeps them (`RunManagerImpl`,
 //! `RunnerAndConfigurationSettingsImpl`), without a UI toolkit.
 //!

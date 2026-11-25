@@ -1,16 +1,16 @@
 ---
-name: pyoxide-agent
-description: Working rules for a sub-agent implementing or researching a Pyoxide IDE issue (Rust/GPUI clone of PyCharm) in its own git worktree - start, sources, clean-room, builds, GUI runs, commits, checkpoint and PR, pause protocol, report format. Use at the start of every Pyoxide sub-agent task, before reading the issue.
+name: oxshift-agent
+description: Working rules for a sub-agent implementing or researching a Oxshift Python IDE issue (Rust/GPUI clone of PyCharm) in its own git worktree - start, sources, clean-room, builds, GUI runs, commits, checkpoint and PR, pause protocol, report format. Use at the start of every Oxshift Python sub-agent task, before reading the issue.
 ---
 
-# Pyoxide sub-agent rules
+# Oxshift Python sub-agent rules
 
-You work on one GitHub issue of Pyoxide IDE (repo `caVenikk/oxshift`, a Rust/GPUI clone of PyCharm 2026.2.3). The lead gives you the issue number `N`, a branch name and whether there is a checkpoint. These rules apply unless the lead's prompt says otherwise.
+You work on one GitHub issue of Oxshift Python IDE (repo `caVenikk/oxshift`, a Rust/GPUI clone of PyCharm 2026.2.3). The lead gives you the issue number `N`, a branch name and whether there is a checkpoint. These rules apply unless the lead's prompt says otherwise.
 
 ## Start
 - You are in your own git worktree (your current directory). First: `git fetch origin && git checkout -b <branch> origin/main` (or the base the lead names).
 - Edit files only inside your worktree; never modify the main checkout. Reading the lead's local material (briefs, reference screenshots, the IntelliJ Community checkout) is fine. A scratch folder may be shared with other agents: keep your files in a subfolder named after your issue.
-- Read: the issue (`gh issue view N --comments`), `AGENTS.md`, `docs/architecture.md`, the ADRs it touches (`docs/adr/`), `docs/performance.md`, `skills/PYOXIDE.md`, the area in `replica/recon.md`, `tests/scenarios/<area>/`. Read lean: only what the issue needs.
+- Read: the issue (`gh issue view N --comments`), `AGENTS.md`, `docs/architecture.md`, the ADRs it touches (`docs/adr/`), `docs/performance.md`, `skills/OXSHIFT.md`, the area in `replica/recon.md`, `tests/scenarios/<area>/`. Read lean: only what the issue needs.
 
 ## Reference and clean-room
 - Reference behaviour = PyCharm 2026.2.3. IntelliJ Community at tag `pycharm/2026.2.3` (Apache-2.0): `gh api 'repos/JetBrains/intellij-community/contents/<path>?ref=pycharm/2026.2.3' -H 'Accept: application/vnd.github.raw'`, or `git -C <checkout> show pycharm/2026.2.3:<path>` in a local (sparse) clone, e.g. in the git-ignored `.claude/ic`. Read from the tag, not from a working tree that may be on master; never check anything out in a shared checkout.

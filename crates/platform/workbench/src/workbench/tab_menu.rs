@@ -1,6 +1,6 @@
 //! The context menu of an editor tab and the commands of its Close group
 //! and Pin Tab: the reference's `EditorTabPopupMenu` with
-//! `EditorTabPopupMenuEx` (in their order, the items Pyoxide has), the
+//! `EditorTabPopupMenuEx` (in their order, the items Oxshift has), the
 //! actions of `CloseEditorsGroup` (`CloseAllEditorsButActiveAction`,
 //! `CloseAllEditorsAction`, `CloseAllUnmodifiedEditorsAction`,
 //! `CloseAllUnpinnedEditorsAction`, `CloseAllEditorsToTheLeftAction`,
@@ -539,7 +539,7 @@ impl Workbench {
         items
     }
 
-    /// Git (`Git.ContextMenu`): the file's actions Pyoxide has (Add for an
+    /// Git (`Git.ContextMenu`): the file's actions Oxshift has (Add for an
     /// unversioned file, Show Diff and, for the active tab, Rollback… for a
     /// changed one), then
     /// the repository's (Push…, Fetch, Branches…, New Branch…).

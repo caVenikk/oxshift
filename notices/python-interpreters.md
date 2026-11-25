@@ -1,8 +1,8 @@
-- crates/python/pyoxide-ide/src/interpreter/ (table.rs, list.rs,
+- crates/python/oxshift-python/src/interpreter/ (table.rs, list.rs,
   configuring.rs, create.rs, candidates.rs, add_dialog.rs, list_dialog.rs,
   page.rs, widget.rs), crates/python/py-env/src/uv.rs, venv.rs, ops.rs,
   interpreter.rs, crates/platform/project/src/idea.rs (the SDK's own data),
-  crates/python/pyoxide-ide/assets/icons/homeFolder.svg, moveUp.svg,
+  crates/python/oxshift-python/assets/icons/homeFolder.svg, moveUp.svg,
   show.svg, greenCheckmark.svg, externalLink.svg, download.svg, edit.svg
   (with their `_dark.svg` variants)
   Closely adapted from IntelliJ Platform Community (Apache-2.0),
@@ -45,7 +45,7 @@
   homeFolder.svg, expui/general/moveUp.svg, show.svg, greenCheckmark.svg,
   download.svg and edit.svg, expui/ide/externalLink.svg (unchanged copies,
   renamed by dropping their folders). Changes: reimplemented in Rust with
-  GPUI; the list of interpreters is kept in Pyoxide's interpreters.toml
+  GPUI; the list of interpreters is kept in Oxshift's interpreters.toml
   instead of the SDK table and imported from it once; a virtual
   environment can be made with the venv module when uv is missing; the
   Pythons to download are uv's (`uv python list --only-downloads`,

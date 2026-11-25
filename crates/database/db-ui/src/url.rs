@@ -151,16 +151,16 @@ mod tests {
         let mut p = Profile::new(Backend::Postgres);
         p.host = "localhost".into();
         p.port = Some(55432);
-        p.database = Some("pyoxide".into());
+        p.database = Some("oxshift".into());
         p
     }
 
     #[test]
     fn postgres_round_trip() {
         let mut p = pg();
-        assert_eq!(format(&p), "postgresql://localhost:55432/pyoxide");
+        assert_eq!(format(&p), "postgresql://localhost:55432/oxshift");
         p.port = None;
-        assert_eq!(format(&p), "postgresql://localhost:5432/pyoxide");
+        assert_eq!(format(&p), "postgresql://localhost:5432/oxshift");
         apply(
             &mut p,
             "postgresql://app@db.example.com:6543/sales?sslmode=require",

@@ -1,6 +1,6 @@
 - crates/platform/project/src/roots.rs, store.rs and idea.rs (roots),
   crates/platform/workbench/src/project_panel/roots.rs, crates/python/
-  pyoxide-ide/src/lib.rs (tree hooks),
+  oxshift-python/src/lib.rs (tree hooks),
   docs/adr/0013-source-roots-and-packages.md
   Source roots, packages and modules in the project tree follow the
   IntelliJ Platform Community (Apache-2.0),

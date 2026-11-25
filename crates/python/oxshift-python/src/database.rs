@@ -837,11 +837,6 @@ mod tests {
             root.path().join(".oxshift/db-profiles.toml")
         );
         assert!(!root.path().join(".oxshift").exists());
-        std::fs::create_dir(root.path().join(".oxide")).unwrap();
-        assert_eq!(
-            profiles_path(root.path()),
-            root.path().join(".oxshift/db-profiles.toml")
-        );
         std::fs::create_dir(root.path().join(".oxshift")).unwrap();
         assert_eq!(
             profiles_path(root.path()),
@@ -857,8 +852,8 @@ mod tests {
     fn pg(save: PasswordSave) -> Profile {
         let mut p = Profile::new(Backend::Postgres);
         p.host = "localhost".into();
-        p.database = Some("pyoxide".into());
-        p.user = "pyoxide".into();
+        p.database = Some("oxshift".into());
+        p.user = "oxshift".into();
         p.gui = Some(GuiOptions {
             password_save: save,
             ..GuiOptions::default()

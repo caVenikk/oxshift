@@ -12,7 +12,7 @@ description: >-
 
 # replica-architect
 
-## Pyoxide override (read first; see `../PYOXIDE.md`)
+## Oxshift Python override (read first; see `../OXSHIFT.md`)
 
 - Stack is **fixed**: Rust workspace. Do not propose Next.js/Postgres/Stripe. The only open choices are decided by short ADRs in `docs/adr/`: UI toolkit (spike egui/Slint/iced/GPUI/Lapce-base with measurements, licenses), Python engines (ruff + ty / basedpyright / pyrefly via LSP, debugpy via DAP), DB drivers behind `db-core`.
 - "Schema" = serialized state: project model, settings, run configs, connection profiles (TOML/JSON, SQLite only if needed). Secrets in the OS keychain, never in files.

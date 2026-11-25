@@ -1,4 +1,4 @@
-//! The main window of Pyoxide IDE (ADR 0007): main toolbar in the title bar
+//! The main window of Oxshift Python IDE (ADR 0007): main toolbar in the title bar
 //! area, tool window stripes, the project tool window, the editor area and
 //! the status bar, plus application start-up and the environment switches
 //! used by automated runs.

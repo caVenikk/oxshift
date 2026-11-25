@@ -348,7 +348,7 @@ fn reference_exclusions_are_imported_once_and_gitignore_is_content(cx: &mut Test
         ]
     };
     assert_eq!(excluded(&s), want(true, false));
-    // The import wrote Pyoxide's own settings and left `.idea` alone.
+    // The import wrote Oxshift's own settings and left `.idea` alone.
     let settings = root.join(".app/project.toml");
     let text = std::fs::read_to_string(&settings).unwrap();
     assert!(text.contains("paths = [\n    \"venv\",\n]"), "{text}");

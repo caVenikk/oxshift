@@ -59,7 +59,7 @@ fn open_printing<'a>(
 
 /// A folder with a Python file in it, for the paths to point at.
 fn project(name: &str) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!("pyoxide-links-{}-{name}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("oxshift-links-{}-{name}", std::process::id()));
     std::fs::create_dir_all(dir.join("pkg")).unwrap();
     std::fs::write(dir.join("pkg").join("app.py"), "print(1)\n").unwrap();
     dir

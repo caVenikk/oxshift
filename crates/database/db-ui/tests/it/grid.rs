@@ -21,7 +21,7 @@ use workbench::test_support::keymap::{Harness, check_area};
 
 use super::*;
 
-pub(crate) const NAME: &str = "pyoxide-local";
+pub(crate) const NAME: &str = "oxshift-local";
 
 pub(crate) fn rows(values: &[(&str, &str)]) -> Reaction {
     Reaction::Rows {
@@ -303,7 +303,7 @@ fn check(h: &mut Harness, b: &Binding) -> bool {
         "db.explorer.open-table" => {
             h.invoke(
                 "db.explorer.expand",
-                json!({ "path": format!("{NAME}/pyoxide/demo/tables/orders") }),
+                json!({ "path": format!("{NAME}/oxshift/demo/tables/orders") }),
             );
             show_tool_window(h);
             h.press(&b.keys);

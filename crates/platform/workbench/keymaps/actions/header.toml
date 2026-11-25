@@ -1,4 +1,4 @@
-# The reference IDE's actions and the Pyoxide commands they run (ADR 0018).
+# The reference IDE's actions and the Oxshift commands they run (ADR 0018).
 # Action ids, texts and the groups of the Keymap page's tree follow the
 # IntelliJ Platform Community (Apache-2.0, see NOTICE): the action files and
 # ActionsBundle of platform/platform-resources, the keymaps of
@@ -7,7 +7,7 @@
 # A keymap of the reference (the VS Code keymaps, a custom keymap) is
 # converted through this table: an action's shortcuts become the bindings
 # of its commands. A command runs in a key context ("Editor"); without one
-# it is global. An action Pyoxide does not have is not listed; the
+# it is global. An action Oxshift does not have is not listed; the
 # conversion reports its shortcuts as unmapped.
 #
 # `groups` places the action in the tree, a path per place with " > "

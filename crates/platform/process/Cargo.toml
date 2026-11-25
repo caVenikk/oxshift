@@ -1,6 +1,6 @@
 [package]
 name = "process"
-description = "External processes of Pyoxide IDE for the Run tool window: spawning a command line with piped standard streams, raw output chunks with backpressure, standard input, interrupt and kill of the process tree"
+description = "External processes of Oxshift Python IDE for the Run tool window: spawning a command line with piped standard streams, raw output chunks with backpressure, standard input, interrupt and kill of the process tree"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

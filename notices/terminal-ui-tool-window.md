@@ -24,7 +24,7 @@
   of tabs of platform/platform-impl/src/com/intellij/ide/actions/
   ShowContentAction.java and openapi/wm/impl/content/SelectContentStep.kt.
   Changes: reimplemented in
-  Rust on GPUI; the allowed actions are mapped to Pyoxide commands through
+  Rust on GPUI; the allowed actions are mapped to Oxshift commands through
   the action table, and every `terminal.*` command is allowed.
   The header and its tabs (2026.2.3 as well): the header 41 high with its
   line and its buttons shown only while the tool window is active, has a

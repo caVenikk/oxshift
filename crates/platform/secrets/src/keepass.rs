@@ -477,27 +477,27 @@ pub(crate) mod tests {
         let store = KeePassStore::open(&path, key("master"), fast_create()).unwrap();
         assert!(path.exists());
         assert_eq!(store.version().unwrap(), "KDBX4.1");
-        assert!(store.get("pyoxide-db", "prod").unwrap().is_none());
+        assert!(store.get("oxshift-db", "prod").unwrap().is_none());
 
         store
-            .set("pyoxide-db", "prod", &Secret::new("s3cret"))
+            .set("oxshift-db", "prod", &Secret::new("s3cret"))
             .unwrap();
         store
-            .set("pyoxide-db", "prod/wallet", &Secret::new("w"))
+            .set("oxshift-db", "prod/wallet", &Secret::new("w"))
             .unwrap();
         store.set("other", "prod", &Secret::new("o")).unwrap();
         assert_eq!(
-            store.get("pyoxide-db", "prod").unwrap().unwrap().expose(),
+            store.get("oxshift-db", "prod").unwrap().unwrap().expose(),
             "s3cret"
         );
         store
-            .set("pyoxide-db", "prod", &Secret::new("changed"))
+            .set("oxshift-db", "prod", &Secret::new("changed"))
             .unwrap();
 
         // A second handle (another process) sees the same data.
         let again = KeePassStore::open(&path, key("master"), KeePassOptions::default()).unwrap();
         assert_eq!(
-            again.get("pyoxide-db", "prod").unwrap().unwrap().expose(),
+            again.get("oxshift-db", "prod").unwrap().unwrap().expose(),
             "changed"
         );
         assert_eq!(again.get("other", "prod").unwrap().unwrap().expose(), "o");
@@ -505,29 +505,29 @@ pub(crate) mod tests {
             again.list().unwrap(),
             vec![
                 ("other".to_owned(), "prod".to_owned()),
-                ("pyoxide-db".to_owned(), "prod".to_owned()),
-                ("pyoxide-db".to_owned(), "prod/wallet".to_owned()),
+                ("oxshift-db".to_owned(), "prod".to_owned()),
+                ("oxshift-db".to_owned(), "prod/wallet".to_owned()),
             ]
         );
 
-        assert!(store.delete("pyoxide-db", "prod").unwrap());
-        assert!(!store.delete("pyoxide-db", "prod").unwrap());
+        assert!(store.delete("oxshift-db", "prod").unwrap());
+        assert!(!store.delete("oxshift-db", "prod").unwrap());
         assert!(store.delete("other", "prod").unwrap());
         // `again` notices the change made through `store`.
-        assert!(again.get("pyoxide-db", "prod").unwrap().is_none());
+        assert!(again.get("oxshift-db", "prod").unwrap().is_none());
         assert_eq!(
             again.list().unwrap(),
-            vec![("pyoxide-db".to_owned(), "prod/wallet".to_owned())]
+            vec![("oxshift-db".to_owned(), "prod/wallet".to_owned())]
         );
 
-        // Entry layout: Pyoxide / service / account.
+        // Entry layout: Oxshift / service / account.
         let db = Database::parse(
             &fs::read(&path).unwrap(),
             key("master").database_key().unwrap(),
         )
         .unwrap();
         let root = child_group(&db, db.root().id(), root_group()).unwrap();
-        let svc = child_group(&db, root, "pyoxide-db").unwrap();
+        let svc = child_group(&db, root, "oxshift-db").unwrap();
         let entry = db
             .entry(entry_by_title(&db, svc, "prod/wallet").unwrap())
             .unwrap();

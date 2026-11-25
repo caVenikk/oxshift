@@ -1,5 +1,5 @@
 //! The Python run configuration type (the reference's
-//! `PythonConfigurationType`, factory `Python`): its options as Pyoxide
+//! `PythonConfigurationType`, factory `Python`): its options as Oxshift
 //! stores them, the import of the reference's Python configurations (and
 //! of its standalone `uv run` configurations, converted into Python ones
 //! with `uv run` on, as the reference itself converts them later), and the
@@ -16,7 +16,7 @@ use run_config::{env_file, params, paths};
 
 use crate::{PythonRun, Target, UvRun};
 
-/// Pyoxide's id of the type.
+/// Oxshift's id of the type.
 pub const TYPE_ID: &str = "python";
 /// The reference's id and display name of the type.
 pub const REFERENCE_ID: &str = "PythonConfigurationType";

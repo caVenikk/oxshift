@@ -1,6 +1,6 @@
 //! The action table (`keymaps/actions/`, ADR 0018): the reference
 //! IDE's action ids with their texts, their places in the Keymap page's
-//! tree and the Pyoxide commands they run, each in its key contexts.
+//! tree and the Oxshift commands they run, each in its key contexts.
 //! Keymaps of the reference are converted through it.
 
 use std::collections::HashMap;

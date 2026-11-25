@@ -1,5 +1,5 @@
 //! Reads the exclusions of a project of the reference IDE from its `.idea`
-//! folder, for the one-time import into Pyoxide's project settings
+//! folder, for the one-time import into Oxshift's project settings
 //! (ADR 0008). Nothing is ever written into `.idea`.
 //!
 //! `.idea/modules.xml` lists the module files of the project:

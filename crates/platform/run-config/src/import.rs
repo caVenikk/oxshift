@@ -18,7 +18,7 @@ use crate::store::{self, StoreError};
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Report {
     pub imported: usize,
-    /// Configurations of types Pyoxide does not support, kept read-only.
+    /// Configurations of types Oxshift does not support, kept read-only.
     pub read_only: usize,
     /// Configurations renamed because their type had the name already:
     /// the name in the reference and the new one.

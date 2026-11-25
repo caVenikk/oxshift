@@ -8,5 +8,5 @@
   kept), platform/platform-impl/src/com/intellij/openapi/editor/impl/CaretImpl.java
   (a caret inside the replaced part keeps its column on the translated
   line, else stays within the new part). Changes: reimplemented in Rust on
-  a rope with char offsets; the line diff is Pyoxide's own (Myers' algorithm
+  a rope with char offsets; the line diff is Oxshift's own (Myers' algorithm
   with a cost limit).

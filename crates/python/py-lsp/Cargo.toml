@@ -1,6 +1,6 @@
 [package]
 name = "py-lsp"
-description = "Python language services of Pyoxide IDE: ruff, ty and basedpyright server specs, executable lookup, settings and the import of the reference's tool settings"
+description = "Python language services of Oxshift Python IDE: ruff, ty and basedpyright server specs, executable lookup, settings and the import of the reference's tool settings"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

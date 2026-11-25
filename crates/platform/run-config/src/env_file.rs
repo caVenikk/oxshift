@@ -6,7 +6,7 @@
 //! removed, and a `#` after the last quote starts a comment.
 //!
 //! The reference also runs `.sh` and `.bat` files to read the environment
-//! they set; Pyoxide reads every file as text.
+//! they set; Oxshift reads every file as text.
 
 use std::path::Path;
 

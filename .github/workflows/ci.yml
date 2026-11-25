@@ -237,25 +237,27 @@ jobs:
       postgres:
         image: postgres:18-alpine
         env:
-          POSTGRES_USER: pyoxide
-          POSTGRES_PASSWORD: pyoxide
-          POSTGRES_DB: pyoxide
+          POSTGRES_USER: oxshift
+          POSTGRES_PASSWORD: oxshift
+          POSTGRES_DB: oxshift
         ports: ["55432:5432"]
         options: >-
-          --health-cmd "pg_isready -U pyoxide -d pyoxide"
+          --health-cmd "pg_isready -U oxshift -d oxshift"
           --health-interval 5s --health-timeout 5s --health-retries 30
       oracle:
         image: gvenzl/oracle-free:23-slim-faststart
         env:
-          ORACLE_PASSWORD: pyoxide
-          APP_USER: pyoxide
-          APP_USER_PASSWORD: pyoxide
+          ORACLE_PASSWORD: oxshift
+          APP_USER: oxshift
+          APP_USER_PASSWORD: oxshift
         ports: ["1521:1521"]
         options: >-
           --health-cmd healthcheck.sh
           --health-interval 10s --health-timeout 5s --health-retries 30
     env:
-      OXSHIFT_DB_PASSWORD: pyoxide
+      OXSHIFT_DB_USER: oxshift
+      OXSHIFT_PG_DATABASE: oxshift
+      OXSHIFT_DB_PASSWORD: oxshift
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable

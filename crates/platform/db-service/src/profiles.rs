@@ -110,8 +110,8 @@ wallet_dir = "/opt/wallet"
 backend = "postgres"
 host = "localhost"
 port = 55432
-database = "pyoxide"
-user = "pyoxide"
+database = "oxshift"
+user = "oxshift"
 password_env = "PG_PASS"
 
 [profiles.scratch]
@@ -198,8 +198,8 @@ path = ":memory:"
 [profiles.local-pg]
 backend = "postgres"
 host = "localhost"
-database = "pyoxide"
-user = "pyoxide"
+database = "oxshift"
+user = "oxshift"
 [profiles.local-pg.gui]
 password_save = "never"
 tx_mode = "manual"

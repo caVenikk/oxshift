@@ -11,7 +11,7 @@ description: >-
 
 # replica-backend
 
-## Pyoxide override (read first; see `../PYOXIDE.md`)
+## Oxshift Python override (read first; see `../OXSHIFT.md`)
 
 - Read as **engine services**, not web backend. Skip Auth, Payments, Email/jobs sections entirely.
 - Services here: LSP client + server process management, DAP client (debugpy), DB drivers (`db-oracle-thin`, `db-oracle-odpi`, Postgres, SQLite) behind `db-core`, VCS (git), Docker (bollard), terminal/PTY, settings import, keychain for secrets.

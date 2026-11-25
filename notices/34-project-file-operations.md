@@ -1,7 +1,7 @@
 - crates/platform/project/src/fs_ops.rs, crates/platform/workbench/src/
   project_panel/ (file_ops.rs, name_popup.rs, new_items.rs, transfer.rs,
   transfer_dialog.rs), crates/platform/workbench/src/workbench/
-  file_events.rs, crates/python/pyoxide-ide/src/new_items.rs,
+  file_events.rs, crates/python/oxshift-python/src/new_items.rs,
   crates/platform/ui/assets/icons/general/cut.svg, copy.svg, paste.svg
   The file operations of the project tool window follow the IntelliJ
   Platform Community (Apache-2.0), https://github.com/JetBrains/intellij-community

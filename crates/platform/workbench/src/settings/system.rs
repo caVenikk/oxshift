@@ -1,8 +1,8 @@
 //! Appearance & Behavior > System Settings (`GeneralSettingsConfigurable`):
 //! the Files group with autosave and the synchronization with changes made
-//! outside. Only the options Pyoxide honours are shown; the reference's
+//! outside. Only the options Oxshift honours are shown; the reference's
 //! exit confirmation, process and project options, the move to the bin
-//! (Pyoxide always deletes to the bin) and safe write (Pyoxide always
+//! (Oxshift always deletes to the bin) and safe write (Oxshift always
 //! writes through a temporary file) are left out.
 
 use editor::{Editor, EditorEvent};

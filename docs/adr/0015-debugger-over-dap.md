@@ -13,7 +13,7 @@ Python backends behind the same UI: its own pydevd protocol and debugpy
 over the Debug Adapter Protocol (DAP), the latter as the default, with a
 "Mode" switch in the Debug tool window. It bundles debugpy 1.8.21.
 
-Pyoxide follows the reference's UI and uses one backend. Constraints: DAP
+Oxshift Python follows the reference's UI and uses one backend. Constraints: DAP
 is the public protocol for this; external processes only behind protocols;
 the UI never waits for the adapter; platform crates know no language
 (ADR 0005); the LSP client (ADR 0010) already has framing and a thread
@@ -42,7 +42,7 @@ debugpy's PyPI metadata.
 | own client on the `lsp-client` model | - | **chosen** |
 
 ## Decision
-debugpy over DAP, with Pyoxide's own client.
+debugpy over DAP, with Oxshift Python's own client.
 
 ### Protocol and threads
 - `stream-framing` (platform, new): the `Content-Length` framing moved out
@@ -140,7 +140,7 @@ debugpy over DAP, with Pyoxide's own client.
   source; the notice also names the upstream repository and version), and
   no relicensing. Any compiled parts of the wheel shipped as such need the
   same statement of where their source is. Running pydevd as a separate
-  process does not put Pyoxide's own code under EPL-1.0; a change to a
+  process does not put Oxshift Python's own code under EPL-1.0; a change to a
   pydevd file would be EPL-1.0 and published as source, so the files are
   not patched. NOTICE and a third-party notices file in the bundle carry
   this.

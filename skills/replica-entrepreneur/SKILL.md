@@ -13,10 +13,10 @@ description: >-
 
 # replica-entrepreneur
 
-## Pyoxide override (read first; see `../PYOXIDE.md`)
+## Oxshift Python override (read first; see `../OXSHIFT.md`)
 
 - Sources: JetBrains' public issue tracker, r/Pycharm and r/Python threads, Hacker News, StackOverflow, blog posts, X/Mastodon. No app stores. Same rules: verbatim, linked, never invented.
-- Goal is "own features" and priorities for Pyoxide (speed, startup, memory, Windows performance, DB client, simplicity), not a sellable pitch. Replace "angle" with a one-paragraph positioning for README.
+- Goal is "own features" and priorities for Oxshift Python (speed, startup, memory, Windows performance, DB client, simplicity), not a sellable pitch. Replace "angle" with a one-paragraph positioning for README.
 - Do not quote user reviews in the README or site.
 
 A straight copy of an app has no reason to exist. This skill finds the reason:

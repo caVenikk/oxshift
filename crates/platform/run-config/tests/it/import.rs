@@ -1,5 +1,5 @@
 //! The one-time import of a reference IDE project's run configurations
-//! into Pyoxide's storage, on a whole `.idea` folder written by hand from
+//! into Oxshift's storage, on a whole `.idea` folder written by hand from
 //! the reference's sources: per-user and shared configurations, the
 //! selection, order, recent list and executors, name clashes, the import
 //! markers, `.idea` left byte for byte, personal values only in the
@@ -248,17 +248,17 @@ fn the_reference_configurations_are_imported_once_per_storage_class() {
 
     // Shared configurations are files in `.app/run/`, the import is
     // marked in the shared settings.
-    let oxide = root.join(".app");
-    assert!(oxide.join("run/shared.toml").is_file());
-    assert!(oxide.join("run/worker.toml").is_file());
-    assert!(oxide.join("run/compose.toml").is_file());
-    let settings = std::fs::read_to_string(oxide.join("project.toml")).unwrap();
+    let storage = root.join(".app");
+    assert!(storage.join("run/shared.toml").is_file());
+    assert!(storage.join("run/worker.toml").is_file());
+    assert!(storage.join("run/compose.toml").is_file());
+    let settings = std::fs::read_to_string(storage.join("project.toml")).unwrap();
     assert!(
         settings.contains("[run]\nimported-from-idea = true"),
         "{settings}"
     );
     // Personal values are only in the personal state, which Git ignores.
-    let committed: Vec<(PathBuf, Vec<u8>)> = snapshot(&oxide)
+    let committed: Vec<(PathBuf, Vec<u8>)> = snapshot(&storage)
         .into_iter()
         .filter(|(p, _)| {
             let name = p.file_name().unwrap().to_string_lossy();
@@ -272,10 +272,10 @@ fn the_reference_configurations_are_imported_once_per_storage_class() {
             assert!(!text.contains(secret), "{} holds {secret}", path.display());
         }
     }
-    let personal = std::fs::read_to_string(oxide.join("workspace.toml")).unwrap();
+    let personal = std::fs::read_to_string(storage.join("workspace.toml")).unwrap();
     assert!(personal.contains("personal-token-value"));
     assert_eq!(
-        std::fs::read_to_string(oxide.join(".gitignore")).unwrap(),
+        std::fs::read_to_string(storage.join(".gitignore")).unwrap(),
         "# Default ignored files\n/workspace.toml\n"
     );
 

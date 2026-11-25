@@ -56,7 +56,7 @@ const MODE: &str = "Mode:";
 const PYDEVD: &str = "pydevd";
 const DEBUGPY: &str = "debugpy";
 const DEBUGPY_DESCRIPTION: &str = "Python debugger backend built on the Debug Adapter Protocol, with a more stable connection model. Lower overhead on Python 3.12+.";
-/// Pyoxide's own.
+/// Oxshift's own.
 const NOT_SUPPORTED: &str = "Not supported yet";
 const NO_PROJECT: &str = "Open a project to configure its Python debugger.";
 

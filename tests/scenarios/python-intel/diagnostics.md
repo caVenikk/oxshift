@@ -30,7 +30,7 @@
   least 2 px high); the widget shows an icon and a count per severity
   present, counted per problem (two servers reporting one range count
   twice), then up / down arrows; a check mark when the file is clean; clicking it opens the Problems tool
-  window (Pyoxide v1: goes to the first problem until the Problems window
+  window (Oxshift Python v1: goes to the first problem until the Problems window
   exists).
 - Step 7: highlights move with the text; stale ones are replaced when the
   server answers for the new version; typing latency stays within budget.

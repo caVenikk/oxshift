@@ -16,7 +16,7 @@
 - Step 3: Sdk tries the interpreter's `bin` (`Scripts` on Windows) first,
   then a custom path or PATH and per-user tool folders, then `uvx ruff`;
   with neither the tool nor uv nothing starts and no balloon is shown
-  (Pyoxide: see the issue for the missing-tool notice).
+  (Oxshift Python: see the issue for the missing-tool notice).
 - Step 4: popup "Type Engine" with the engines, a check mark on the
   current one, and "Type Engine Settings…".
 - Step 5: type servers restart with the new interpreter; open files are

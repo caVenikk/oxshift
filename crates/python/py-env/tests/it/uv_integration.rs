@@ -853,7 +853,7 @@ async fn pypi_lookup() {
     assert!(!p.versions.is_empty());
     assert!(p.versions.windows(2).all(|w| w[0].version != w[1].version));
     assert_eq!(
-        pypi.project("this-package-does-not-exist-pyoxide-0x7f")
+        pypi.project("this-package-does-not-exist-oxshift-0x7f")
             .await
             .unwrap_err()
             .kind,

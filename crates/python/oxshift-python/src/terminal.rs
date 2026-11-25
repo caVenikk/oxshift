@@ -3,7 +3,7 @@
 //! session in the project activates the project's interpreter when it is a
 //! virtual environment (uv's included) and "Activate virtualenv" is on.
 //!
-//! - Shells with Pyoxide's integration (zsh, bash, `/bin/sh` of macOS,
+//! - Shells with Oxshift's integration (zsh, bash, `/bin/sh` of macOS,
 //!   fish, PowerShell) source the environment's activation script after
 //!   the user's startup files and before the first prompt: `activate`,
 //!   `activate.fish`, `Activate.ps1` (`activate.ps1` in uv's), from the
@@ -13,7 +13,7 @@
 //!   scripts folder first, `PYTHONHOME` cleared, and the prompt (`PROMPT`
 //!   on Windows, `PS1` elsewhere), with the `_OLD_VIRTUAL_*` variables
 //!   `deactivate` restores. The reference runs `activate.bat` (or
-//!   `activate` in `/bin/bash`) to read them; Pyoxide sets them as the
+//!   `activate` in `/bin/bash`) to read them; Oxshift sets them as the
 //!   script does, without starting a process.
 //! - With "Shell integration" off nothing is activated (as in the
 //!   reference); conda environments are not activated yet.
@@ -99,7 +99,7 @@ impl ShellCustomizer for VirtualEnvCustomizer {
             return Customization::default();
         };
         // The reference takes the interpreter of the module that owns the
-        // working directory: a Pyoxide project is one module.
+        // working directory: a Oxshift project is one module.
         if !inside(context.working_directory, root) || !activate_virtualenv(root) {
             return Customization::default();
         }
@@ -470,7 +470,7 @@ mod tests {
         let stored = project::store::load_value(root, SETTINGS_TABLE, ACTIVATE_KEY).unwrap();
         assert_eq!(stored.and_then(|v| v.as_bool()), Some(false));
 
-        // Turned on in Pyoxide: the default is not written, and the
+        // Turned on in Oxshift: the default is not written, and the
         // reference's setting is not imported again.
         assert!(set_activate_virtualenv(root, true).unwrap());
         assert!(activate_virtualenv(root));

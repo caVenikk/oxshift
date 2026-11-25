@@ -1,4 +1,4 @@
-//! Terminal sessions of Pyoxide IDE (ADR 0014), without a UI toolkit.
+//! Terminal sessions of Oxshift Python IDE (ADR 0014), without a UI toolkit.
 //!
 //! - [`Session`]: a shell on a pseudo-terminal (openpty on macOS and Linux,
 //!   ConPTY on Windows 10 1809 and later) with the emulator state it writes
@@ -14,7 +14,7 @@
 //!   working directory, environment) and [`plan_session`] with the
 //!   [`ShellCustomizer`] product hook; [`shells`]: the shells found on the
 //!   machine.
-//! - [`integration`]: Pyoxide's shell integration scripts (zsh, bash, fish,
+//! - [`integration`]: Oxshift's shell integration scripts (zsh, bash, fish,
 //!   PowerShell) that source what customizers ask for before the first
 //!   prompt and report the working directory, the prompt and the commands.
 //!

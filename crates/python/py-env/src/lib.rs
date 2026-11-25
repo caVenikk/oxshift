@@ -1,4 +1,4 @@
-//! Python environments for Pyoxide IDE.
+//! Python environments for Oxshift Python IDE.
 //!
 //! - [`discovery`]: interpreters from uv, `PATH`, project virtual
 //!   environments, Poetry, conda and pyenv, each probed once.

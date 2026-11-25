@@ -1,2 +1,2 @@
 feature,area,priority,original,clone,notes
-"First-run window (import, choose theme, choose keymap)",settings,should,yes,yes,"Community; import page only (newest reference config, Skip Import, Other Options with two-line rows), report balloon (#155); theme and keymap chosen on the Welcome tab (#267)"
+"First-run window (import, choose theme, choose keymap)",settings,should,yes,yes,"Community; import page only (newest supported PyCharm config, Skip Import, Other Options with two-line rows), report balloon (#155); theme and keymap chosen on the Welcome tab (#267); truthful source edition/version and official import-only icon (#501)"

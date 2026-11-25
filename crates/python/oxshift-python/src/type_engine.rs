@@ -3,7 +3,7 @@
 //! the `python.type-engine.*` commands.
 //!
 //! The reference shows the widget with a Pro subscription only and offers
-//! its own engine and Pyrefly; Pyoxide shows it always and offers its type
+//! its own engine and Pyrefly; Oxshift shows it always and offers its type
 //! servers, ty and basedpyright (ADR 0011). The popup lists them with a
 //! check mark on the current one, a separator and "Type Engine
 //! Settings…", which opens Settings > Python > Type Engine.

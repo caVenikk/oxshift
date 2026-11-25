@@ -1,6 +1,6 @@
 [package]
 name = "project"
-description = "Project model of Pyoxide IDE: a folder, its lazily loaded file tree with hidden and excluded entries, the project settings folder, and loading and saving documents"
+description = "Project model of Oxshift Python IDE: a folder, its lazily loaded file tree with hidden and excluded entries, the project settings folder, and loading and saving documents"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

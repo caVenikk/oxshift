@@ -1,7 +1,7 @@
 //! The context menu of the text editor: a right click on the text (or
 //! `editor.context-menu`) opens it at the pointer. Its rows are the
 //! reference's editor popup (`EditorPopupMenu`) in its order, the ones
-//! Pyoxide has: Show Context Actions | Cut, Copy, Paste | Find Usages, Go To
+//! Oxshift has: Show Context Actions | Cut, Copy, Paste | Find Usages, Go To
 //! | Duplicate, Reformat Code | the rows of the file's type | Run and Debug
 //! the file | Open In | Git. Rows whose action cannot run are left out, as
 //! the reference's popup hides disabled actions (an editor without a

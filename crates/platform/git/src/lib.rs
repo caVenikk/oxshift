@@ -1,4 +1,4 @@
-//! Git for Pyoxide IDE through the git executable (ADR 0016).
+//! Git for Oxshift Python IDE through the git executable (ADR 0016).
 //!
 //! - [`GitExe`]: the executable from the settings, `PATH` or the usual
 //!   folders (on macOS `/usr/bin/git` only with the developer tools), with

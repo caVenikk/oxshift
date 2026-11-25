@@ -3,7 +3,7 @@
 How AI agents (and humans using them) work in this repository.
 
 ## Method
-Development runs through the skill pack in `skills/` (see `skills/PYOXIDE.md`).
+Development runs through the skill pack in `skills/` (see `skills/OXSHIFT.md`).
 For each feature area (db, editor, python-intel, run-debug, vcs, db-gui, sql, docker,
 settings-import, packaging):
 

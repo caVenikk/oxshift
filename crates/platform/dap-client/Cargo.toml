@@ -1,6 +1,6 @@
 [package]
 name = "dap-client"
-description = "Debug Adapter Protocol client of Pyoxide IDE: an adapter over standard streams, requests with cancellation, events, reverse requests and shutdown"
+description = "Debug Adapter Protocol client of Oxshift Python IDE: an adapter over standard streams, requests with cancellation, events, reverse requests and shutdown"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

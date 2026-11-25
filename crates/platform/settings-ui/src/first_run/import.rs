@@ -20,7 +20,7 @@ use ui::notification::{Notification, NotificationKind};
 use crate::{store, theme_switch};
 
 /// What importers read: the folder imported from, the snapshot of its
-/// data files and the options Pyoxide imports, read once from it.
+/// data files and the options the application imports, read once from it.
 #[derive(Debug, Clone)]
 pub struct Source {
     /// The folder imported from: its name and version, and its plugins
@@ -31,7 +31,7 @@ pub struct Source {
     /// scheme files here, never in [`ConfigFolder::path`].
     pub snapshot: Snapshot,
     pub options: ReferenceOptions,
-    /// Pyoxide's configuration folder (where `settings.toml` is), for the
+    /// the application's configuration folder (where `settings.toml` is), for the
     /// files an importer writes (`themes/`, `keymaps/`, `interpreters.toml`).
     pub config_dir: Option<PathBuf>,
     /// The import is made for settings that already exist (a configuration
@@ -78,7 +78,7 @@ impl Outcome {
 pub type Applied = Box<dyn FnOnce(&mut App) -> Outcome + Send>;
 
 /// An area's part of the import: `work` runs off the UI thread (it may
-/// read the reference's files and write Pyoxide's), its result runs on it.
+/// read the reference's files and write the application's), its result runs on it.
 #[derive(Clone, Copy)]
 pub struct Importer {
     pub id: &'static str,
@@ -130,7 +130,7 @@ const DEFAULT_THEME: &str = "Islands Dark";
 /// The prefix of an editable copy of a scheme (`Scheme.EDITABLE_COPY_PREFIX`).
 const USER_COPY: &str = "_@user_";
 
-/// A theme of the reference as Pyoxide has it.
+/// A theme of the reference as the application has it.
 enum Chosen {
     /// A built-in theme; `approximates` names the reference's theme when it
     /// is not the same.
@@ -694,7 +694,7 @@ pub(super) fn recorded_source(
     }
 }
 
-/// Pyoxide's configuration folder: the folder of `settings.toml`.
+/// the application's configuration folder: the folder of `settings.toml`.
 pub(super) fn config_dir(cx: &App) -> Option<PathBuf> {
     store::file(cx).and_then(|f| f.parent().map(Path::to_path_buf))
 }

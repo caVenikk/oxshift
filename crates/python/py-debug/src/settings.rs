@@ -435,7 +435,7 @@ mod tests {
         std::fs::write(dir.path().join(IDEA_DIR).join("workspace.xml"), changed).unwrap();
         assert_eq!(load(dir.path()).unwrap(), loaded);
         assert_eq!(import_idea(dir.path()).unwrap(), None);
-        // A reset to the defaults in Pyoxide is not undone by the import.
+        // A reset to the defaults in Oxshift is not undone by the import.
         save(dir.path(), &DebuggerSettings::default()).unwrap();
         assert_eq!(load(dir.path()).unwrap(), DebuggerSettings::default());
     }

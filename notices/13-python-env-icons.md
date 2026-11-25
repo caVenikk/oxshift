@@ -1,4 +1,4 @@
-- crates/python/pyoxide-ide/assets/icons/uv.svg, virtualEnv.svg,
+- crates/python/oxshift-python/assets/icons/uv.svg, virtualEnv.svg,
   virtualEnv_dark.svg
   Icons of the IntelliJ Platform Community (Apache-2.0, license text in
   LICENSE-APACHE), https://github.com/JetBrains/intellij-community @

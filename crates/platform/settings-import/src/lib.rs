@@ -3,7 +3,7 @@
 //! application options, and the snapshot an import keeps of them
 //! ([`snapshot`]).
 //!
-//! Output is plain data; turning it into Pyoxide profiles and storing the
+//! Output is plain data; turning it into the application profiles and storing the
 //! passwords is up to the caller. Only the user's own files are read, and
 //! secret values only travel as [`secrets::Secret`].
 

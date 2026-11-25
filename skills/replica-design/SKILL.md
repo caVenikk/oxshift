@@ -12,7 +12,7 @@ description: >-
 
 # replica-design
 
-## Pyoxide override (read first; see `../PYOXIDE.md`)
+## Oxshift Python override (read first; see `../OXSHIFT.md`)
 
 - Output is a **theme** (`replica/design/tokens.json` -> theme files the UI toolkit loads), not CSS/Tailwind. Roles: surface, text, accent, selection, diagnostics, syntax tokens, git/diff colours.
 - Assets follow `docs/clean-room.md` ("Visual fidelity"): icons, themes, metric constants and UI strings of the open-source IntelliJ Platform Community (Apache-2.0) may be used with a `notices/` entry (source, commit, files, changes); assets, logos and product names of proprietary products and plugins never. Fonts are used under their own licenses (for example Inter and JetBrains Mono, SIL OFL 1.1), unmodified, with the license next to them.

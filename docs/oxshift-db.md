@@ -20,7 +20,7 @@ A connection is a saved profile (`--profile NAME`, ADR 0004) or inline flags:
 
 ```bash
 oxshift-db profile add reporting --backend oracle-thin --host db.example.com --service ORCLPDB1 --user app_reader
-oxshift-db profile add local-pg --backend postgres --host localhost --port 55432 --database pyoxide --user pyoxide
+oxshift-db profile add local-pg --backend postgres --host localhost --port 55432 --database oxshift --user oxshift
 oxshift-db profile add scratch --path ~/data/app.db --create
 oxshift-db profile list
 oxshift-db --backend sqlite --path :memory: query "select sqlite_version()"
@@ -48,9 +48,10 @@ read once per run. On macOS the item is created so that the IDE and this
 command trust each other's items; local builds need a stable signature for
 that to hold across builds (see [code-signing.md](code-signing.md)).
 
-The credential service remains `pyoxide-db`, with the profile name as the
-account. A configured profile can reuse its saved password without old CLI or
-environment aliases. Old profile files are not imported automatically.
+The credential service is `oxshift-db`, with the profile name as the
+account. Credentials and profile files from the previous product identity are
+not imported automatically. Enter a password again in Oxshift when needed;
+the previously saved entry remains in its original credential store.
 
 Where stored passwords live is an IDE-wide setting (`secrets.toml` in
 `<config dir>/oxshift-python/`, `OXSHIFT_SECRETS_CONFIG` overrides it):

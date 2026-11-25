@@ -1,4 +1,4 @@
-//! External processes of Pyoxide IDE, for the Run tool window.
+//! External processes of Oxshift Python IDE, for the Run tool window.
 //!
 //! [`spawn`] starts a [`CommandLine`] with piped standard streams and returns
 //! a [`ProcessHandle`] and a bounded channel of [`ProcessEvent`]s:

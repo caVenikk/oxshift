@@ -1,4 +1,4 @@
-- crates/python/pyoxide-ide/assets/icons/ruff.svg, ruff_dark.svg,
+- crates/python/oxshift-python/assets/icons/ruff.svg, ruff_dark.svg,
   basedpyright.svg, basedpyright_dark.svg
   Icons of IntelliJ Community (Apache-2.0, license text in LICENSE-APACHE),
   https://github.com/JetBrains/intellij-community @
@@ -7,4 +7,4 @@
   and python/python-pyright/common/resources/images/intellij/python/pyright/
   common/expui/basedpyright.svg, basedpyright_dark.svg. Unchanged copies;
   the status bar draws them in one colour. typeServer.svg and
-  typeServer_dark.svg are Pyoxide's own.
+  typeServer_dark.svg are Oxshift's own.

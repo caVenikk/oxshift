@@ -1,4 +1,4 @@
-//! The Settings window of Pyoxide IDE (ADR 0017) and the running
+//! The Settings window of Oxshift Python IDE (ADR 0017) and the running
 //! application's settings store.
 //!
 //! - [`store`]: the application settings (`settings::Store` in a global),

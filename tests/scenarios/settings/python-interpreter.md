@@ -99,7 +99,7 @@ IntelliJ Community (Apache-2.0) at `pycharm/2026.2.3`:
 `PyActiveSdkConfigurable`, `PythonAddCustomInterpreter`,
 `PythonInterpreterMasterDetails` and `MasterDetailsComponent` (step 3),
 `getInstallableInterpreters` and `installBaseSdk` (step 8; the reference
-offers python.org installers, Pyoxide uv's downloads),
+offers python.org installers, Oxshift Python uv's downloads),
 `FileSystem.validateVenv` (step 6), `sdk.create.custom.venv.missing.text`
 and `ValidatedPathField.validatablePathField` (step 7; the longer "Make
 sure uv is installed and added to PATH." text and the hidden field are

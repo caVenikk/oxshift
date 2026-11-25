@@ -2591,7 +2591,7 @@ impl Workbench {
     }
 
     /// The lines of the empty editor area: the reference IDE's hints, in its
-    /// order, for the actions Pyoxide has (the Navigation Bar is not there
+    /// order, for the actions Oxshift has (the Navigation Bar is not there
     /// yet): Search Everywhere, Project View, Go to File, Recent Files. An
     /// action's hint shows its shortcut ("Double ⇧" for a double tap) and is
     /// left out when it has none; the Project View hint shows only while

@@ -1,5 +1,5 @@
 //! The snapshot of an imported configuration: a copy of the reference
-//! IDE's configuration data files that an import keeps in Pyoxide's
+//! IDE's configuration data files that an import keeps in the application's
 //! configuration folder (`imported/<source>-<version>/`), so that a
 //! feature built after the import can take its part of the reference's
 //! settings later, once (`[import.applied]` of `settings.toml`, ADR 0017).
@@ -20,7 +20,7 @@ use std::path::{Component, Path, PathBuf};
 use crate::pycharm::options::{self, ReferenceOptions};
 use crate::xml::{self, Element};
 
-/// The folder of the snapshots in Pyoxide's configuration folder.
+/// The folder of the snapshots in the application's configuration folder.
 pub const FOLDER: &str = "imported";
 
 /// The folders of a PyCharm configuration folder that are copied, with the
@@ -209,7 +209,7 @@ impl Snapshot {
         options::raw_option(&component, name).map(str::to_owned)
     }
 
-    /// The options Pyoxide imports ([`options::read_options`]).
+    /// The options the application imports ([`options::read_options`]).
     pub fn options(&self) -> ReferenceOptions {
         options::read_options(&self.dir)
     }

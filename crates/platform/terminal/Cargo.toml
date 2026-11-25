@@ -1,6 +1,6 @@
 [package]
 name = "terminal"
-description = "Terminal sessions of Pyoxide IDE (ADR 0014): a shell over a pseudo-terminal, the emulator state and its snapshots, xterm input encoding, start rules and shell detection"
+description = "Terminal sessions of Oxshift Python IDE (ADR 0014): a shell over a pseudo-terminal, the emulator state and its snapshots, xterm input encoding, start rules and shell detection"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

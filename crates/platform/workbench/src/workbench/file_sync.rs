@@ -20,7 +20,7 @@
 //! A deleted file's tab closes, as in the reference (a rename outside the
 //! application is a deletion and a creation). An editor with changes
 //! stays open instead, its tab marked, and is not saved automatically:
-//! Pyoxide has no Local History yet to get them back from. Save writes
+//! Oxshift has no Local History yet to get them back from. Save writes
 //! the file again; closing the tab asks (Close Document).
 //!
 //! Created, changed and removed paths reach the project tree (folders
@@ -87,7 +87,7 @@ struct DiskState {
 /// The file watcher: the project folder with everything below it, and
 /// the folders of open files outside it (or of every open file without a
 /// project), which the reference has no need for: it always has a
-/// project, while Pyoxide opens single files too.
+/// project, while Oxshift opens single files too.
 #[derive(Default)]
 enum Watch {
     /// Not asked for, or nothing to watch yet.

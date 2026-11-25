@@ -1,9 +1,9 @@
-# Pyoxide adaptation of the Replica skill pack
+# Oxshift adaptation of the Replica skill pack
 
 The upstream pack targets web/mobile SaaS clones. In this repository it drives
-the whole development of **Pyoxide IDE**, a Rust desktop IDE for Python whose
-reference ("the original") is **PyCharm**. Each `SKILL.md` has a
-"Pyoxide override" block right under its title; where the override and the
+development of the **Oxshift platform** and its first product,
+**Oxshift Python IDE**, a Rust desktop IDE for Python whose reference ("the original") is **PyCharm**. Each `SKILL.md` has a
+"Oxshift Python override" block right under its title; where the override and the
 upstream text disagree, **the override wins**. Everything else upstream stays
 as is (rules, formats, scripts).
 

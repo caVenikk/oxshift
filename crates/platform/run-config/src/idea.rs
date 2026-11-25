@@ -1,6 +1,6 @@
 //! Reads the run configurations of a project of the reference IDE from its
 //! `.idea` folder and from `*.run.xml` files, for the one-time import into
-//! Pyoxide's storage (ADR 0012). Nothing is ever written into `.idea`.
+//! Oxshift's storage (ADR 0012). Nothing is ever written into `.idea`.
 //!
 //! - Per-user configurations are in `.idea/workspace.xml`, component
 //!   `RunManager` (`RunManagerImpl`): the `<configuration>` elements, the
@@ -90,7 +90,7 @@ impl<'a> IdeaConfiguration<'a> {
     }
 }
 
-/// Converts the reference's configurations of some types into Pyoxide's
+/// Converts the reference's configurations of some types into Oxshift's
 /// (the platform converts Shell Script, a product its language's types).
 pub trait Importer: Send + Sync {
     /// The reference's display name of a type this importer knows

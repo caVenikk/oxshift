@@ -24,5 +24,5 @@ theme).
 
 ## Source
 https://www.jetbrains.com/help/pycharm/settings-appearance.html;
-`docs/theme-formats.md` and the `themes` importer. Pyoxide's "Import
+`docs/theme-formats.md` and the `themes` importer. Oxshift Python's "Import
 Theme…" replaces the reference's marketplace link.

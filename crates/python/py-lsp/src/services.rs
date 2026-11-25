@@ -41,7 +41,7 @@ pub enum Problem {
     NeedsUvxConsent,
     /// Only `uvx` could run it, and the person said no.
     UvxDeclined,
-    /// Older than the oldest version Pyoxide is tested with (it runs).
+    /// Older than the oldest version Oxshift is tested with (it runs).
     BelowMinimum { version: String, minimum: String },
     /// Its version could not be read (it runs).
     Version { message: String },

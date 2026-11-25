@@ -1254,7 +1254,7 @@ fn import_leaf(parent: &str, dark: Option<bool>) -> Imported {
 fn a_child_of_islands_dark_keeps_its_values_for_unset_roles() {
     let item = import_leaf("Islands Dark", None);
     let islands = themes::builtin::default_theme(ThemeKind::Dark);
-    let pyoxide = themes::builtin::dark();
+    let oxshift = themes::builtin::dark();
     assert_eq!(item.report.base, "islands-dark");
     assert_eq!(item.theme.kind, ThemeKind::Dark);
     // Set by the theme.
@@ -1263,7 +1263,7 @@ fn a_child_of_islands_dark_keeps_its_values_for_unset_roles() {
     // original base on them.
     for role in [UiRole::TreeText, UiRole::NotificationText] {
         assert_eq!(item.theme.ui[role], islands.ui[role]);
-        assert_ne!(item.theme.ui[role], pyoxide.ui[role]);
+        assert_ne!(item.theme.ui[role], oxshift.ui[role]);
     }
     assert_eq!(item.theme.ui[UiRole::Accent], islands.ui[UiRole::Accent]);
     assert_eq!(

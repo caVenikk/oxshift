@@ -1,6 +1,6 @@
 [package]
 name = "db-ui"
-description = "Database module of Pyoxide IDE on GPUI (ADR 0021, 0022): the Database tool window, the Data Sources dialog and the db.explorer commands, contributed to a product as a workbench module; it sees data sources and connections only through the store the product gives it"
+description = "Database module of Oxshift Python IDE on GPUI (ADR 0021, 0022): the Database tool window, the Data Sources dialog and the db.explorer commands, contributed to a product as a workbench module; it sees data sources and connections only through the store the product gives it"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

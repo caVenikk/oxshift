@@ -20,9 +20,9 @@ fn target() -> Target {
     let params = ConnectParams {
         host: env_or("TEST_PG_HOST", "localhost"),
         port: env_or("TEST_PG_PORT", "55432").parse().expect("port"),
-        database: "pyoxide".into(),
-        user: "pyoxide".into(),
-        password: Secret::new(env_or("DB_PASSWORD", "pyoxide")),
+        database: env_or("PG_DATABASE", "oxshift"),
+        user: env_or("DB_USER", "oxshift"),
+        password: Secret::new(env_or("DB_PASSWORD", "oxshift")),
         ..ConnectParams::default()
     };
     Target::new(Arc::new(PostgresDriver), params, Hooks::postgres())

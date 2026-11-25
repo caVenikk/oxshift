@@ -197,7 +197,7 @@ fn bracketed_paste() {
 
 #[test]
 fn environment_and_working_directory() {
-    let dir = std::env::temp_dir().join(format!("pyoxide-terminal-cwd-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("oxshift-terminal-cwd-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let mut opts = options(
         &[
@@ -244,7 +244,7 @@ fn environment_and_working_directory() {
 #[test]
 fn missing_working_directory_is_an_error() {
     let mut opts = options(&["exit"], TerminalSize::default());
-    opts.working_directory = PathBuf::from("/pyoxide/no/such/folder");
+    opts.working_directory = PathBuf::from("/oxshift/no/such/folder");
     let err = Session::spawn(opts).unwrap_err();
     assert!(
         matches!(err, terminal::SpawnError::WorkingDirectory(_)),

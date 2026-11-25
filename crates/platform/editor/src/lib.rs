@@ -1,4 +1,4 @@
-//! The code editor of Pyoxide IDE (ADR 0007): an [`Editor`] entity over a
+//! The code editor of Oxshift Python IDE (ADR 0007): an [`Editor`] entity over a
 //! `text::Buffer` and its GPUI element. Only visible lines are laid out and
 //! painted; typing, caret movement, selection, clipboard, undo and the
 //! platform input method (IME) are handled here. Every action is a command

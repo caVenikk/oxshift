@@ -215,9 +215,14 @@ fn write_report(
             "Report directory must not be a symlink",
         ));
     }
-    let temporary = tempfile::Builder::new()
-        .prefix(".capture-")
-        .tempdir_in(root)?;
+    let mut directory = tempfile::Builder::new();
+    directory.prefix(".capture-");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        directory.permissions(fs::Permissions::from_mode(0o700));
+    }
+    let temporary = directory.tempdir_in(root)?;
     let mut archive = tempfile::Builder::new()
         .prefix(".report-")
         .tempfile_in(root)?;
@@ -233,7 +238,11 @@ fn write_report(
         let image_path = temporary.path().join(&name);
         match capture.and_then(|target| target.save(&image_path)) {
             Ok((width, height)) => {
-                zip.start_file(&name, options)?;
+                // The PNG encoder has already compressed the frame.
+                zip.start_file(
+                    &name,
+                    options.compression_method(zip::CompressionMethod::Stored),
+                )?;
                 std::io::copy(&mut fs::File::open(&image_path)?, &mut zip)?;
                 images.push(
                     json!({"file": name, "status": "saved", "width": width, "height": height}),
